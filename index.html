@@ -7,34 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        select, select option { color: #0f172a !important; background-color: #ffffff !important; }
-        .section-header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); }
         .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
-        @media print {
-            @page { size: A4 portrait; margin: 4mm; }
-            body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; font-size: 9px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .no-print { display: none !important; }
-            body > header, nav, footer { display: none !important; }
-            #view-calculadora { display: block !important; width: 100% !important; max-height: 285mm !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; padding: 0 !important; margin: 0 !important; }
-            #view-calculadora .simulador-container { padding: 0 !important; margin: 0 auto !important; max-width: 100% !important; }
-            #view-calculadora .card-simulador { padding: 10px 14px !important; margin-bottom: 8px !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; box-shadow: none !important; }
-            #view-calculadora .card-simulador-resumo { background-color: #002d72 !important; color: #ffffff !important; padding: 8px !important; border-radius: 8px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #view-calculadora h2 { font-size: 16px !important; margin-bottom: 2px !important; }
-            #view-calculadora input, #view-calculadora select { padding: 3px 6px !important; font-size: 9px !important; background-color: #ffffff !important; color: #0f172a !important; }
-            #view-calculadora label { font-size: 8.5px !important; margin-bottom: 1px !important; }
-            #view-despesas { page-break-inside: avoid !important; break-inside: avoid !important; width: 100% !important; }
-            #view-despesas td, #view-despesas th, #view-solicitacao td, #view-solicitacao th { color: #0f172a !important; background-color: #ffffff !important; font-size: 8.5px !important; padding: 3px 5px !important; }
-            #view-despesas th, #view-solicitacao th { background-color: #1e3a8a !important; color: #ffffff !important; }
-        }
     </style>
 </head>
 <body class="min-h-screen pb-12 flex flex-col">
@@ -65,7 +41,6 @@
                         <input type="checkbox" id="auth-remember" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
                         <span>Lembrar-me neste dispositivo</span>
                     </label>
-                    <button type="button" onclick="abrirModalResetSenha()" class="text-blue-600 hover:text-blue-800 font-bold transition">Esqueci minha senha</button>
                 </div>
                 <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-[#002d72] hover:bg-blue-900 text-white font-extrabold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-to-bracket"></i> Entrar na Plataforma
@@ -74,87 +49,8 @@
         </div>
     </div>
 
-    <!-- MODAIS E PREVIEWS -->
-    <div id="modal-reset-senha" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-left space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-key text-blue-600"></i> Redefinir Senha</h3>
-                <button onclick="fecharModalResetSenha()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <p class="text-xs text-slate-600 leading-relaxed">Informe o seu e-mail cadastrado para receber um link oficial de redefinição de senha.</p>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">E-mail Cadastrado</label>
-                <input type="email" id="reset-email" placeholder="seu.nome@grupocij.com.br" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-600">
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="fecharModalResetSenha()" class="px-3 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl">Cancelar</button>
-                <button type="button" onclick="enviarEmailRedefinicao()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md">Enviar Link</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-preview-tabela" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex flex-col items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-5xl h-[85vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-            <div class="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-                <div class="flex items-center gap-2"><i class="fa-solid fa-eye text-amber-400"></i><h3 id="preview-tabela-titulo" class="text-sm font-bold text-white">Visualização da Tabela</h3></div>
-                <div class="flex items-center gap-2">
-                    <a id="preview-tabela-download-btn" href="#" download class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1 shadow-sm"><i class="fa-solid fa-download"></i> Baixar Arquivo</a>
-                    <button onclick="fecharModalPreviewTabela()" class="px-2 py-1 text-slate-400 hover:text-white text-lg transition"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            </div>
-            <div id="preview-tabela-container" class="flex-1 w-full bg-slate-100 flex items-center justify-center p-2 overflow-auto"></div>
-        </div>
-    </div>
-
-    <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-left space-y-4">
-            <div class="flex items-center gap-3 text-amber-600">
-                <div class="p-2 bg-amber-100 rounded-xl"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
-                <h3 class="text-sm font-bold text-slate-900" id="confirm-title">Confirmação</h3>
-            </div>
-            <p class="text-xs text-slate-600 leading-relaxed" id="confirm-message">Tem certeza que deseja executar esta ação?</p>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="fecharModalConfirm(false)" class="px-3.5 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200 transition">Cancelar</button>
-                <button type="button" id="btn-confirm-action" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-md transition">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-confirmacao-comissao" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-left space-y-4">
-            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-rotate text-blue-600"></i> Cliente já cadastrado</h3>
-            <p class="text-xs text-slate-600 leading-relaxed">Este cliente já existe na base. Deseja atualizar a data e renovar a comissão?</p>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="confirmarRenovacaoComissao(false)" class="px-3.5 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition">Cancelar</button>
-                <button onclick="confirmarRenovacaoComissao(true)" class="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md transition">Sim, Renovar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-apagar-comissao" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-t-4 border-red-500 text-left space-y-4">
-            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-red-600"></i> Apagar Registro</h3>
-            <p class="text-xs text-slate-600 leading-relaxed">Tem certeza que deseja apagar permanentemente o registro de <strong id="nomeClienteApagarComissao" class="text-slate-900"></strong>?</p>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="fecharModalApagarComissao()" class="px-3.5 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition">Cancelar</button>
-                <button onclick="confirmarApagarComissao()" class="px-4 py-2 bg-red-600 text-white font-bold text-xs rounded-xl shadow-md transition">Sim, Apagar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-renovar-comissao" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-t-4 border-blue-500 text-left space-y-4">
-            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Renovar Comissão</h3>
-            <p class="text-xs text-slate-600 leading-relaxed">Deseja reiniciar a contagem de tempo para <strong id="nomeClienteRenovarComissao" class="text-slate-900"></strong>?<br><br>A nova data base será <strong>Hoje</strong>, estendendo por mais 12 meses.</p>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="fecharModalRenovarComissao()" class="px-3.5 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition">Cancelar</button>
-                <button onclick="confirmarRenovacaoDiretaComissao()" class="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md transition">Sim, Renovar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- CABEÇALHO DO PORTAL -->
-    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 no-print sticky top-0 z-40">
+    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
@@ -167,27 +63,14 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">PORTAL GRUPO CIJ</span>
-                            <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-emerald-950 text-emerald-300 border-emerald-800">Admin / Financeiro</span>
+                            <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Autenticando...</span>
                         </div>
                         <h1 class="text-base font-bold tracking-tight text-white leading-tight">Plataforma de Gestão Integrada</h1>
                     </div>
                 </div>
 
                 <nav class="hidden lg:flex space-x-1 items-center">
-                    <button onclick="navegarPara('inicio')" id="nav-inicio" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-blue-600 text-white shadow"><i class="fa-solid fa-house"></i> Início</button>
-                    <button onclick="navegarPara('solicitacao')" id="nav-solicitacao" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5"><i class="fa-solid fa-file-signature"></i> Solicitação</button>
-                    <button onclick="navegarPara('calculadora')" id="nav-calculadora" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5"><i class="fa-solid fa-calculator"></i> Simulador</button>
-                    <button onclick="navegarPara('despesas')" id="nav-despesas" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5"><i class="fa-solid fa-receipt"></i> Despesas</button>
-                    <button onclick="navegarPara('tabelas')" id="nav-tabelas" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-amber-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 border border-amber-500/30"><i class="fa-solid fa-file-pdf"></i> Documentos</button>
-                    <button onclick="navegarPara('admin')" id="nav-admin" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-purple-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 border border-purple-500/30"><i class="fa-solid fa-shield-halved"></i> Painel Admin</button>
-                    <button onclick="navegarPara('comissoes-azul')" id="nav-comissoes-azul" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-blue-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 border border-blue-500/30"><i class="fa-solid fa-chart-line"></i> Comissões Azul</button>
-                    
-                    <!-- NOVOS BOTÕES -->
-                    <button onclick="navegarPara('estoque')" id="nav-estoque" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-cyan-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 border border-cyan-500/30"><i class="fa-solid fa-boxes-stacked"></i> Estoque</button>
-                    <button onclick="navegarPara('vendas')" id="nav-vendas" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-rose-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 border border-rose-500/30"><i class="fa-solid fa-cart-shopping"></i> Vendas</button>
-                    <button onclick="navegarPara('dashboard-equip')" id="nav-dashboard-equip" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 border border-teal-500/30"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
-
-                    <button onclick="fazerLogout()" class="ml-2 px-3 py-2 rounded-lg text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition flex items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+                    <button onclick="fazerLogout()" class="ml-2 px-3 py-2 rounded-lg text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition flex items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema</button>
                 </nav>
             </div>
         </div>
@@ -195,489 +78,108 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
-        <!-- 1. MÓDULO INÍCIO -->
+        <!-- MÓDULO INÍCIO (HUB) -->
         <div id="view-inicio" class="space-y-8">
             <div class="bg-gradient-to-r from-[#1b2559] via-[#111827] to-[#0f172a] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
                 <div class="relative z-10 max-w-2xl">
                     <span class="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700/50">Leadjet CIJ Systems</span>
                     <h2 class="text-3xl font-extrabold tracking-tight mt-3 text-white leading-tight">Gestão Comercial, Análise Financeira e Controle Operacional</h2>
-                    <p class="text-slate-300 text-sm mt-2 leading-relaxed">Acesse as ferramentas integradas para elaboração de pedidos de venda, simulação de custos de insumos e controle de despesas de viagens.</p>
+                    <p class="text-slate-300 text-sm mt-2 leading-relaxed">Selecione abaixo qual módulo deseja acessar. As permissões são aplicadas automaticamente conforme o seu nível de acesso.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-cards-inicio">
+                
+                <!-- CARD: SOLICITAÇÃO (Todos acessam) -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-signature"></i></div><span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">Nova Solicitação</span></div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-signature"></i></div><span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">Operacional</span></div>
                         <h3 class="text-base font-bold text-slate-900">Solicitação CIJ</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Especificação técnica de impressoras, insumos, acessórios, parâmetros da linha e escopo de instalação.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Especificação técnica de impressoras, insumos, acessórios e escopo de instalação.</p>
                     </div>
-                    <button onclick="navegarPara('solicitacao')" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Abrir Formulário <i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="navegarPara('solicitacao')" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
 
+                <!-- CARD: SIMULADOR (Todos acessam) -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-calculator"></i></div><span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">Projeção Leadjet</span></div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-calculator"></i></div><span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">Operacional</span></div>
                         <h3 class="text-base font-bold text-slate-900">Simulador Financeiro</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Projeção completa de consumo de tinta, solvente, matriz e estimativa de custos operacionais.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Projeção completa de consumo de tinta, solvente, matriz e estimativa de custos.</p>
                     </div>
-                    <button onclick="navegarPara('calculadora')" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Abrir Simulador <i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="navegarPara('simulador')" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
 
+                <!-- CARD: DESPESAS (Todos acessam) -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div><span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Viagens e Compras</span></div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div><span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Operacional</span></div>
                         <h3 class="text-base font-bold text-slate-900">Controle de Despesas</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Lançamento e relatório de compras por técnico/vendedor, cliente, combustível, hotel e refeições.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Lançamento e relatório de compras de viagens, combustível, hotel e refeições.</p>
                     </div>
-                    <button onclick="navegarPara('despesas')" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Controle de Despesas <i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="navegarPara('despesas')" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
 
-                <div id="card-tabelas-inicio" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- CARD: DOCUMENTOS OFICIAIS (Admin e Vendedores) -->
+                <div id="card-tabelas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-pdf"></i></div><span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Comercial & Gestão</span></div>
                         <h3 class="text-base font-bold text-slate-900">Documentos Oficiais</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta, visualização e download de arquivos e documentos oficiais de equipamentos e insumos.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta, visualização e download de arquivos e documentos de equipamentos.</p>
                     </div>
-                    <button onclick="navegarPara('tabelas')" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Documentos <i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="navegarPara('tabelas')" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
 
-                <div id="card-admin-inicio" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-purple-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- CARD: COMISSÕES AZUL (Admin e Vendedores) -->
+                <div id="card-comissoes-azul" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-indigo-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-shield-halved"></i></div><span class="text-[11px] font-bold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-300">Gestão Global</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Painel Administrativo</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle de comissões de consumíveis e ferramentas exclusivas da diretoria.</p>
-                    </div>
-                    <button onclick="navegarPara('admin')" class="mt-6 w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Painel <i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-
-                <div id="card-comissoes-azul-inicio" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-blue-200 hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div><span class="text-[11px] font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-300">Vendas & Metas</span></div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div><span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-300">Comercial & Gestão</span></div>
                         <h3 class="text-base font-bold text-slate-900">Comissões Azul</h3>
                         <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão inteligente de vendas, regras de liberação e liquidação de comissões.</p>
                     </div>
-                    <button onclick="navegarPara('comissoes-azul')" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="navegarPara('comissoes-azul')" class="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
-
-                <!-- CARDS NOVOS -->
-                <div id="card-estoque-inicio" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-cyan-200 hover:shadow-md transition flex flex-col justify-between">
+                
+                <!-- CARD: ESTOQUE EQUIPAMENTOS (Admin e Vendedores) -->
+                <div id="card-estoque" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-cyan-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div><span class="text-[11px] font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-300">Inventário</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Estoque Equipamentos</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle e listagem de equipamentos disponíveis e seus estados.</p>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div><span class="text-[11px] font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-300">Comercial & Gestão</span></div>
+                        <h3 class="text-base font-bold text-slate-900">Estoque de Equipamentos</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle e listagem de equipamentos disponíveis, categorias e estados.</p>
                     </div>
-                    <button onclick="navegarPara('estoque')" class="mt-6 w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Estoque <i class="fa-solid fa-arrow-right"></i></button>
+                    <button onclick="navegarPara('estoque')" class="mt-6 w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
-
-                <div id="card-vendas-inicio" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-rose-200 hover:shadow-md transition flex flex-col justify-between">
+                
+                <!-- CARD: DASHBOARD GERENCIAL (Admin e Vendedores) -->
+                <div id="card-dashboard" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-cart-shopping"></i></div><span class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-300">Saídas</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Vendas Equipamentos</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro oficial de saída de máquinas e faturamento gerado.</p>
-                    </div>
-                    <button onclick="navegarPara('vendas')" class="mt-6 w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Vendas <i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-
-                <div id="card-dashboard-equip-inicio" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div><span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Inteligência</span></div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div><span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Comercial & Gestão</span></div>
                         <h3 class="text-base font-bold text-slate-900">Dashboard Gerencial</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gráficos e indicadores de performance de estoque e vendas.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gráficos e indicadores de performance baseados nas vendas e estoques.</p>
                     </div>
-                    <button onclick="navegarPara('dashboard-equip')" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Ver Dashboard <i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. MÓDULO SOLICITAÇÃO CIJ -->
-        <div id="view-solicitacao" class="hidden space-y-6">
-            <form id="formVendaInstalacao" class="space-y-6" onsubmit="event.preventDefault();">
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="section-header px-6 py-4 text-white flex items-center justify-between"><div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-building text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">1. Dados do Cliente e Local de Instalação</h2><p class="text-xs text-blue-100">Informações cadastrais do cliente e ponto de entrega/instalação técnica.</p></div></div></div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Razão Social / Cliente *</label><input type="text" id="cli_razao" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nome Fantasia</label><input type="text" id="cli_fantasia" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">CNPJ / CPF *</label><input type="text" id="cli_cnpj" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Inscrição Estadual (IE)</label><input type="text" id="cli_ie" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">CEP</label><input type="text" id="cli_cep" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Endereço Completo de Instalação</label><input type="text" id="cli_endereco" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cidade / UF</label><input type="text" id="cli_cidade" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Contato Responsável Comercial</label><input type="text" id="cli_contato_nome" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Telefone / WhatsApp</label><input type="text" id="cli_contato_fone" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">E-mail de Contato</label><input type="email" id="cli_contato_email" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Responsável Técnico / Manutenção</label><input type="text" id="cli_tecnico_nome" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Telefone / Ramal Técnico</label><input type="text" id="cli_tecnico_fone" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Transportadora / Redespacho</label><input type="text" id="cli_transportadora" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                    </div>
-                </section>
-
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="section-header px-6 py-4 text-white flex items-center justify-between"><div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-file-contract text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">2. Dados Comerciais do Pedido de Venda</h2><p class="text-xs text-blue-100">Números de controle comercial, prazos, consultor e condições de faturamento.</p></div></div></div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nº Proposta Comercial</label><input type="text" id="ven_num_proposta" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nº Pedido de Venda *</label><input type="text" id="ven_num_pedido" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Data da Solicitação</label><input type="date" id="ven_data_solicitacao" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Vendedor / Consultor CIJ</label><input type="text" id="ven_vendedor" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modalidade da Venda</label><select id="ven_modalidade" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"><option value="Venda Direta Equipamento">Venda Direta Equipamento</option><option value="Locação com Insumos">Locação com Insumos</option><option value="Comodato">Comodato</option><option value="Demonstração / Teste">Demonstração / Teste</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Condição de Pagamento</label><input type="text" id="ven_cond_pagto" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Previsão de Entrega</label><input type="date" id="ven_previsao_entrega" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Previsão de Instalação</label><input type="date" id="ven_previsao_instalacao" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                    </div>
-                </section>
-
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="section-header px-6 py-4 text-white flex items-center justify-between"><div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-boxes-stacked text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">3. Relação Completa de Equipamentos, Insumos e Acessórios da Venda</h2></div></div></div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto border border-slate-200 rounded-xl mb-4">
-                            <table class="w-full text-left border-collapse" id="tabelaVendaEquipamentos">
-                                <thead>
-                                    <tr class="bg-slate-900 text-white text-xs font-bold uppercase tracking-wider">
-                                        <th class="py-3 px-2 w-10 text-center border-r border-slate-800">#</th>
-                                        <th class="py-3 px-3 w-1/4 border-r border-slate-800">Tecnologia / Categoria</th>
-                                        <th class="py-3 px-3 border-r border-slate-800">Modelo / Descrição do Equipamento</th>
-                                        <th class="py-3 px-2 w-16 text-center border-r border-slate-800">Qtd</th>
-                                        <th class="py-3 px-3 w-36 border-r border-slate-800 text-right">Preço Unit. (R$)</th>
-                                        <th class="py-3 px-3 w-40 border-r border-slate-800 text-right">Preço Total (R$)</th>
-                                        <th class="py-3 px-2 w-10 text-center no-print">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="corpoTabelaVenda" class="divide-y divide-slate-200 text-xs"></tbody>
-                            </table>
-                        </div>
-                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <button type="button" onclick="adicionarLinhaVenda()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-blue-500 transition flex items-center gap-2 shadow-sm"><i class="fa-solid fa-plus"></i> Adicionar Item</button>
-                            <div class="flex items-center gap-6 text-xs font-semibold text-slate-700"><span>Itens: <strong id="totalItensVenda" class="text-blue-900 font-bold text-sm">0</strong></span><span class="text-slate-300">|</span><span>Valor Total: <strong id="valorTotalGeral" class="text-blue-700 font-extrabold text-base">R$ 0,00</strong></span></div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="section-header px-6 py-4 text-white flex items-center justify-between"><div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-industry text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">4. Condições Técnicas da Linha de Produção</h2></div></div></div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Substrato / Embalagem a Marcar</label><input type="text" id="lin_substrato" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Velocidade da Linha</label><input type="text" id="lin_velocidade" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Sentido de Passagem dos Produtos</label><select id="lin_sentido" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"><option value="Esquerda para Direita">Esquerda para Direita</option><option value="Direita para Esquerda">Direita para Esquerda</option><option value="Vertical Descendente">Vertical Descendente</option><option value="Vertical Ascendente">Vertical Ascendente</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Ambiente Operacional</label><input type="text" id="lin_ambiente" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Ponto de Energia Elétrica</label><input type="text" id="lin_energia" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Suporte Mecânico</label><input type="text" id="lin_suporte_mecanico" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50"></div>
-                    </div>
-                </section>
-
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="section-header px-6 py-4 text-white flex items-center justify-between"><div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-screwdriver-wrench text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">5. Escopo de Serviços</h2></div></div></div>
-                    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        <label class="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition"><input type="checkbox" id="srv_fisica" checked class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"><span class="text-xs font-semibold text-slate-800">Montagem Mecânica / Posicionamento</span></label>
-                        <label class="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition"><input type="checkbox" id="srv_eletrica" checked class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"><span class="text-xs font-semibold text-slate-800">Conexão Elétrica, Sensor e Encoder</span></label>
-                        <label class="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition"><input type="checkbox" id="srv_parametrizacao" checked class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"><span class="text-xs font-semibold text-slate-800">Parametrização e Mensagens</span></label>
-                        <label class="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition"><input type="checkbox" id="srv_treina_operador" checked class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"><span class="text-xs font-semibold text-slate-800">Treinamento Operacional</span></label>
-                        <label class="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition"><input type="checkbox" id="srv_treina_manutencao" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"><span class="text-xs font-semibold text-slate-800">Treinamento Manutenção Preventiva</span></label>
-                        <label class="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition"><input type="checkbox" id="srv_integracao_clp" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"><span class="text-xs font-semibold text-slate-800">Integração CLP / Automação</span></label>
-                    </div>
-                </section>
-
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="section-header px-6 py-4 text-white flex items-center justify-between"><div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-comment-dots text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">6. Observações Gerais</h2></div></div></div>
-                    <div class="p-6"><textarea id="obs_gerais" rows="4" class="w-full rounded-xl border border-slate-300 p-3 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50" placeholder="Observações específicas..."></textarea></div>
-                </section>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col lg:flex-row items-center justify-between gap-4 no-print">
-                    <button type="button" onclick="limparFormulario()" class="text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 px-4 py-3 rounded-xl border border-red-200 transition"><i class="fa-solid fa-trash-can mr-1"></i> Limpar Formulário</button>
-                    <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button type="button" onclick="salvarSolicitacao()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2 border border-emerald-400/30"><i class="fa-solid fa-cloud-arrow-up text-sm"></i> Salvar Solicitação</button>
-                        <button type="button" onclick="gerarExcel()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2 border border-blue-400/30"><i class="fa-solid fa-file-excel text-sm"></i> Exportar para Excel (.xlsx)</button>
-                        <button type="button" onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2"><i class="fa-solid fa-print text-sm"></i> Gerar PDF / Imprimir</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <!-- 3. MÓDULO SIMULADOR LEADJET (750ml) -->
-        <div id="view-calculadora" class="hidden space-y-4">
-            <div class="simulador-container max-w-4xl mx-auto space-y-4">
-                <div class="card-simulador bg-white p-5 rounded-2xl shadow-sm border border-slate-200 text-center relative">
-                    <h2 class="text-xl font-extrabold text-[#002d72]">Simulador Leadjet (750ml)</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Projeção de Custos Operacionais e Consumo de Insumos</p>
-                    <button onclick="window.print()" class="absolute right-5 top-5 no-print px-3 py-1.5 bg-[#002d72] hover:bg-blue-900 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-md"><i class="fa-solid fa-file-pdf"></i> Salvar PDF (1 Página)</button>
+                    <button onclick="navegarPara('dashboard')" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
 
-                <div class="card-simulador bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-bold text-xs text-slate-700 mb-1">Tipo de Matriz</label>
-                            <select id="tipoMatriz" onchange="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-semibold outline-none focus:border-blue-600">
-                                <option value="14">5x5 (14 pts)</option><option value="16" selected>7x5 (16 pts)</option><option value="22">7x9 (22 pts)</option><option value="26">7x12 (26 pts)</option><option value="81">11x16 (81 pts)</option><option value="108">14x20 (108 pts)</option><option value="171">16x24 (171 pts)</option>
-                            </select>
-                        </div>
-                        <div><label class="block font-bold text-xs text-slate-700 mb-1">Caracteres na Mensagem <span class="text-blue-600 font-bold" id="display-pontos">(Pts: 0)</span></label><input type="number" id="caracteres" value="150" oninput="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-medium outline-none focus:border-blue-600"></div>
-                        <div><label class="block font-bold text-xs text-slate-700 mb-1">Função Códigos (Extras)</label><select id="extras" onchange="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-semibold outline-none focus:border-blue-600"><option value="0">Nenhum</option><option value="623">Código de Barras (+623 pts)</option><option value="118">QR Code (+118 pts)</option></select></div>
-                        <div><label class="block font-bold text-xs text-slate-700 mb-1">Impressões p/ Minuto</label><input type="number" id="imp_min" value="1" oninput="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-medium outline-none focus:border-blue-600"></div>
-                        <div><label class="block font-bold text-xs text-slate-700 mb-1">Dias Trabalhados/Mês</label><input type="number" id="dias" value="22" oninput="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-medium outline-none focus:border-blue-600"></div>
-                        <div><label class="block font-bold text-xs text-slate-700 mb-1">Horas de Trabalho/Dia</label><input type="number" id="horas" value="16" oninput="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-medium outline-none focus:border-blue-600"></div>
-                        <div class="md:col-span-2"><label class="block font-bold text-xs text-slate-700 mb-1">Temperatura (°C)</label><select id="temperatura" onchange="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-semibold outline-none focus:border-blue-600"><option value="10">10°C</option><option value="12">12°C</option><option value="14">14°C</option><option value="16">16°C</option><option value="18">18°C</option><option value="20" selected>20°C</option><option value="22">22°C</option><option value="24">24°C</option><option value="26">26°C</option><option value="28">28°C</option><option value="30">30°C</option></select></div>
-                        <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
-                            <div><label class="block font-bold text-xs text-slate-700 mb-1">Preço Tinta (750ml)</label><input type="number" id="precoTinta" value="300" oninput="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-bold outline-none focus:border-blue-600"></div>
-                            <div><label class="block font-bold text-xs text-slate-700 mb-1">Preço Solvente (750ml)</label><input type="number" id="precoSolvente" value="150" oninput="calcularSimuladorOficial()" class="w-full p-2 bg-white border border-slate-300 text-slate-800 rounded-xl text-xs font-bold outline-none focus:border-blue-600"></div>
-                        </div>
+                <!-- CARD: VENDAS REGISTRADAS (Apenas Admin) -->
+                <div id="card-vendas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-rose-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-cart-shopping"></i></div><span class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-300">Gestão Global (Admin)</span></div>
+                        <h3 class="text-base font-bold text-slate-900">Vendas (Saídas)</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro oficial de saída de máquinas, datas e faturamento gerado.</p>
                     </div>
+                    <button onclick="navegarPara('vendas')" class="mt-6 w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div class="bg-[#002d72] text-white p-4 rounded-2xl text-center shadow-sm card-simulador-resumo"><label class="block text-slate-300 text-xs font-medium mb-0.5">Custo/Impressão</label><span id="res-unitario" class="text-xl font-bold">R$ 0,0000</span></div>
-                    <div class="bg-[#002d72] text-white p-4 rounded-2xl text-center shadow-sm card-simulador-resumo"><label class="block text-slate-300 text-xs font-medium mb-0.5">Custo Diário</label><span id="res-diario" class="text-xl font-bold">R$ 0,00</span></div>
-                    <div class="bg-[#002d72] text-white p-4 rounded-2xl text-center shadow-sm card-simulador-resumo"><label class="block text-slate-300 text-xs font-medium mb-0.5">Custo Mensal</label><span id="res-mensal" class="text-xl font-bold">R$ 0,00</span></div>
-                    <div class="bg-[#002d72] text-white p-4 rounded-2xl text-center shadow-sm card-simulador-resumo"><label class="block text-slate-300 text-xs font-medium mb-0.5">Custo Anual</label><span id="res-anual" class="text-xl font-bold">R$ 0,00</span></div>
+                <!-- CARD: PAINEL ADMINISTRATIVO GERAL (Apenas Admin) -->
+                <div id="card-admin" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-purple-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-shield-halved"></i></div><span class="text-[11px] font-bold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-300">Gestão Global (Admin)</span></div>
+                        <h3 class="text-base font-bold text-slate-900">Painel Administrativo</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle de comissões de consumíveis e ferramentas da diretoria.</p>
+                    </div>
+                    <button onclick="navegarPara('admin')" class="mt-6 w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
-                <div class="card-simulador bg-white p-4 rounded-2xl border border-slate-200 text-xs text-slate-700 leading-relaxed shadow-sm">
-                    <strong class="text-[#002d72] text-xs block mb-1">Detalhamento Técnico (Mensal):</strong>
-                    • Total de Impressões: <span id="res-total-imp" class="font-bold text-slate-900">0</span> unidades<br>
-                    • Consumo de Tinta: <span id="res-tinta-ml" class="font-bold text-slate-900">0</span> ml (R$ <span id="res-tinta-rs" class="font-bold text-slate-900">0</span>)<br>
-                    • Consumo de Solvente: <span id="res-solvente-ml" class="font-bold text-slate-900">0</span> ml (R$ <span id="res-solvente-rs" class="font-bold text-slate-900">0</span>)
-                </div>
-            </div>
-        </div>
 
-        <!-- 4. MÓDULO CONTROLE DE DESPESAS -->
-        <div id="view-despesas" class="hidden space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <section class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 no-print h-fit">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
-                        <div class="flex items-center gap-2"><i class="fa-solid fa-receipt text-sky-600 text-lg"></i><h2 class="text-lg font-bold text-slate-900">Lançamento de Despesa</h2></div>
-                        <span id="desp-num-badge" class="text-xs px-2.5 py-1 bg-sky-100 text-sky-800 font-bold rounded-full border border-sky-300">REL-1001</span>
-                    </div>
-                    <form id="expense-form" class="space-y-4" onsubmit="salvarDespesa(event)">
-                        <div class="flex items-center justify-between bg-sky-50 p-3 rounded-xl border border-sky-200">
-                            <div><label class="block text-[11px] font-bold text-sky-900">Nº do Relatório *</label><input type="text" id="desp_num_relatorio" value="REL-1001" readonly class="bg-transparent font-bold text-sky-900 text-xs focus:outline-none w-28"></div>
-                        </div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Técnico / Vendedor *</label><select id="desp_tecnico" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold"><option value="" disabled selected>Selecione...</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
-                        <div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label><input type="text" id="desp_cliente" required placeholder="Nome do Cliente" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs"></div><div><label class="block text-xs font-bold text-slate-700 mb-1">Cidade *</label><input type="text" id="desp_cidade" required placeholder="Ex: Joinville" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs"></div></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Descrição do Item / Compra *</label><input type="text" id="desp_descricao" required placeholder="Ex: Gasolina, Almoço..." class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs"></div>
-                        <div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-700 mb-1">Valor (R$) *</label><input type="number" id="desp_valor" step="0.01" min="0.01" required placeholder="0,00" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs font-bold"></div><div><label class="block text-xs font-bold text-slate-700 mb-1">Data Pagamento *</label><input type="date" id="desp_data" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs font-medium"></div></div>
-                        <div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-700 mb-1">Categoria *</label><select id="desp_categoria" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold"><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div><div><label class="block text-xs font-bold text-slate-700 mb-1">Forma / Cartão *</label><select id="desp_cartao" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs font-medium"><option value="Mastercard **0067">Mastercard **0067</option><option value="Mastercard **9553">Mastercard **9553</option><option value="Visa **7543">Visa **7543</option><option value="Dinheiro / Pix">Dinheiro / Pix</option></select></div></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Observações</label><input type="text" id="desp_observacoes" placeholder="Nº NF ou observações" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-900 rounded-xl text-xs"></div>
-                        <div class="space-y-2 pt-2">
-                            <button type="submit" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-plus-circle"></i> Adicionar Despesa ao Relatório</button>
-                            <button type="button" onclick="finalizarRelatorioAtual()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-check-double"></i> Finalizar Relatório Atual</button>
-                        </div>
-                    </form>
-                </section>
-                <section class="lg:col-span-7 space-y-4">
-                    <div id="card-total-admin" class="bg-gradient-to-r from-slate-900 to-sky-950 text-white p-5 rounded-2xl shadow-md flex justify-between items-center border border-slate-800"><div><span class="text-xs uppercase tracking-wider text-sky-300 font-bold">Total Acumulado</span><h3 class="text-xs text-slate-300 mt-0.5">Resumo conforme filtros</h3></div><div class="text-right"><div id="desp-total-acumulado" class="text-3xl font-black text-white">R$ 0,00</div></div></div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-5 gap-3 no-print">
-                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Exata</label><input type="date" id="filter-data-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium"></div>
-                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mês</label><input type="month" id="filter-mes-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium"></div>
-                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico</label><select id="filter-tecnico-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium"><option value="Todos">Todos</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
-                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria</label><select id="filter-categoria-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium"><option value="Todas">Todas</option><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
-                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar</label><input type="text" id="filter-search-desp" onkeyup="renderizarRelatoriosDespesas()" placeholder="Buscar..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs"></div>
-                    </div>
-                    <div id="filter-actions-admin" class="flex flex-wrap items-center justify-end gap-2 no-print">
-                        <button onclick="exportarRelatorioExcelFiltro()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Exportar</button>
-                        <button onclick="imprimirRelatorioFiltroPDF()" class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> Imprimir</button>
-                        <button onclick="confirmarExcluirTudoFiltro()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Excluir Filtro</button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs"><thead class="bg-slate-900 text-white font-bold border-b border-slate-800"><tr><th class="p-3">RELATÓRIO / TÉCNICO</th><th class="p-3">CLIENTE / CIDADE</th><th class="p-3">ITENS</th><th class="p-3">DATA</th><th class="p-3">TOTAL (R$)</th><th class="p-3 text-center no-print">AÇÕES</th></tr></thead><tbody id="despesas-grouped-body" class="divide-y divide-slate-200"></tbody></table>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <!-- 5. MÓDULO TABELAS DE PREÇOS (DOCUMENTOS) -->
-        <div id="view-tabelas" class="hidden space-y-6">
-            <div class="bg-gradient-to-r from-amber-900 via-amber-950 to-slate-900 text-white p-6 rounded-3xl shadow-lg border border-amber-800/40 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div><div class="flex items-center gap-2"><span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-950 px-2.5 py-0.5 rounded border border-amber-800">Comercial & Gestão</span></div><h2 class="text-2xl font-black mt-1 text-white">Base de Documentos Oficiais</h2><p class="text-xs text-amber-200/80 mt-1">Consulta, visualização no navegador e upload de documentos oficiais.</p></div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <section id="sec-upload-tabela" class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                    <div class="flex items-center gap-2 border-b border-slate-200 pb-3 mb-5"><i class="fa-solid fa-cloud-arrow-up text-amber-600 text-lg"></i><h3 class="text-base font-bold text-slate-900">Novo Documento</h3></div>
-                    <form id="form-upload-tabela" class="space-y-4" onsubmit="salvarNovaTabelaPrecos(event)">
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Título / Nome *</label><input type="text" id="tab_nome" required placeholder="Ex: Tabela CIJ Insumos 2026 V1" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-amber-600"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Categoria *</label><select id="tab_categoria" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-amber-600"><option value="Equipamentos CIJ / TIJ / Laser">Equipamentos CIJ / TIJ / Laser</option><option value="Insumos e Fluidos">Insumos e Fluidos</option><option value="Peças e Acessórios">Peças e Acessórios</option><option value="Geral / Consolidada">Geral / Consolidada</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Arquivo *</label><input type="file" id="tab_arquivo" required accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.png,.jpg,.jpeg" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"><p class="text-[10px] text-slate-400 mt-1">Tamanho máximo recomendado: 3MB</p></div>
-                        <button type="submit" id="btn-upload-tab" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> Salvar e Publicar</button>
-                    </form>
-                </section>
-                <section id="sec-list-tabelas" class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5"><div class="flex items-center gap-2"><i class="fa-solid fa-file-pdf text-amber-600 text-lg"></i><h3 class="text-base font-bold text-slate-900">Documentos Disponíveis</h3></div><span id="tab-count-badge" class="text-xs px-2.5 py-1 bg-amber-100 text-amber-900 font-bold rounded-full border border-amber-300">0 documento(s)</span></div>
-                    <div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-xs"><thead class="bg-slate-900 text-white font-bold border-b border-slate-800"><tr><th class="p-3">NOME DO DOCUMENTO</th><th class="p-3">CATEGORIA</th><th class="p-3">DATA UPLOAD</th><th class="p-3 text-center">AÇÃO / VISUALIZAR</th><th class="p-3 text-center">EXCLUIR</th></tr></thead><tbody id="tabelas-table-body" class="divide-y divide-slate-200 font-medium"></tbody></table></div>
-                </section>
-            </div>
-        </div>
-
-        <!-- 6. MÓDULO PAINEL ADMIN -->
-        <div id="view-admin" class="hidden space-y-6">
-            <div class="bg-gradient-to-r from-purple-900 via-slate-900 to-slate-800 text-white p-6 rounded-3xl shadow-lg border border-purple-800/40 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div><div class="flex items-center gap-2"><span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-300 bg-purple-950 px-2.5 py-0.5 rounded border border-purple-800">Módulo Restrito</span></div><h2 class="text-2xl font-black mt-1 text-white">Painel Administrativo</h2><p class="text-xs text-purple-200/80 mt-1">Gestão de comissões, métricas e visão global do sistema.</p></div>
-            </div>
-            <div class="flex flex-col sm:flex-row items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
-                <button onclick="alternarAbaAdmin('dashboard')" id="btn-tab-dashboard" class="flex-1 w-full py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-purple-600 text-white shadow-md"><i class="fa-solid fa-chart-pie"></i> Dashboard Despesas</button>
-                <button onclick="alternarAbaAdmin('comissoes')" id="btn-tab-comissoes" class="flex-1 w-full py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200"><i class="fa-solid fa-hand-holding-dollar"></i> Comissões Consumíveis</button>
-            </div>
-            <section id="admin-tab-comissoes" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-2 border-b border-slate-200 pb-3 mb-5"><i class="fa-solid fa-hand-holding-dollar text-purple-600 text-lg"></i><h3 class="text-base font-bold text-slate-900">Controle de Comissões (Consumíveis)</h3></div>
-                <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Registrar Nova Base</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
-                        <input type="text" id="comissao_vendedor" placeholder="Nome do Vendedor" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs outline-none">
-                        <div class="relative"><input type="text" id="comissao_cliente" placeholder="Nome do Cliente" oninput="filtrarDropdownClientes(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs outline-none"><div id="dropdownClientesComissao" class="absolute z-10 top-full mt-1 bg-white border border-slate-300 w-full rounded-xl shadow-xl hidden max-h-48 overflow-y-auto custom-scrollbar"></div></div>
-                        <input type="date" id="comissao_data" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs outline-none">
-                        <button onclick="tentarAdicionarComissao()" class="w-full py-2 bg-purple-600 text-white font-bold rounded-xl text-xs"><i class="fa-solid fa-plus"></i> Registrar</button>
-                    </div>
-                </div>
-                <div class="mb-4 flex gap-3"><input type="text" id="filtroComissaoVendedor" placeholder="Filtrar por Vendedor" oninput="renderizarTabelaComissoes()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs outline-none"><input type="text" id="filtroComissaoCliente" placeholder="Filtrar por Cliente" oninput="renderizarTabelaComissoes()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs outline-none"></div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><h4 class="text-xs font-bold text-slate-700 uppercase mb-4"><i class="fa-solid fa-users text-purple-600"></i> Ativas por Vendedor</h4><div class="relative h-64"><canvas id="chartComissoesVendedor"></canvas></div></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><h4 class="text-xs font-bold text-slate-700 uppercase mb-4"><i class="fa-solid fa-signal text-purple-600"></i> Status Global</h4><div class="relative h-64"><canvas id="chartComissoesStatus"></canvas></div></div>
-                </div>
-                <div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-xs"><thead class="bg-slate-900 text-white font-bold"><tr><th class="p-3">VENDEDOR</th><th class="p-3">CLIENTE</th><th class="p-3">DATA BASE</th><th class="p-3">STATUS (RESTANTE)</th><th class="p-3 text-center">AÇÕES</th></tr></thead><tbody id="tabelaComissoesBody" class="divide-y divide-slate-200 bg-white"></tbody></table></div>
-            </section>
-            <section id="admin-tab-dashboard" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-2 border-b border-slate-200 pb-3 mb-5"><i class="fa-solid fa-chart-pie text-purple-600 text-lg"></i><h3 class="text-base font-bold text-slate-900">Dashboard Financeiro (Despesas)</h3></div>
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-wrap gap-3 items-end no-print">
-                    <div class="flex-1"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico/Vendedor</label><select id="dash-filter-tecnico" onchange="renderizarDashboardDespesas()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none"><option value="">Todos</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
-                    <div class="flex-1"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria</label><select id="dash-filter-categoria" onchange="renderizarDashboardDespesas()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none"><option value="">Todas</option><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
-                    <div class="flex-1"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Início</label><input type="date" id="dash-filter-data-inicio" onchange="renderizarDashboardDespesas()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none"></div>
-                    <div class="flex-1"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Fim</label><input type="date" id="dash-filter-data-fim" onchange="renderizarDashboardDespesas()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none"></div>
-                    <div><button onclick="limparFiltrosDashboard()" class="px-4 py-2 bg-slate-200 text-slate-700 text-xs font-bold rounded-lg h-[38px]"><i class="fa-solid fa-eraser"></i> Limpar</button></div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative overflow-hidden"><span class="text-[10px] font-bold text-slate-500 uppercase">Total Gasto</span><div id="dash-total-gasto" class="text-xl font-black text-red-600 mt-1">R$ 0,00</div></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative overflow-hidden"><span class="text-[10px] font-bold text-slate-500 uppercase">Transações</span><div id="dash-transacoes" class="text-xl font-black text-slate-800 mt-1">0</div></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative overflow-hidden"><span class="text-[10px] font-bold text-slate-500 uppercase">Maior Gasto (Categoria)</span><div id="dash-maior-categoria" class="text-sm font-bold text-slate-800 mt-1">-</div><div id="dash-valor-categoria" class="text-xs text-slate-500">R$ 0,00</div></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative overflow-hidden"><span class="text-[10px] font-bold text-slate-500 uppercase">Maior Gasto (Cliente)</span><div id="dash-maior-cliente" class="text-sm font-bold text-slate-800 mt-1">-</div><div id="dash-valor-cliente" class="text-xs text-slate-500">R$ 0,00</div></div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><h4 class="text-xs font-bold text-slate-700 uppercase mb-4"><i class="fa-solid fa-chart-pie text-purple-600"></i> Por Categoria</h4><div class="relative h-64"><canvas id="chartDespesasCategoria"></canvas></div></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200"><h4 class="text-xs font-bold text-slate-700 uppercase mb-4"><i class="fa-solid fa-chart-line text-purple-600"></i> Evolução</h4><div class="relative h-64"><canvas id="chartDespesasEvolucao"></canvas></div></div>
-                </div>
-            </section>
-        </div>
-
-        <!-- 7. MÓDULO COMISSÕES AZUL -->
-        <div id="view-comissoes-azul" class="hidden space-y-6">
-            <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-6 rounded-3xl text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div><div class="flex items-center gap-2"><span class="text-[10px] font-extrabold uppercase text-blue-300 bg-blue-950 px-2.5 py-0.5 rounded border border-blue-800">Vendas & Metas</span></div><h2 class="text-2xl font-black mt-1">Controle de Comissões Azul</h2></div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm"><p class="text-[10px] font-bold uppercase text-blue-600">Total Vendas</p><h3 id="kpiTotalSalesAzul" class="text-2xl font-black text-blue-950 mt-1">R$ 0,00</h3></div>
-                <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm"><p class="text-[10px] font-bold uppercase text-indigo-600">Total Comissões</p><h3 id="kpiTotalCommissionsAzul" class="text-2xl font-black text-indigo-950 mt-1">R$ 0,00</h3></div>
-                <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm"><p class="text-[10px] font-bold uppercase text-amber-700">Comissões Pendentes</p><h3 id="kpiPendingCommissionsAzul" class="text-2xl font-black text-amber-900 mt-1">R$ 0,00</h3></div>
-                <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm"><p class="text-[10px] font-bold uppercase text-emerald-700">Comissões Pagas</p><h3 id="kpiPaidCommissionsAzul" class="text-2xl font-black text-emerald-950 mt-1">R$ 0,00</h3></div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-5 border-b pb-3"><h3 id="formTitleAzul" class="text-base font-bold text-slate-900"><i class="fa-solid fa-cart-plus text-blue-600"></i> Nova Venda</h3><button type="button" id="btnCancelEditAzul" onclick="resetFormAzul()" class="hidden text-xs bg-slate-100 px-3 py-1.5 rounded-xl font-bold">Cancelar Edição</button></div>
-                <form id="commissionFormAzul" class="space-y-4" onsubmit="salvarVendaAzul(event)">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Vendedor *</label><input type="text" id="azul_sellerName" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Data *</label><input type="date" id="azul_date" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">NF *</label><input type="text" id="azul_nfNumber" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label><input type="text" id="azul_client" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Cliente</label><select id="azul_clientType" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"><option value="Atual">Cliente Atual</option><option value="Novo">Cliente Novo</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Item</label><select id="azul_itemType" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"><option value="Maquina">Maquina</option><option value="Alternativo">Alternativo</option><option value="Locação">Locação</option><option value="Consumíveis">Consumíveis</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Valor Venda (R$) *</label><input type="number" step="0.01" id="azul_saleValue" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Entrada (%) *</label><input type="number" step="0.1" id="azul_entryPercent" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Condição</label><select id="azul_paymentCond" onchange="updatePaymentFieldsAzul()" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"><option value="À Vista">À Vista</option><option value="Parcelado">Parcelado</option></select></div>
-                        <div id="azul_containerInstallments" class="hidden"><label class="block text-xs font-bold text-slate-700 mb-1">Parcelas</label><input type="number" id="azul_installmentsCount" value="1" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                        <div id="azul_containerInterval" class="hidden"><label class="block text-xs font-bold text-slate-700 mb-1">Intervalo</label><select id="azul_installmentInterval" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"><option value="30">30 dias</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Comissão (%) *</label><input type="number" step="0.1" id="azul_commissionPercent" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs"></div>
-                    </div>
-                    <div class="flex justify-end pt-3"><button type="submit" id="btnSubmitAzul" class="bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl text-xs"><i class="fa-solid fa-save"></i> Salvar Venda</button></div>
-                </form>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
-                <div class="flex items-center justify-between border-b pb-3"><h3 class="text-sm font-bold"><i class="fa-solid fa-filter text-blue-600"></i> Filtros</h3><button onclick="exportToExcelAzul()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold">Exportar Excel</button></div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                    <div><input type="text" id="azul_filterSeller" oninput="renderTableAzul()" placeholder="Vendedor..." class="w-full px-2.5 py-1.5 border rounded-lg text-xs"></div>
-                    <div><input type="text" id="azul_filterClient" oninput="renderTableAzul()" placeholder="Cliente..." class="w-full px-2.5 py-1.5 border rounded-lg text-xs"></div>
-                    <div><input type="date" id="azul_filterDateFrom" onchange="renderTableAzul()" class="w-full px-2.5 py-1.5 border rounded-lg text-xs"></div>
-                    <div><input type="date" id="azul_filterDateTo" onchange="renderTableAzul()" class="w-full px-2.5 py-1.5 border rounded-lg text-xs"></div>
-                    <div><select id="azul_filterStatus" onchange="renderTableAzul()" class="w-full px-2.5 py-1.5 border rounded-lg text-xs"><option value="">Todos Status</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option></select></div>
-                </div>
-                <div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left text-xs"><thead class="bg-slate-900 text-white font-bold"><tr><th class="p-3">Vendedor</th><th class="p-3">NF</th><th class="p-3">Data</th><th class="p-3">Cliente</th><th class="p-3">Item</th><th class="p-3 text-right">Valor</th><th class="p-3 text-center">Entrada</th><th class="p-3 text-right">Comissão</th><th class="p-3">Previsão</th><th class="p-3 text-center">Status</th><th class="p-3 text-center no-print">Ação</th></tr></thead><tbody id="tableBodyAzul" class="divide-y divide-slate-200 bg-white"></tbody><tfoot id="tableFooterAzul" class="bg-slate-50 font-bold border-t"></tfoot></table></div>
-            </div>
-        </div>
-
-        <!-- ================= NOVOS MÓDULOS (ESTOQUE, VENDAS E DASHBOARD) ================= -->
-
-        <!-- 8. MÓDULO ESTOQUE -->
-        <div id="view-estoque" class="hidden space-y-6">
-            <div class="flex items-center justify-between mb-4 mt-2">
-                <h2 class="text-2xl font-bold text-slate-800">Estoque de Equipamentos</h2>
-            </div>
-            <!-- Cadastro Estoque (Admin) -->
-            <div id="area-cadastro-estoque" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hidden">
-                <h3 class="text-lg font-bold text-slate-800 mb-4" id="titulo-form-estoque">Cadastrar Novo Equipamento</h3>
-                <form id="formEstoque" class="grid grid-cols-1 md:grid-cols-3 gap-4" onsubmit="salvarEstoque(event)">
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Categoria *</label><input type="text" id="est-cat" placeholder="Ex: Impressora, Peça, Acessório" required class="w-full px-3 py-2 text-sm rounded border border-slate-300 outline-none focus:border-cyan-500"></div>
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Marca *</label><input type="text" id="est-marca" required class="w-full px-3 py-2 text-sm rounded border border-slate-300 outline-none focus:border-cyan-500"></div>
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Modelo *</label><input type="text" id="est-modelo" required class="w-full px-3 py-2 text-sm rounded border border-slate-300 outline-none focus:border-cyan-500"></div>
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Número de Série *</label><input type="text" id="est-ns" required class="w-full px-3 py-2 text-sm rounded border border-slate-300 outline-none focus:border-cyan-500"></div>
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Estado</label><select id="est-estado" class="w-full px-3 py-2 text-sm rounded border border-slate-300 outline-none focus:border-cyan-500"><option value="Novo">Novo</option><option value="Usado">Usado</option><option value="Revisado">Revisado</option></select></div>
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Quantidade *</label><input type="number" id="est-qtd" value="1" min="1" required class="w-full px-3 py-2 text-sm rounded border border-slate-300 outline-none focus:border-cyan-500"></div>
-                    <div class="md:col-span-3 flex justify-end gap-2 mt-2">
-                        <button type="button" onclick="cancelarEdicaoEstoque()" id="btn-cancelar-est" class="hidden bg-slate-300 text-slate-700 px-6 py-2 rounded-lg text-sm font-bold">Cancelar</button>
-                        <button type="submit" id="btn-salvar-est" class="bg-cyan-600 text-white px-6 py-2 rounded-lg text-sm font-bold">Salvar Equipamento</button>
-                    </div>
-                </form>
-            </div>
-            <!-- Lista Estoque -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 bg-slate-50 border-b">
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <input type="text" id="filtro-est-cat" placeholder="Buscar por Categoria..." onkeyup="renderEstoque()" class="px-3 py-2 text-sm rounded border outline-none">
-                        <input type="text" id="filtro-est-mod" placeholder="Buscar Modelo/Marca/NS" onkeyup="renderEstoque()" class="px-3 py-2 text-sm rounded border outline-none">
-                        <select id="filtro-est-estado" onchange="renderEstoque()" class="px-3 py-2 text-sm rounded border outline-none"><option value="">Todos Estados</option><option value="Novo">Novo</option><option value="Usado">Usado</option><option value="Revisado">Revisado</option></select>
-                        <div class="flex items-center text-sm font-bold text-slate-600 justify-end pr-2">Total: <span id="est-total-itens" class="ml-1 text-cyan-700">0</span></div>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-600"><thead class="bg-slate-900 text-white"><tr><th class="px-4 py-3">Categoria</th><th class="px-4 py-3">Marca / Modelo</th><th class="px-4 py-3">Nº Série</th><th class="px-4 py-3 text-center">Estado</th><th class="px-4 py-3 text-center">Qtd</th><th class="px-4 py-3 text-center col-acao-estoque hidden">Ações</th></tr></thead><tbody id="tabela-estoque" class="divide-y divide-slate-100"></tbody></table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 9. MÓDULO VENDAS -->
-        <div id="view-vendas" class="hidden space-y-6">
-            <div class="flex items-center justify-between mb-4 mt-2">
-                <h2 class="text-2xl font-bold text-slate-800">Vendas de Equipamentos</h2>
-            </div>
-            <!-- Cadastro Vendas (Admin) -->
-            <div id="area-cadastro-venda" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hidden">
-                <h3 class="text-lg font-bold text-slate-800 mb-4" id="titulo-form-vendas">Registrar Venda / Saída</h3>
-               <form id="formVendas" class="grid grid-cols-1 md:grid-cols-6 gap-4" onsubmit="salvarVendaEquip(event)">
-                    <div class="col-span-1"><label class="block text-xs font-medium text-slate-600 mb-1">Data *</label><input type="date" id="ven-data" required class="w-full px-3 py-2 text-sm rounded border outline-none"></div>
-                    <div class="col-span-2"><label class="block text-xs font-medium text-slate-600 mb-1">Equipamento *</label><input type="text" id="ven-equip" required class="w-full px-3 py-2 text-sm rounded border outline-none"></div>
-                    <div class="col-span-1"><label class="block text-xs font-medium text-slate-600 mb-1">Nº Série *</label><input type="text" id="ven-ns" required class="w-full px-3 py-2 text-sm rounded border outline-none"></div>
-                    <div class="col-span-2"><label class="block text-xs font-medium text-slate-600 mb-1">Valor (R$) *</label><input type="number" step="0.01" id="ven-valor" required class="w-full px-3 py-2 text-sm rounded border outline-none"></div>
-                    
-                    <div class="col-span-3"><label class="block text-xs font-medium text-slate-600 mb-1">Cliente *</label><input type="text" id="ven-cliente" required class="w-full px-3 py-2 text-sm rounded border outline-none"></div>
-                    <div class="col-span-3"><label class="block text-xs font-medium text-slate-600 mb-1">Vendedor *</label><input type="text" id="ven-vendedor" required class="w-full px-3 py-2 text-sm rounded border outline-none"></div>
-                    
-                    <div class="col-span-full flex justify-end gap-2 mt-2">
-                        <button type="button" onclick="cancelarEdicaoVenda()" id="btn-cancelar-ven" class="hidden bg-slate-300 text-slate-700 px-6 py-2 rounded-lg text-sm font-bold">Cancelar</button>
-                        <button type="submit" id="btn-salvar-ven" class="bg-rose-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-rose-700">Registrar Venda</button>
-                    </div>
-                </form>
-            </div>
-            <!-- Lista Vendas -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 bg-slate-50 border-b flex justify-between items-center"><input type="text" id="filtro-ven-busca" placeholder="Buscar Cliente, Equipamento, NS ou Vendedor" onkeyup="renderVendas()" class="w-64 px-3 py-2 text-sm rounded border outline-none"><div class="text-sm font-bold text-slate-600">Total: <span id="ven-total-valor" class="text-rose-700">R$ 0,00</span></div></div>
-                <div class="overflow-x-auto"><table class="w-full text-left text-sm text-slate-600"><thead class="bg-slate-900 text-white"><tr><th class="px-4 py-3">Data</th><th class="px-4 py-3">Equipamento</th><th class="px-4 py-3">Nº Série</th><th class="px-4 py-3">Cliente</th><th class="px-4 py-3">Vendedor</th><th class="px-4 py-3">Valor</th><th class="px-4 py-3 text-center">Ações</th></tr></thead><tbody id="tabela-vendas" class="divide-y divide-slate-100"></tbody></table></div>
-            </div>
-                <div class="overflow-x-auto"><table class="w-full text-left text-sm text-slate-600"><thead class="bg-slate-900 text-white"><tr><th class="px-4 py-3">Data</th><th class="px-4 py-3">Equipamento</th><th class="px-4 py-3">Nº Série</th><th class="px-4 py-3">Vendedor</th><th class="px-4 py-3">Valor</th><th class="px-4 py-3 text-center">Ações</th></tr></thead><tbody id="tabela-vendas" class="divide-y divide-slate-100"></tbody></table></div>
-            </div>
-        </div>
-
-        <!-- 10. MÓDULO DASHBOARD EQUIPAMENTOS -->
-        <div id="view-dashboard-equip" class="hidden space-y-6">
-            <div class="flex items-center justify-between mb-4 mt-2">
-                <h2 class="text-2xl font-bold text-slate-800">Dashboard Gerencial (Equipamentos)</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="text-lg font-bold text-slate-800 mb-4 text-center">Estoque (Estado)</h3><div class="relative h-64"><canvas id="chartEstoque"></canvas></div></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="text-lg font-bold text-slate-800 mb-4 text-center">Vendas por Vendedor</h3><div class="relative h-64"><canvas id="chartVendas"></canvas></div></div>
             </div>
         </div>
 
@@ -689,8 +191,7 @@
     <!-- FIREBASE MODULE SDK SETUP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Substitua abaixo pelas SUAS chaves do Firebase
         const firebaseConfig = {
@@ -705,97 +206,59 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plataforma-cij';
-        const despesasCol = collection(db, 'artifacts', appId, 'public', 'data', 'despesas');
-        const tabelasCol = collection(db, 'artifacts', appId, 'public', 'data', 'tabelas_precos');
-        const comissoesCol = collection(db, 'artifacts', appId, 'public', 'data', 'comissoes');
-        const solicitacoesCol = collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes');
-        const comissoesAzulCol = collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul');
-        
-        // Novas Coleções
-        const estoqueCol = collection(db, 'artifacts', appId, 'public', 'data', 'estoque_equipamentos');
-        const vendasCol = collection(db, 'artifacts', appId, 'public', 'data', 'vendas_equipamentos');
-
-        let unsubDespesas = null; let unsubTabelas = null; let unsubComissoes = null; let unsubSolicitacoes = null; let unsubComissoesAzul = null; let unsubEstoque = null; let unsubVendas = null;
-        let isFirstLoadDespesas = true;
-
-        window.attachFirestoreListeners = function() {
-            unsubDespesas = onSnapshot(despesasCol, (snap) => {
-                const docs = []; snap.forEach(d => docs.push(d.data())); window.listaDespesas = docs;
-                localStorage.setItem('banco_despesas_cij', JSON.stringify(docs));
-                if(typeof window.renderizarRelatoriosDespesas === 'function') window.renderizarRelatoriosDespesas();
-                if(typeof window.renderizarDashboardDespesas === 'function') window.renderizarDashboardDespesas();
-                if(isFirstLoadDespesas && typeof window.inicializarNumeroRelatorio === 'function') { window.inicializarNumeroRelatorio(); isFirstLoadDespesas = false; }
-            });
-            unsubTabelas = onSnapshot(tabelasCol, (snap) => { const docs = []; snap.forEach(d => docs.push(d.data())); window.listaTabelas = docs; localStorage.setItem('banco_tabelas_precos_cij', JSON.stringify(docs)); if(typeof window.renderizarTabelasPrecos === 'function') window.renderizarTabelasPrecos(); });
-            unsubComissoes = onSnapshot(comissoesCol, (snap) => { const docs = []; snap.forEach(d => docs.push(d.data())); window.listaComissoes = docs; localStorage.setItem('banco_comissoes_cij', JSON.stringify(docs)); if(typeof window.renderizarTabelaComissoes === 'function') window.renderizarTabelaComissoes(); });
-            unsubSolicitacoes = onSnapshot(solicitacoesCol, (snap) => { const docs = []; snap.forEach(d => docs.push(d.data())); window.listaSolicitacoes = docs; localStorage.setItem('banco_solicitacoes_cij', JSON.stringify(docs)); });
-            unsubComissoesAzul = onSnapshot(comissoesAzulCol, (snap) => { const docs = []; snap.forEach(d => docs.push(d.data())); window.listaComissoesAzul = docs; localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(docs)); if(typeof window.renderTableAzul === 'function') window.renderTableAzul(); });
-            
-            // Listeners Novos
-            unsubEstoque = onSnapshot(estoqueCol, (snap) => { const docs = []; snap.forEach(d => docs.push(d.data())); window.listaEstoque = docs; localStorage.setItem('banco_estoque_cij', JSON.stringify(docs)); if(typeof window.renderEstoque === 'function') window.renderEstoque(); });
-            unsubVendas = onSnapshot(vendasCol, (snap) => { const docs = []; snap.forEach(d => docs.push(d.data())); window.listaVendas = docs; localStorage.setItem('banco_vendas_cij', JSON.stringify(docs)); if(typeof window.renderVendas === 'function') window.renderVendas(); });
-        };
-
-        function detachFirestoreListeners() { if(unsubDespesas) unsubDespesas(); if(unsubTabelas) unsubTabelas(); if(unsubComissoes) unsubComissoes(); if(unsubSolicitacoes) unsubSolicitacoes(); if(unsubComissoesAzul) unsubComissoesAzul(); if(unsubEstoque) unsubEstoque(); if(unsubVendas) unsubVendas(); }
-
+        // Listener de Autenticação - Mostra/Esconde Login
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
             if(user) {
                 if(loginScreen) loginScreen.classList.add('hidden');
                 window.currentUser = user;
                 if(typeof window.verificarPermissoesUsuario === 'function') window.verificarPermissoesUsuario(user.email);
-                window.attachFirestoreListeners();
             } else {
                 if(loginScreen) loginScreen.classList.remove('hidden');
-                window.currentUser = null; detachFirestoreListeners();
+                window.currentUser = null;
             }
         });
 
-        window.handleLogin = async function(e) { e.preventDefault(); const email = document.getElementById('auth-email').value.trim(); const pass = document.getElementById('auth-password').value; try { await signInWithEmailAndPassword(auth, email, pass); window.mostrarNotificacao("Login efetuado!"); } catch(err) { window.mostrarNotificacao("Erro no login: "+err.message, true); } };
-        window.fazerLogout = async function() { await signOut(auth); window.mostrarNotificacao("Sessão encerrada."); };
+        window.handleLogin = async function(e) { 
+            e.preventDefault(); 
+            const email = document.getElementById('auth-email').value.trim(); 
+            const pass = document.getElementById('auth-password').value; 
+            try { 
+                await signInWithEmailAndPassword(auth, email, pass); 
+                window.mostrarNotificacao("Acesso Liberado!"); 
+            } catch(err) { 
+                window.mostrarNotificacao("Erro no login: "+err.message, true); 
+            } 
+        };
 
-        // Exports para Gravação Nuvem
-        window.salvarDespesaNuvem = async function(item) { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', item.id), item); } catch(err) {} };
-        window.excluirDespesaNuvem = async function(id) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', id)); } catch(err) {} };
-        window.salvarEstoqueNuvem = async function(item) { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'estoque_equipamentos', item.id), item); } catch(err) {} };
-        window.excluirEstoqueNuvem = async function(id) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'estoque_equipamentos', id)); } catch(err) {} };
-        window.salvarVendaNuvem = async function(item) { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vendas_equipamentos', item.id), item); } catch(err) {} };
-        window.excluirVendaNuvem = async function(id) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vendas_equipamentos', id)); } catch(err) {} };
-        // Mesmos para as outras coleções...
-        window.salvarTabelaNuvem = async function(i) { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tabelas_precos', i.id), i); } catch(err) {} };
-        window.excluirTabelaNuvem = async function(id) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tabelas_precos', id)); } catch(err) {} };
-        window.salvarComissaoAzulNuvem = async function(i) { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul', i.id), i); } catch(err) {} };
-        window.salvarComissaoNuvem = async function(i) { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comissoes', i.id), i); } catch(err) {} };
+        window.fazerLogout = async function() { 
+            await signOut(auth); 
+            window.mostrarNotificacao("Sessão encerrada com sucesso."); 
+        };
     </script>
 
     <script>
-        /* VARIÁVEIS GLOBAIS DA APLICAÇÃO */
-        window.listaDespesas = JSON.parse(localStorage.getItem('banco_despesas_cij') || '[]');
-        window.listaTabelas = JSON.parse(localStorage.getItem('banco_tabelas_precos_cij') || '[]');
-        window.listaComissoes = JSON.parse(localStorage.getItem('banco_comissoes_cij') || '[]');
-        window.listaSolicitacoes = JSON.parse(localStorage.getItem('banco_solicitacoes_cij') || '[]');
-        window.listaComissoesAzul = JSON.parse(localStorage.getItem('banco_comissoes_azul_cij') || '[]');
-        window.listaEstoque = JSON.parse(localStorage.getItem('banco_estoque_cij') || '[]');
-        window.listaVendas = JSON.parse(localStorage.getItem('banco_vendas_cij') || '[]');
-
         /* FUNÇÕES UTILITÁRIAS */
-        function safeGetVal(id, def='') { const e = document.getElementById(id); return e ? e.value.trim() : def; }
-        function safeSetVal(id, val) { const e = document.getElementById(id); if(e) e.value = val !== undefined ? val : ''; }
-        function safeSetText(id, txt) { const e = document.getElementById(id); if(e) e.innerText = txt !== undefined ? txt : ''; }
-        function formatarMoeda(val) { return (parseFloat(val)||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-
         window.mostrarNotificacao = function(msg, isError = false) {
             const toast = document.getElementById('toast');
-            safeSetText('toast-message', msg);
+            const msgEl = document.getElementById('toast-message');
+            if(msgEl) msgEl.innerText = msg;
+            
+            const icon = document.getElementById('toast-icon');
+            if(icon) {
+                if(isError) {
+                    icon.className = 'fa-solid fa-circle-xmark text-red-400';
+                } else {
+                    icon.className = 'fa-solid fa-circle-check text-emerald-400';
+                }
+            }
+
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3500);
         };
 
         /* PERMISSÕES DA PLATAFORMA */
-      /* PERMISSÕES DA PLATAFORMA */
         window.EMAILS_ADMIN_FINANCEIRO = [
             'adm@grupocij.com',
             'faturamento@grupocij.com',
@@ -822,288 +285,63 @@
 
         window.verificarPermissoesUsuario = function(email) {
             const clean = (email||'').toLowerCase().trim();
-            if(window.EMAILS_ADMIN_FINANCEIRO.includes(clean) || clean.includes('admin') || clean.includes('financeiro')) window.userRole = 'ADMIN_FINANCEIRO';
-            else if(window.EMAILS_TECNICOS.includes(clean) || clean.includes('tecnico')) window.userRole = 'TECNICO';
-            else if(window.EMAILS_VENDEDORES.includes(clean) || clean.includes('vendedor') || clean.includes('vendas')) window.userRole = 'VENDEDOR';
-            else window.userRole = 'VENDEDOR';
+            if(window.EMAILS_ADMIN_FINANCEIRO.includes(clean) || clean.includes('admin') || clean.includes('financeiro')) {
+                window.userRole = 'ADMIN_FINANCEIRO';
+            }
+            else if(window.EMAILS_TECNICOS.includes(clean) || clean.includes('tecnico')) {
+                window.userRole = 'TECNICO';
+            }
+            else if(window.EMAILS_VENDEDORES.includes(clean) || clean.includes('vendedor') || clean.includes('vendas')) {
+                window.userRole = 'VENDEDOR';
+            }
+            else {
+                window.userRole = 'VENDEDOR'; // Padrão se não encontrar
+            }
             
             window.isUserAdminOrFinance = (window.userRole === 'ADMIN_FINANCEIRO');
             const isAdmin = window.isUserAdminOrFinance;
             const isVendedor = (window.userRole === 'VENDEDOR');
+            const pComercial = (isAdmin || isVendedor); // Vendedor ou Admin podem ver
 
-            // Header Navs & Cards
-            const pComercial = (isAdmin || isVendedor);
-            
-            document.getElementById('nav-tabelas')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-tabelas-inicio')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('nav-comissoes-azul')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-comissoes-azul-inicio')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('nav-estoque')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-estoque-inicio')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('nav-dashboard-equip')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-dashboard-equip-inicio')?.classList.toggle('hidden', !pComercial);
-            
-            document.getElementById('nav-vendas')?.classList.toggle('hidden', !isAdmin);
-            document.getElementById('card-vendas-inicio')?.classList.toggle('hidden', !isAdmin);
-            document.getElementById('nav-admin')?.classList.toggle('hidden', !isAdmin);
-            document.getElementById('card-admin-inicio')?.classList.toggle('hidden', !isAdmin);
-
-            document.getElementById('area-cadastro-estoque')?.classList.toggle('hidden', !isAdmin);
-            document.getElementById('area-cadastro-venda')?.classList.toggle('hidden', !isAdmin);
-            document.querySelectorAll('.col-acao-estoque').forEach(el => el.classList.toggle('hidden', !isAdmin));
-
-            if(window.userRole === 'TECNICO') document.getElementById('user-role-badge').innerText = 'Técnico';
-            else if(window.userRole === 'VENDEDOR') document.getElementById('user-role-badge').innerText = 'Vendedor';
-
-            window.renderEstoque(); window.renderVendas(); window.renderizarTabelasPrecos(); window.renderizarRelatoriosDespesas();
-        };
-
-        window.navegarParaOriginal = window.navegarPara;
-        window.navegarPara = function(idDestino) {
-            // Trava de segurança nas Despesas
-            const viewDespesas = document.getElementById('view-despesas');
-            if (viewDespesas && !viewDespesas.classList.contains('hidden')) {
-                const relAtual = document.getElementById('desp_num_relatorio')?.value;
-                const temItens = window.listaDespesas && window.listaDespesas.some(i => i.num_relatorio === relAtual);
-                if (temItens && idDestino !== 'despesas' && idDestino !== 'view-despesas') {
-                    alert("⚠️ Você possui despesas não finalizadas neste relatório. Clique em 'Finalizar Relatório Atual' antes de sair.");
-                    return; 
+            // Atualiza Badge do Cabeçalho
+            const badge = document.getElementById('user-role-badge');
+            if(badge) {
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1";
+                if(isAdmin) {
+                    badge.innerText = 'Administrador';
+                    badge.classList.add('bg-purple-950', 'text-purple-300', 'border-purple-800');
+                } else if(isVendedor) {
+                    badge.innerText = 'Vendedor';
+                    badge.classList.add('bg-blue-950', 'text-blue-300', 'border-blue-800');
+                } else {
+                    badge.innerText = 'Técnico';
+                    badge.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
                 }
             }
-
-            const modulos = ['inicio','solicitacao','calculadora','despesas','tabelas','admin','comissoes-azul','estoque','vendas','dashboard-equip'];
-            modulos.forEach(m => {
-                document.getElementById('view-'+m)?.classList.add('hidden');
-                document.getElementById('nav-'+m)?.classList.remove('bg-blue-600','text-white','shadow');
-                document.getElementById('nav-'+m)?.classList.add('text-slate-300');
-            });
-
-            document.getElementById('view-'+idDestino)?.classList.remove('hidden');
-            const nav = document.getElementById('nav-'+idDestino);
-            if(nav) { nav.classList.add('bg-blue-600','text-white','shadow'); nav.classList.remove('text-slate-300'); }
-
-            if(idDestino === 'dashboard-equip') window.renderChartsEquip();
-            window.scrollTo(0,0);
-        };
-
-        /* LÓGICAS MANTIDAS: DESPESAS E SIMULADOR */
-        window.inicializarNumeroRelatorio = function() {
-            let numParaUsar = 1001;
-            if (window.listaDespesas && window.listaDespesas.length > 0) {
-                let maxRel = 1000;
-                window.listaDespesas.forEach(item => {
-                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                    if (!isNaN(num) && num > maxRel) maxRel = num;
-                });
-                numParaUsar = maxRel + 1;
-            }
-            safeSetVal('desp_num_relatorio', `REL-${numParaUsar}`);
-            safeSetText('desp-num-badge', `REL-${numParaUsar}`);
-        };
-
-        window.finalizarRelatorioAtual = function() {
-            if(confirm("Deseja fechar o relatório atual? Ao confirmar, o sistema irá pular para o próximo número para a próxima viagem.")) {
-                window.inicializarNumeroRelatorio(); // Avança 1 na contagem
-                window.mostrarNotificacao(`Novo relatório liberado!`);
-            }
-        };
-
-        window.calcularSimuladorOficial = function() {
-            const ptsMatriz = parseInt(safeGetVal('tipoMatriz', '16')) || 16;
-            const chars = parseInt(safeGetVal('caracteres', '150')) || 0;
-            const ptsExtra = parseInt(safeGetVal('extras', '0')) || 0;
-            const impMin = parseInt(safeGetVal('imp_min', '1')) || 0;
-            const dias = parseInt(safeGetVal('dias', '22')) || 1;
-            const horas = parseInt(safeGetVal('horas', '16')) || 0;
-            const temp = parseInt(safeGetVal('temperatura', '20')) || 20;
-            const precoTinta = parseFloat(safeGetVal('precoTinta', '300')) || 0;
-            const precoSolvente = parseFloat(safeGetVal('precoSolvente', '150')) || 0;
-
-            const totalPontos = (ptsMatriz * chars) + ptsExtra;
-            safeSetText('display-pontos', `(Pts: ${totalPontos})`);
-
-            const totalImpMes = impMin * 60 * horas * dias;
-            safeSetText('res-total-imp', totalImpMes.toLocaleString('pt-BR'));
-
-            const consumoTintaMl = ((totalPontos * totalImpMes) / 1280000000) * 750;
-            const custoTinta = (consumoTintaMl / 750) * precoTinta;
-
-            let mlPorHora = (temp <= 20) ? (2 + (temp - 10) * 0.2) : (4 + (temp - 20) * 0.4);
-            const consumoSolventeMl = mlPorHora * (horas * dias);
-            const custoSolvente = (consumoSolventeMl / 750) * precoSolvente;
-
-            const custoTotalMensal = custoTinta + custoSolvente;
-            const custoPorImpressao = totalImpMes > 0 ? (custoTotalMensal / totalImpMes) : 0;
-
-            safeSetText('res-tinta-ml', consumoTintaMl.toFixed(1)); safeSetText('res-tinta-rs', custoTinta.toFixed(2));
-            safeSetText('res-solvente-ml', consumoSolventeMl.toFixed(1)); safeSetText('res-solvente-rs', custoSolvente.toFixed(2));
-            safeSetText('res-unitario', "R$ " + custoPorImpressao.toFixed(4));
-            safeSetText('res-diario', "R$ " + (custoTotalMensal / dias).toFixed(2));
-            safeSetText('res-mensal', "R$ " + custoTotalMensal.toFixed(2));
-            safeSetText('res-anual', "R$ " + (custoTotalMensal * 12).toFixed(2));
-        };
-
-        /* NOVAS LÓGICAS: ESTOQUE E VENDAS */
-        window.editandoEstoqueId = null;
-        window.editandoVendaId = null;
-
-        window.salvarEstoque = async function(e) {
-            e.preventDefault();
-            if(!window.isUserAdminOrFinance) return;
-            const obj = { id: window.editandoEstoqueId || Date.now().toString(), categoria: safeGetVal('est-cat'), marca: safeGetVal('est-marca'), modelo: safeGetVal('est-modelo'), ns: safeGetVal('est-ns'), estado: safeGetVal('est-estado'), qtd: parseInt(safeGetVal('est-qtd')) || 1, timestamp: new Date().getTime() };
-
-            if(window.editandoEstoqueId) {
-                const idx = window.listaEstoque.findIndex(x => x.id === window.editandoEstoqueId);
-                if(idx > -1) window.listaEstoque[idx] = obj;
-            } else window.listaEstoque.unshift(obj);
-
-            localStorage.setItem('banco_estoque_cij', JSON.stringify(window.listaEstoque));
-            if(typeof window.salvarEstoqueNuvem === 'function') window.salvarEstoqueNuvem(obj);
-            window.cancelarEdicaoEstoque(); window.renderEstoque(); window.mostrarNotificacao('Equipamento salvo no estoque!');
-        };
-
-        window.editarEstoque = function(id) {
-            const e = window.listaEstoque.find(x => x.id === id); if(!e) return;
-            window.editandoEstoqueId = id;
-            safeSetVal('est-cat', e.categoria); safeSetVal('est-marca', e.marca); safeSetVal('est-modelo', e.modelo); safeSetVal('est-ns', e.ns); safeSetVal('est-estado', e.estado); safeSetVal('est-qtd', e.qtd);
-            safeSetText('titulo-form-estoque', 'Editar Equipamento'); document.getElementById('btn-salvar-est').innerText = 'Atualizar Equipamento'; document.getElementById('btn-cancelar-est').classList.remove('hidden');
-            window.scrollTo({top:0, behavior:'smooth'});
-        };
-
-        window.cancelarEdicaoEstoque = function() {
-            window.editandoEstoqueId = null; document.getElementById('formEstoque').reset();
-            safeSetText('titulo-form-estoque', 'Cadastrar Novo Equipamento'); document.getElementById('btn-salvar-est').innerText = 'Salvar Equipamento'; document.getElementById('btn-cancelar-est').classList.add('hidden');
-        };
-
-        window.excluirEstoque = function(id) {
-            if(confirm("Apagar do estoque?")) {
-                window.listaEstoque = window.listaEstoque.filter(x => x.id !== id);
-                localStorage.setItem('banco_estoque_cij', JSON.stringify(window.listaEstoque));
-                if(typeof window.excluirEstoqueNuvem === 'function') window.excluirEstoqueNuvem(id);
-                window.renderEstoque();
-            }
-        };
-
-        window.renderEstoque = function() {
-            const tbody = document.getElementById('tabela-estoque'); if(!tbody) return;
-            const fCat = safeGetVal('filtro-est-cat').toLowerCase(); const fMod = safeGetVal('filtro-est-mod').toLowerCase(); const fEst = safeGetVal('filtro-est-estado');
-            const filt = window.listaEstoque.filter(e => e.categoria.toLowerCase().includes(fCat) && (e.marca+" "+e.modelo+" "+e.ns).toLowerCase().includes(fMod) && (fEst==="" || e.estado===fEst));
             
-            tbody.innerHTML = ''; safeSetText('est-total-itens', filt.length);
-            filt.forEach(e => {
-                const c = e.estado==='Novo'?'bg-emerald-100 text-emerald-700':e.estado==='Usado'?'bg-amber-100 text-amber-700':'bg-blue-100 text-blue-700';
-                tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="px-4 py-3 font-semibold">${e.categoria}</td><td class="px-4 py-3">${e.marca} ${e.modelo}</td><td class="px-4 py-3 text-xs">${e.ns}</td><td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded text-[10px] font-bold ${c}">${e.estado}</span></td><td class="px-4 py-3 text-center font-bold">${e.qtd}</td>${window.isUserAdminOrFinance ? `<td class="px-4 py-3 text-center col-acao-estoque"><button onclick="editarEstoque('${e.id}')" class="text-blue-500 hover:bg-blue-100 p-1 rounded mr-1"><i class="fa-solid fa-pen"></i></button><button onclick="excluirEstoque('${e.id}')" class="text-red-500 hover:bg-red-100 p-1 rounded"><i class="fa-solid fa-trash"></i></button></td>` : `<td class="hidden col-acao-estoque"></td>`}</tr>`;
-            });
+            // Lógica para mostrar/esconder Cartões do Menu baseada no Nível
+            document.getElementById('card-tabelas')?.classList.toggle('hidden', !pComercial);
+            document.getElementById('card-comissoes-azul')?.classList.toggle('hidden', !pComercial);
+            document.getElementById('card-estoque')?.classList.toggle('hidden', !pComercial);
+            document.getElementById('card-dashboard')?.classList.toggle('hidden', !pComercial);
+            
+            document.getElementById('card-vendas')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('card-admin')?.classList.toggle('hidden', !isAdmin);
         };
 
-      window.salvarVendaEquip = async function(e) {
-            e.preventDefault(); if(!window.isUserAdminOrFinance) return;
-            const obj = { id: window.editandoVendaId || Date.now().toString(), data: safeGetVal('ven-data'), equip: safeGetVal('ven-equip'), ns: safeGetVal('ven-ns'), valor: parseFloat(safeGetVal('ven-valor'))||0, cliente: safeGetVal('ven-cliente'), vendedor: safeGetVal('ven-vendedor'), timestamp: new Date().getTime() };
-
-            if(window.editandoVendaId) {
-                const idx = window.listaVendas.findIndex(x => x.id === window.editandoVendaId);
-                if(idx > -1) window.listaVendas[idx] = obj;
-            } else window.listaVendas.unshift(obj);
-
-            localStorage.setItem('banco_vendas_cij', JSON.stringify(window.listaVendas));
-            if(typeof window.salvarVendaNuvem === 'function') window.salvarVendaNuvem(obj);
-            window.cancelarEdicaoVenda(); window.renderVendas(); window.mostrarNotificacao('Venda registrada!');
+        /* NAVEGAÇÃO ENTRE ARQUIVOS (MULTI-PAGE APPLICATION) */
+        window.navegarPara = function(nomeArquivo) {
+            // Se estivermos abrindo da própria máquina ou github, 
+            // redireciona para o arquivo HTML correspondente.
+            const url = nomeArquivo + '.html';
+            
+            // Mostramos um aviso pois aqui no ambiente virtual da IA não temos as pastas criadas.
+            console.log(`Redirecionando para: ${url}`);
+            
+            // Executa o salto para a nova página
+            window.location.href = url;
         };
 
-        window.editarVenda = function(id) {
-            const e = window.listaVendas.find(x => x.id === id); if(!e) return;
-            window.editandoVendaId = id;
-            safeSetVal('ven-data', e.data); safeSetVal('ven-equip', e.equip); safeSetVal('ven-ns', e.ns); safeSetVal('ven-valor', e.valor); safeSetVal('ven-cliente', e.cliente); safeSetVal('ven-vendedor', e.vendedor);
-            safeSetText('titulo-form-vendas', 'Editar Venda'); document.getElementById('btn-salvar-ven').innerText = 'Atualizar Venda'; document.getElementById('btn-cancelar-ven').classList.remove('hidden');
-            window.scrollTo({top:0, behavior:'smooth'});
-        };window.salvarVendaEquip = async function(e) {
-            e.preventDefault(); if(!window.isUserAdminOrFinance) return;
-            const obj = { id: window.editandoVendaId || Date.now().toString(), data: safeGetVal('ven-data'), equip: safeGetVal('ven-equip'), ns: safeGetVal('ven-ns'), valor: parseFloat(safeGetVal('ven-valor'))||0, cliente: safeGetVal('ven-cliente'), vendedor: safeGetVal('ven-vendedor'), timestamp: new Date().getTime() };
-
-            if(window.editandoVendaId) {
-                const idx = window.listaVendas.findIndex(x => x.id === window.editandoVendaId);
-                if(idx > -1) window.listaVendas[idx] = obj;
-            } else window.listaVendas.unshift(obj);
-
-            localStorage.setItem('banco_vendas_cij', JSON.stringify(window.listaVendas));
-            if(typeof window.salvarVendaNuvem === 'function') window.salvarVendaNuvem(obj);
-            window.cancelarEdicaoVenda(); window.renderVendas(); window.mostrarNotificacao('Venda registrada!');
-        };
-
-        window.editarVenda = function(id) {
-            const e = window.listaVendas.find(x => x.id === id); if(!e) return;
-            window.editandoVendaId = id;
-            safeSetVal('ven-data', e.data); safeSetVal('ven-equip', e.equip); safeSetVal('ven-ns', e.ns); safeSetVal('ven-valor', e.valor); safeSetVal('ven-cliente', e.cliente); safeSetVal('ven-vendedor', e.vendedor);
-            safeSetText('titulo-form-vendas', 'Editar Venda'); document.getElementById('btn-salvar-ven').innerText = 'Atualizar Venda'; document.getElementById('btn-cancelar-ven').classList.remove('hidden');
-            window.scrollTo({top:0, behavior:'smooth'});
-        };
-        window.cancelarEdicaoVenda = function() {
-            window.editandoVendaId = null; document.getElementById('formVendas').reset();
-            safeSetText('titulo-form-vendas', 'Registrar Venda / Saída'); document.getElementById('btn-salvar-ven').innerText = 'Registrar Venda'; document.getElementById('btn-cancelar-ven').classList.add('hidden');
-        };
-
-        window.excluirVenda = function(id) {
-            if(confirm("Apagar venda?")) {
-                window.listaVendas = window.listaVendas.filter(x => x.id !== id);
-                localStorage.setItem('banco_vendas_cij', JSON.stringify(window.listaVendas));
-                if(typeof window.excluirVendaNuvem === 'function') window.excluirVendaNuvem(id);
-                window.renderVendas();
-            }
-        };
-
-      window.renderVendas = function() {
-            const tbody = document.getElementById('tabela-vendas'); if(!tbody) return;
-            const busca = safeGetVal('filtro-ven-busca').toLowerCase();
-            const filt = window.listaVendas.filter(e => (e.equip+" "+e.ns+" "+e.vendedor+" "+(e.cliente||'')).toLowerCase().includes(busca));
-            let total = 0; tbody.innerHTML = '';
-            filt.forEach(v => {
-                total += v.valor;
-                tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="px-4 py-3">${v.data.split('-').reverse().join('/')}</td><td class="px-4 py-3 font-semibold">${v.equip}</td><td class="px-4 py-3 text-xs">${v.ns}</td><td class="px-4 py-3">${v.cliente || '-'}</td><td class="px-4 py-3">${v.vendedor}</td><td class="px-4 py-3 font-bold text-rose-700">${formatarMoeda(v.valor)}</td><td class="px-4 py-3 text-center"><button onclick="editarVenda('${v.id}')" class="text-blue-500 hover:bg-blue-100 p-1 rounded mr-1"><i class="fa-solid fa-pen"></i></button><button onclick="excluirVenda('${v.id}')" class="text-red-500 hover:bg-red-100 p-1 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
-            });
-            safeSetText('ven-total-valor', formatarMoeda(total));
-        };
-
-        let chartEstEquip = null; let chartVenEquip = null;
-        window.renderChartsEquip = function() {
-            let n=0, u=0, r=0;
-            window.listaEstoque.forEach(e => { if(e.estado==='Novo') n+=e.qtd; else if(e.estado==='Usado') u+=e.qtd; else r+=e.qtd; });
-            const ctxEst = document.getElementById('chartEstoque');
-            if(ctxEst) {
-                if(chartEstEquip) chartEstEquip.destroy();
-                chartEstEquip = new Chart(ctxEst.getContext('2d'), { type:'doughnut', data:{labels:['Novo','Usado','Revisado'], datasets:[{data:[n,u,r], backgroundColor:['#10b981','#f59e0b','#3b82f6']}]}, options:{maintainAspectRatio:false} });
-            }
-
-            let vend={}; window.listaVendas.forEach(v => { vend[v.vendedor] = (vend[v.vendedor]||0) + v.valor; });
-            const ctxVen = document.getElementById('chartVendas');
-            if(ctxVen) {
-                if(chartVenEquip) chartVenEquip.destroy();
-                chartVenEquip = new Chart(ctxVen.getContext('2d'), { type:'bar', data:{labels:Object.keys(vend), datasets:[{label:'Vendas (R$)', data:Object.values(vend), backgroundColor:'#e11d48'}]}, options:{maintainAspectRatio:false} });
-            }
-        };
-
-        /* INICIALIZAÇÃO */
-        window.injetarBotoesVoltar = function() {
-            const views = ['view-solicitacao','view-calculadora','view-despesas','view-tabelas','view-admin','view-comissoes-azul','view-estoque','view-vendas','view-dashboard-equip'];
-            views.forEach(id => {
-                const c = document.getElementById(id);
-                if(c && !c.querySelector('.btn-voltar-injetado')) {
-                    const b = document.createElement('button');
-                    b.className = 'btn-voltar-injetado px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl shadow-sm mb-4 flex items-center gap-2';
-                    b.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Voltar ao Início';
-                    b.onclick = () => window.navegarPara('inicio');
-                    c.insertBefore(b, c.firstChild);
-                }
-            });
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            window.injetarBotoesVoltar();
-            window.addEventListener('beforeunload', (e) => {
-                const relAtual = document.getElementById('desp_num_relatorio')?.value;
-                const temItens = window.listaDespesas && window.listaDespesas.some(i => i.num_relatorio === relAtual);
-                if (temItens) { e.preventDefault(); e.returnValue = ''; }
-            });
-        });
     </script>
 </body>
 </html>
