@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Financeiro - Portal Grupo CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
+        
+        /* CSS Específico para gerar um PDF elegante em 1 página */
+        @media print {
+            @page { size: A4 portrait; margin: 8mm; }
+            body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; font-size: 11px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print { display: none !important; }
+            body > header { display: none !important; }
+            main { padding: 0 !important; max-width: 100% !important; margin-top: 0 !important; }
+            .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 12px !important; }
+            .card-simulador { border: 1px solid #cbd5e1 !important; border-radius: 8px !important; box-shadow: none !important; padding: 12px 16px !important; margin-bottom: 10px !important; break-inside: avoid !important; }
+            .card-simulador-resumo { background-color: #002d72 !important; color: #ffffff !important; -webkit-print-color-adjust: exact; break-inside: avoid !important; padding: 12px !important; }
+            input, select { border: 1px solid #cbd5e1 !important; background: transparent !important; color: #000 !important; padding: 4px 8px !important; font-size: 11px !important; }
+            h2 { font-size: 16px !important; margin-bottom: 2px !important; }
+            p.text-sm { font-size: 10px !important; }
+            .mb-4 { margin-bottom: 8px !important; }
+            .pb-2 { padding-bottom: 4px !important; }
+            .pt-4 { padding-top: 8px !important; }
+            .gap-5 { gap: 10px !important; }
+            .gap-4 { gap: 10px !important; }
+            .text-2xl { font-size: 18px !important; }
+            .mt-5 { margin-top: 10px !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-12">
+
+    <!-- CABEÇALHO (Visível apenas na tela, oculto na impressão) -->
+    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
+                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-300 bg-teal-950 px-2 py-0.5 rounded border border-teal-800">MÓDULO OPERACIONAL</span>
+                        </div>
+                        <h1 class="text-base font-bold tracking-tight text-white leading-tight">Simulador Financeiro</h1>
+                    </div>
+                </div>
+
+                <nav class="flex space-x-2 items-center">
+                    <a href="index.html" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 shadow-sm">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar ao Hub
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- CORPO DO SIMULADOR -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-5">
+        
+        <div class="card-simulador bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center relative">
+            <h2 class="text-2xl font-extrabold text-[#002d72] tracking-tight">Simulador Leadjet</h2>
+            <p class="text-sm text-slate-500 mt-1 font-medium">Projeção Oficial de Custos Operacionais e Consumo de Insumos CIJ</p>
+            <button onclick="window.print()" class="absolute right-5 top-1/2 -translate-y-1/2 no-print px-4 py-2.5 bg-[#002d72] hover:bg-blue-900 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-md">
+                <i class="fa-solid fa-file-pdf text-sm"></i> Salvar PDF
+            </button>
+        </div>
+
+        <div class="card-simulador bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100"><i class="fa-solid fa-sliders text-teal-500 mr-1"></i> Parâmetros de Produção</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Tipo de Matriz</label>
+                    <select id="tipoMatriz" onchange="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-semibold outline-none focus:border-teal-500 focus:bg-white transition">
+                        <option value="14">5x5 (14 pts)</option>
+                        <option value="16" selected>7x5 (16 pts)</option>
+                        <option value="22">7x9 (22 pts)</option>
+                        <option value="26">7x12 (26 pts)</option>
+                        <option value="81">11x16 (81 pts)</option>
+                        <option value="108">14x20 (108 pts)</option>
+                        <option value="171">16x24 (171 pts)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Caracteres na Mensagem <span class="text-teal-600 font-black ml-1" id="display-pontos">(Pts: 0)</span></label>
+                    <input type="number" id="caracteres" value="150" oninput="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-bold outline-none focus:border-teal-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Função Códigos (Extras)</label>
+                    <select id="extras" onchange="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-semibold outline-none focus:border-teal-500 focus:bg-white transition">
+                        <option value="0">Nenhum</option>
+                        <option value="623">Código de Barras (+623 pts)</option>
+                        <option value="118">QR Code (+118 pts)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Impressões p/ Minuto</label>
+                    <input type="number" id="imp_min" value="60" oninput="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-bold outline-none focus:border-teal-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Dias Trabalhados / Mês</label>
+                    <input type="number" id="dias" value="22" oninput="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-bold outline-none focus:border-teal-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Horas de Trabalho / Dia</label>
+                    <input type="number" id="horas" value="16" oninput="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-bold outline-none focus:border-teal-500 focus:bg-white transition">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block font-bold text-xs text-slate-700 mb-1.5 uppercase tracking-wide">Temperatura Ambiente da Linha (°C)</label>
+                    <select id="temperatura" onchange="calcularSimuladorOficial()" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-800 rounded-xl text-sm font-semibold outline-none focus:border-teal-500 focus:bg-white transition">
+                        <option value="10">10°C</option><option value="12">12°C</option><option value="14">14°C</option><option value="16">16°C</option>
+                        <option value="18">18°C</option><option value="20" selected>20°C (Padrão)</option><option value="22">22°C</option>
+                        <option value="24">24°C</option><option value="26">26°C</option><option value="28">28°C</option><option value="30">30°C</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-slate-100">
+                    <div>
+                        <label class="block font-bold text-xs text-blue-700 mb-1.5 uppercase tracking-wide">Preço Tinta - R$</label>
+                        <input type="number" id="precoTinta" value="1250" oninput="calcularSimuladorOficial()" class="w-full p-3 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-sm font-black outline-none focus:border-blue-500 transition shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-xs text-indigo-700 mb-1.5 uppercase tracking-wide">Preço Solvente - R$</label>
+                        <input type="number" id="precoSolvente" value="250" oninput="calcularSimuladorOficial()" class="w-full p-3 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-xl text-sm font-black outline-none focus:border-indigo-500 transition shadow-sm">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTADOS FINANCEIROS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-gradient-to-br from-[#002d72] to-[#001b44] text-white p-5 rounded-2xl text-center shadow-lg card-simulador-resumo">
+                <label class="block text-blue-200 text-[11px] font-bold uppercase tracking-wider mb-1">Custo / Impressão</label>
+                <span id="res-unitario" class="text-2xl font-black">R$ 0,0000</span>
+            </div>
+            <div class="bg-gradient-to-br from-[#002d72] to-[#001b44] text-white p-5 rounded-2xl text-center shadow-lg card-simulador-resumo">
+                <label class="block text-blue-200 text-[11px] font-bold uppercase tracking-wider mb-1">Custo Diário</label>
+                <span id="res-diario" class="text-2xl font-black">R$ 0,00</span>
+            </div>
+            <div class="bg-gradient-to-br from-[#002d72] to-[#001b44] text-white p-5 rounded-2xl text-center shadow-lg card-simulador-resumo border-2 border-teal-400/30">
+                <label class="block text-teal-200 text-[11px] font-bold uppercase tracking-wider mb-1">Custo Mensal</label>
+                <span id="res-mensal" class="text-2xl font-black text-teal-400">R$ 0,00</span>
+            </div>
+            <div class="bg-gradient-to-br from-[#002d72] to-[#001b44] text-white p-5 rounded-2xl text-center shadow-lg card-simulador-resumo">
+                <label class="block text-blue-200 text-[11px] font-bold uppercase tracking-wider mb-1">Custo Anual</label>
+                <span id="res-anual" class="text-2xl font-black">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- DETALHAMENTO TÉCNICO -->
+        <div class="card-simulador bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100"><i class="fa-solid fa-magnifying-glass-chart text-blue-500 mr-1"></i> Detalhamento Técnico (Mensal)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="block text-[10px] font-bold text-slate-500 uppercase">Volume de Produção</span>
+                    <div class="mt-1 flex items-baseline gap-1"><span id="res-total-imp" class="text-xl font-black text-slate-800">0</span> <span class="text-xs font-semibold text-slate-500">impressões</span></div>
+                </div>
+                <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <span class="block text-[10px] font-bold text-blue-600 uppercase">Consumo de Tinta</span>
+                    <div class="mt-1 flex items-baseline gap-1"><span id="res-tinta-ml" class="text-xl font-black text-blue-900">0</span> <span class="text-xs font-semibold text-blue-600">ml</span></div>
+                    <span class="block text-xs font-bold text-slate-500 mt-1">Gasto: R$ <span id="res-tinta-rs">0,00</span></span>
+                </div>
+                <div class="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                    <span class="block text-[10px] font-bold text-indigo-600 uppercase">Consumo de Solvente</span>
+                    <div class="mt-1 flex items-baseline gap-1"><span id="res-solvente-ml" class="text-xl font-black text-indigo-900">0</span> <span class="text-xs font-semibold text-indigo-600">ml</span></div>
+                    <span class="block text-xs font-bold text-slate-500 mt-1">Gasto: R$ <span id="res-solvente-rs">0,00</span></span>
+                </div>
+            </div>
+            
+            <p class="text-[10px] text-slate-400 mt-5 leading-relaxed text-center font-medium">
+                * Os cálculos apresentados são projeções baseadas nos parâmetros informados e no rendimento padrão do equipamento. Variações podem ocorrer devido ao tipo de substrato, configuração de limpeza automática e condições extremas de ambiente.
+            </p>
+        </div>
+        
+    </main>
+
+    <!-- FIREBASE MODULE SDK SETUP -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+                authDomain: "plataforma-cij.firebaseapp.com",
+                projectId: "plataforma-cij",
+                storageBucket: "plataforma-cij.firebasestorage.app",
+                messagingSenderId: "949985395100",
+                appId: "1:949985395100:web:cf881e0c91c63175228859",
+                measurementId: "G-PGX7H2R8G2"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            onAuthStateChanged(auth, (user) => {
+                if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
+                    window.location.href = 'index.html'; // Redireciona para o login se não estiver autenticado
+                }
+            });
+        } catch(e) {
+            console.warn("Modo Preview: Firebase isolado para evitar erros de Sandboxing.");
+        }
+    </script>
+
+    <!-- LÓGICA DO SIMULADOR -->
+    <script>
+        window.calcularSimuladorOficial = function() {
+            // 1. Coleta dos Valores dos Inputs
+            const ptsMatriz = parseInt(document.getElementById('tipoMatriz').value) || 16;
+            const chars = parseInt(document.getElementById('caracteres').value) || 0;
+            const ptsExtra = parseInt(document.getElementById('extras').value) || 0;
+            
+            const impMin = parseInt(document.getElementById('imp_min').value) || 0;
+            const dias = parseInt(document.getElementById('dias').value) || 1;
+            const horas = parseInt(document.getElementById('horas').value) || 0;
+            
+            const temp = parseInt(document.getElementById('temperatura').value) || 20;
+            
+            const precoTinta = parseFloat(document.getElementById('precoTinta').value) || 0;
+            const precoSolvente = parseFloat(document.getElementById('precoSolvente').value) || 0;
+
+            // 2. Cálculo de Pontos da Mensagem
+            const totalPontos = (ptsMatriz * chars) + ptsExtra;
+            document.getElementById('display-pontos').innerText = `(Pts: ${totalPontos.toLocaleString('pt-BR')})`;
+
+            // 3. Cálculo de Volume Mensal de Impressões
+            const totalImpMes = impMin * 60 * horas * dias;
+            document.getElementById('res-total-imp').innerText = totalImpMes.toLocaleString('pt-BR');
+
+            // 4. Cálculo Consumo de Tinta (Constante Leadjet: 1.280.000.000 pontos por Litro, ajustado para 750ml)
+            // Fórmula: (Total Pontos Mensal / 1,28B) * 750ml = consumo em ml
+            const consumoTintaMl = ((totalPontos * totalImpMes) / 1280000000) * 750;
+            const custoTinta = (consumoTintaMl / 750) * precoTinta;
+
+            // 5. Cálculo Consumo de Solvente (Evaporação Baseada na Temperatura)
+            // Base: 20°C = ~4ml por hora. Aumenta 0.4ml a cada grau acima. Diminui 0.2 a cada grau abaixo.
+            let mlPorHora = (temp <= 20) ? (2 + (temp - 10) * 0.2) : (4 + (temp - 20) * 0.4);
+            const consumoSolventeMl = mlPorHora * (horas * dias);
+            const custoSolvente = (consumoSolventeMl / 750) * precoSolvente;
+
+            // 6. Fechamento de Custos Totais
+            const custoTotalMensal = custoTinta + custoSolvente;
+            const custoPorImpressao = totalImpMes > 0 ? (custoTotalMensal / totalImpMes) : 0;
+            const custoDiario = custoTotalMensal / dias;
+            const custoAnual = custoTotalMensal * 12;
+
+            // 7. Renderização na Tela
+            document.getElementById('res-tinta-ml').innerText = consumoTintaMl.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+            document.getElementById('res-tinta-rs').innerText = custoTinta.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            document.getElementById('res-solvente-ml').innerText = consumoSolventeMl.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+            document.getElementById('res-solvente-rs').innerText = custoSolvente.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            document.getElementById('res-unitario').innerText = "R$ " + custoPorImpressao.toLocaleString('pt-BR', {minimumFractionDigits: 4, maximumFractionDigits: 4});
+            document.getElementById('res-diario').innerText = "R$ " + custoDiario.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('res-mensal').innerText = "R$ " + custoTotalMensal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('res-anual').innerText = "R$ " + custoAnual.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        };
+
+        // Inicia o cálculo automaticamente quando a página carregar
+        window.addEventListener('DOMContentLoaded', window.calcularSimuladorOficial);
+    </script>
+</body>
+</html>
