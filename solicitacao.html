@@ -235,7 +235,7 @@
                 // Aqui podemos ignorar o redirecionamento se estivermos no preview. 
                 // Mas no GitHub, ele vai voltar para index.html se não estiver logado.
                 if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                    // window.location.href = 'index.html'; // Descomente esta linha quando for subir para o Github
+                     window.location.href = 'index.html'; // Descomente esta linha quando for subir para o Github
                 } else if(user) {
                     const campoVendedor = document.getElementById('ven_vendedor');
                     if(campoVendedor && !campoVendedor.value) {
