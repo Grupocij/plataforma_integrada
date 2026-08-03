@@ -235,7 +235,7 @@
 
         window.processarSalvamentoFirebase = async function(solicitacaoObj) {
             try {
-                const counterRef = doc(db, 'artifacts', appId, 'public', 'counters', 'solicitacao');
+                const counterRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'solicitacao');
                 
                 const numFormatado = await runTransaction(db, async (transaction) => {
                     const counterDoc = await transaction.get(counterRef);
