@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Despesas - Portal CIJ</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,21 +12,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
         .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        
-        @media print {
-            @page { size: A4 landscape; margin: 8mm; }
-            body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; font-size: 10px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .no-print { display: none !important; }
-            body > header { display: none !important; }
-            main { padding: 0 !important; max-width: 100% !important; margin-top: 0 !important; }
-            #sec-form-despesas { display: none !important; }
-            .lg\:col-span-8 { grid-column: span 12 / span 12 !important; }
-            table th { background-color: #0f172a !important; color: white !important; }
-            table td { border-bottom: 1px solid #e2e8f0 !important; }
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col pb-12">
@@ -37,10 +21,7 @@
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
                     <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
-                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
-                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
-                        </svg>
+                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/><path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/></svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -51,9 +32,7 @@
                     </div>
                 </div>
                 <nav class="flex space-x-2 items-center">
-                    <a href="index.html" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 shadow-sm">
-                        <i class="fa-solid fa-arrow-left"></i> Voltar ao Hub
-                    </a>
+                    <a href="index.html" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 shadow-sm"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
                 </nav>
             </div>
         </div>
@@ -61,96 +40,38 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
             <section id="sec-form-despesas" class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit no-print">
                 <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-receipt text-sky-600 text-lg"></i>
-                        <h2 class="text-base font-bold text-slate-900">Lançamento</h2>
-                    </div>
-                    <span id="desp-num-badge" class="text-[10px] px-2.5 py-1 bg-sky-100 text-sky-800 font-extrabold rounded-full border border-sky-300">REL-1001</span>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-receipt text-sky-600 text-lg"></i><h2 class="text-base font-bold text-slate-900">Novo Lançamento</h2></div>
+                    <span id="desp-num-badge" class="text-[10px] px-2.5 py-1 bg-sky-100 text-sky-800 font-extrabold rounded-full border border-sky-300">Carregando...</span>
                 </div>
-                
                 <form id="expense-form" class="space-y-4" onsubmit="salvarDespesa(event)">
-                    <div class="hidden"><input type="text" id="desp_num_relatorio" value="REL-1001" readonly></div>
-                    
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Técnico / Vendedor *</label>
-                        <select id="desp_tecnico" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-sky-500 transition">
-                            <option value="" disabled selected>Selecione seu nome...</option>
-                            <option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option>
-                        </select>
-                    </div>
-                    
+                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Técnico / Vendedor *</label><select id="desp_tecnico" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:border-sky-500"><option value="" disabled selected>Selecione...</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Cliente *</label><input type="text" id="desp_cliente" required placeholder="Nome do Cliente" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Cidade *</label><input type="text" id="desp_cidade" required placeholder="Ex: Joinville" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
+                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cliente *</label><input type="text" id="desp_cliente" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"></div>
+                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cidade *</label><input type="text" id="desp_cidade" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"></div>
                     </div>
-                    
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Descrição do Item *</label><input type="text" id="desp_descricao" required placeholder="Ex: Gasolina, Almoço..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
-                    
+                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Descrição *</label><input type="text" id="desp_descricao" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"></div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Valor (R$) *</label><input type="number" id="desp_valor" step="0.01" min="0.01" required placeholder="0,00" class="w-full px-3 py-2.5 bg-sky-50 border border-sky-300 text-sky-900 rounded-xl text-xs font-bold outline-none focus:border-sky-600 transition"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Data *</label><input type="date" id="desp_data" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-sky-500 transition"></div>
+                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Valor (R$) *</label><input type="number" id="desp_valor" step="0.01" required class="w-full px-3 py-2.5 bg-sky-50 border border-sky-300 text-sky-900 rounded-xl text-xs font-bold outline-none focus:border-sky-600"></div>
+                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Data *</label><input type="date" id="desp_data" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-sky-500"></div>
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Categoria *</label>
-                            <select id="desp_categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-sky-500 transition">
-                                <option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Pagamento *</label>
-                            <select id="desp_cartao" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-sky-500 transition">
-                                <option value="Mastercard **0067">Mastercard **0067</option><option value="Mastercard **9553">Mastercard **9553</option><option value="Visa **7543">Visa **7543</option><option value="Dinheiro / Pix">Dinheiro / Pix</option>
-                            </select>
-                        </div>
+                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoria *</label><select id="desp_categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:border-sky-500"><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
+                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pagamento *</label><select id="desp_cartao" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"><option value="Mastercard **0067">Mastercard **0067</option><option value="Mastercard **9553">Mastercard **9553</option><option value="Visa **7543">Visa **7543</option><option value="Dinheiro / Pix">Dinheiro / Pix</option></select></div>
                     </div>
-                    
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Observações (Opcional)</label><input type="text" id="desp_observacoes" placeholder="Nº NF, etc..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
-                    
-                    <div class="space-y-2 pt-4">
-                        <button type="submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-plus-circle"></i> Adicionar Despesa ao Relatório</button>
-                        <button type="button" onclick="finalizarRelatorioAtual()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-check-double text-emerald-400"></i> Finalizar Viagem / Relatório</button>
-                    </div>
+                    <button type="submit" id="btn-submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-xs shadow-md">Adicionar Despesa</button>
+                    <button type="button" onclick="iniciarNovoRelatorio()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs">Novo Relatório</button>
                 </form>
             </section>
 
             <section class="lg:col-span-8 space-y-4">
-                
-                <div id="card-total-admin" class="bg-gradient-to-br from-slate-900 to-sky-950 text-white p-5 rounded-2xl shadow-md flex justify-between items-center border border-slate-800 hidden">
-                    <div><span class="text-[10px] uppercase tracking-widest text-sky-300 font-black">Total Acumulado</span><h3 class="text-xs text-slate-300 mt-0.5">Resumo conforme filtros</h3></div>
-                    <div class="text-right"><div id="desp-total-acumulado" class="text-3xl font-black text-white tracking-tight">R$ 0,00</div></div>
+                <div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-900">Histórico de Relatórios</h3>
+                    <div id="desp-total-acumulado" class="text-lg font-black text-sky-800">R$ 0,00</div>
                 </div>
-                
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 no-print">
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mês</label><input type="month" id="filter-mes-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data</label><input type="date" id="filter-data-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico</label><select id="filter-tecnico-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"><option value="Todos">Todos</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria</label><select id="filter-categoria-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"><option value="Todas">Todas</option><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar Palavra</label><input type="text" id="filter-search-desp" onkeyup="renderizarRelatoriosDespesas()" placeholder="Buscar..." class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"></div>
-                </div>
-                
-                <div class="flex flex-wrap items-center justify-end gap-2 no-print">
-                    <button onclick="limparFiltros()" class="px-3 py-2 bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5"><i class="fa-solid fa-eraser"></i> Limpar Filtros</button>
-                    <button id="btn-export-excel" onclick="exportarExcel()" class="px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 hidden"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
-                    <button onclick="window.print()" class="px-3 py-2 bg-sky-600 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-print"></i> Imprimir</button>
-                </div>
-                
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs whitespace-nowrap">
-                            <thead class="bg-slate-900 text-white font-bold border-b border-slate-800">
-                                <tr>
-                                    <th class="p-3 w-16">REL.</th><th class="p-3">DATA</th><th class="p-3">TÉCNICO</th><th class="p-3">CLIENTE / CIDADE</th><th class="p-3">DESCRIÇÃO / CATEGORIA</th><th class="p-3 text-right">VALOR</th><th class="p-3 text-center no-print w-10">AÇÃO</th>
-                                </tr>
-                            </thead>
-                            <tbody id="despesas-body" class="divide-y divide-slate-100"></tbody>
-                        </table>
-                    </div>
-                    <div id="empty-state" class="hidden p-8 text-center text-slate-400"><i class="fa-solid fa-receipt text-3xl mb-2 opacity-50"></i><p class="text-sm font-medium">Nenhuma despesa encontrada.</p></div>
+                <div id="despesas-list" class="space-y-3">
+                    <!-- Lista de Acordeons será injetada aqui -->
                 </div>
             </section>
         </div>
@@ -161,202 +82,98 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        try {
-            const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const appId = 'plataforma-cij';
+        const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
 
-            onAuthStateChanged(auth, (user) => {
-                if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                    // window.location.href = 'index.html'; // No Github, descomente essa linha
-                } else if(user) {
-                    if(typeof window.definirPerfilUsuario === 'function') window.definirPerfilUsuario(user.email);
+        // Carregar Dados
+        onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'despesas'), orderBy('timestamp', 'desc')), (snap) => {
+            window.listaDespesas = []; snap.forEach(d => window.listaDespesas.push(d.data()));
+            if(window.renderizar) window.renderizar();
+        });
+
+        window.dbSalvar = async function(desp) {
+            const counterRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'despesas');
+            await runTransaction(db, async (t) => {
+                const cDoc = await t.get(counterRef);
+                const current = cDoc.exists() ? cDoc.data().current : 1000;
+                if(!desp.num_relatorio) { // Se não tiver número, busca o último ou cria
+                    desp.num_relatorio = `REL-${current}`;
+                    t.set(counterRef, { current: current + 1 }, { merge: true });
                 }
+                t.set(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', desp.id), desp);
             });
+        };
 
-            const despesasRef = collection(db, 'artifacts', appId, 'public', 'data', 'despesas');
-            const q = query(despesasRef, orderBy('timestamp', 'desc'));
-
-            onSnapshot(q, (snapshot) => {
-                const docs = []; snapshot.forEach(d => docs.push(d.data())); window.listaDespesas = docs;
-                localStorage.setItem('cij_local_despesas', JSON.stringify(docs));
-                if(typeof window.renderizarRelatoriosDespesas === 'function') { window.renderizarRelatoriosDespesas(); window.inicializarNumeroRelatorio(); }
-            });
-
-            window.dbSalvarDespesa = async function(obj) { await setDoc(doc(despesasRef, obj.id), obj); };
-            window.dbExcluirDespesa = async function(id) { await deleteDoc(doc(despesasRef, id)); };
-
-        } catch(e) {
-            console.warn("Modo Preview Detectado.");
-            try { window.listaDespesas = JSON.parse(localStorage.getItem('cij_local_despesas') || '[]'); } catch(err){ window.listaDespesas = []; }
-        }
+        window.dbExcluir = async function(id) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', id)); };
     </script>
 
     <script>
-        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
-        const EMAILS_TECNICOS = ['tecnico.cij3@gmail.com', 'tecnico.cij1@gmail.com', 'engenharia@grupocij.com', 'estoque@grupocij.com'];
+        window.listaDespesas = [];
+        window.numRelatorioAtual = localStorage.getItem('cij_last_rel') || 'REL-1001';
         
-        window.definirPerfilUsuario = function(email) {
-            const clean = (email||'').toLowerCase().trim();
-            window.isUserAdmin = EMAILS_ADMIN_FINANCEIRO.includes(clean) || clean.includes('admin') || clean.includes('financeiro');
-            let isTecnico = EMAILS_TECNICOS.includes(clean) || clean.includes('tecnico');
-            
-            const badge = document.getElementById('user-role-badge');
-            if(badge) {
-                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1";
-                if(window.isUserAdmin) {
-                    badge.innerText = 'Admin / Financeiro';
-                    badge.classList.add('bg-purple-950', 'text-purple-300', 'border-purple-800');
-                    document.getElementById('card-total-admin')?.classList.remove('hidden');
-                    document.getElementById('btn-export-excel')?.classList.remove('hidden');
-                } else if (isTecnico) {
-                    badge.innerText = 'Técnico';
-                    badge.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
-                } else {
-                    badge.innerText = 'Vendedor';
-                    badge.classList.add('bg-blue-950', 'text-blue-300', 'border-blue-800');
-                }
-            }
-            if(typeof window.renderizarRelatoriosDespesas === 'function') window.renderizarRelatoriosDespesas();
-        };
-
-        window.listaDespesas = window.listaDespesas || [];
-        function formatarMoeda(val) { return (parseFloat(val)||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-
-        window.mostrarNotificacao = function(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = msg;
-            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
-            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 3500);
-        };
-
-        window.inicializarNumeroRelatorio = function() {
-            let maxRel = 1000;
-            if (window.listaDespesas && window.listaDespesas.length > 0) {
-                window.listaDespesas.forEach(item => {
-                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                    if (!isNaN(num) && num > maxRel) maxRel = num;
-                });
-            }
-            const prox = `REL-${maxRel}`; 
-            document.getElementById('desp_num_relatorio').value = prox;
-            document.getElementById('desp-num-badge').innerText = prox;
-        };
-
-        window.finalizarRelatorioAtual = function() {
-            if(confirm("Deseja fechar o relatório atual? As próximas despesas serão salvas em um novo número.")) {
-                let maxRel = 1000;
-                window.listaDespesas.forEach(item => {
-                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                    if (!isNaN(num) && num > maxRel) maxRel = num;
-                });
-                const prox = `REL-${maxRel + 1}`;
-                document.getElementById('desp_num_relatorio').value = prox;
-                document.getElementById('desp-num-badge').innerText = prox;
-                document.getElementById('desp_cliente').value = '';
-                document.getElementById('desp_cidade').value = '';
-                document.getElementById('desp_descricao').value = '';
-                document.getElementById('desp_valor').value = '';
-                window.mostrarNotificacao("Novo relatório iniciado!");
-            }
+        window.iniciarNovoRelatorio = function() {
+            const num = parseInt(window.numRelatorioAtual.replace('REL-', '')) + 1;
+            window.numRelatorioAtual = `REL-${num}`;
+            localStorage.setItem('cij_last_rel', window.numRelatorioAtual);
+            document.getElementById('desp-num-badge').innerText = window.numRelatorioAtual;
+            window.mostrarNotificacao("Novo relatório iniciado: " + window.numRelatorioAtual);
         };
 
         window.salvarDespesa = async function(e) {
             e.preventDefault();
-            const btn = e.submitter; const textoOriginal = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; btn.disabled = true;
-
-            const novaDespesa = {
-                id: Date.now().toString(), num_relatorio: document.getElementById('desp_num_relatorio').value, tecnico: document.getElementById('desp_tecnico').value, cliente: document.getElementById('desp_cliente').value.trim(), cidade: document.getElementById('desp_cidade').value.trim(), descricao: document.getElementById('desp_descricao').value.trim(), valor: parseFloat(document.getElementById('desp_valor').value), data: document.getElementById('desp_data').value, categoria: document.getElementById('desp_categoria').value, cartao: document.getElementById('desp_cartao').value, observacoes: document.getElementById('desp_observacoes').value.trim(), timestamp: new Date().getTime()
+            const btn = document.getElementById('btn-submit'); btn.disabled = true;
+            const nova = {
+                id: Date.now().toString(), num_relatorio: window.numRelatorioAtual, tecnico: document.getElementById('desp_tecnico').value, 
+                cliente: document.getElementById('desp_cliente').value, cidade: document.getElementById('desp_cidade').value, 
+                descricao: document.getElementById('desp_descricao').value, valor: parseFloat(document.getElementById('desp_valor').value), 
+                data: document.getElementById('desp_data').value, categoria: document.getElementById('desp_categoria').value, 
+                timestamp: Date.now()
             };
-
-            window.listaDespesas.unshift(novaDespesa);
-            localStorage.setItem('cij_local_despesas', JSON.stringify(window.listaDespesas));
-
-            try {
-                if(typeof window.dbSalvarDespesa === 'function') await window.dbSalvarDespesa(novaDespesa);
-                window.mostrarNotificacao('Despesa lançada!');
-                document.getElementById('desp_descricao').value = ''; document.getElementById('desp_valor').value = ''; document.getElementById('desp_descricao').focus();
-            } catch(err) {} finally { btn.innerHTML = textoOriginal; btn.disabled = false; window.renderizarRelatoriosDespesas(); }
+            try { await window.dbSalvar(nova); window.mostrarNotificacao('Salvo!'); document.getElementById('expense-form').reset(); }
+            catch(err) { alert(err.message); } finally { btn.disabled = false; }
         };
 
-        window.excluirDespesa = async function(id) {
-            if(confirm("Apagar este lançamento?")) {
-                window.listaDespesas = window.listaDespesas.filter(d => d.id !== id);
-                localStorage.setItem('cij_local_despesas', JSON.stringify(window.listaDespesas));
-                try { if(typeof window.dbExcluirDespesa === 'function') await window.dbExcluirDespesa(id); } catch(e){}
-                window.renderizarRelatoriosDespesas();
-            }
-        };
-
-        window.renderizarRelatoriosDespesas = function() {
-            const tbody = document.getElementById('despesas-body');
-            const empty = document.getElementById('empty-state');
-            if(!tbody) return;
-
-            const fMes = document.getElementById('filter-mes-desp').value; const fData = document.getElementById('filter-data-desp').value; const fTecnico = document.getElementById('filter-tecnico-desp').value; const fCategoria = document.getElementById('filter-categoria-desp').value; const fSearch = document.getElementById('filter-search-desp').value.toLowerCase();
-
-            let dadosFiltrados = (window.listaDespesas || []).filter(item => {
-                let ok = true;
-                if(fMes && (!item.data || !item.data.startsWith(fMes))) ok = false;
-                if(fData && item.data !== fData) ok = false;
-                if(fTecnico !== "Todos" && item.tecnico !== fTecnico) ok = false;
-                if(fCategoria !== "Todas" && item.categoria !== fCategoria) ok = false;
-                if(fSearch && !`${item.cliente} ${item.cidade} ${item.descricao} ${item.num_relatorio}`.toLowerCase().includes(fSearch)) ok = false;
-                return ok;
+        window.renderizar = function() {
+            const list = document.getElementById('despesas-list');
+            const grouped = window.listaDespesas.reduce((acc, obj) => { (acc[obj.num_relatorio] = acc[obj.num_relatorio] || []).push(obj); return acc; }, {});
+            
+            let total = 0; list.innerHTML = '';
+            Object.keys(grouped).sort().reverse().forEach(rel => {
+                const items = grouped[rel];
+                const relTotal = items.reduce((sum, item) => sum + item.valor, 0);
+                total += relTotal;
+                
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden";
+                card.innerHTML = `
+                    <div class="p-4 bg-slate-50 flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        <div class="font-bold text-sky-900">${rel} <span class="text-slate-400 text-xs font-normal">(${items.length} itens)</span></div>
+                        <div class="font-black text-slate-800">R$ ${relTotal.toFixed(2)}</div>
+                    </div>
+                    <div class="hidden p-4">
+                        <table class="w-full text-xs">
+                            ${items.map(i => `<tr><td class="py-2">${i.data}</td><td class="py-2 font-bold">${i.cliente}</td><td class="py-2 text-right">R$ ${i.valor.toFixed(2)}</td></tr>`).join('')}
+                        </table>
+                    </div>
+                `;
+                list.appendChild(card);
             });
-
-            let totalAcumulado = 0; tbody.innerHTML = '';
-
-            if (dadosFiltrados.length === 0) {
-                empty.classList.remove('hidden');
-            } else {
-                empty.classList.add('hidden');
-                dadosFiltrados.forEach(item => {
-                    totalAcumulado += item.valor;
-                    const dataBr = item.data ? item.data.split('-').reverse().join('/') : '-';
-                    const c = item.categoria === 'Combustível'?'bg-orange-100 text-orange-700':item.categoria==='Alimentação/Bebida'?'bg-emerald-100 text-emerald-700':item.categoria==='Hotel'?'bg-purple-100 text-purple-700':item.categoria==='Pedágio'?'bg-slate-200 text-slate-700':'bg-sky-100 text-sky-700';
-                    
-                    const tdAcao = window.isUserAdmin ? `<td class="p-3 text-center no-print"><button onclick="excluirDespesa('${item.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition"><i class="fa-solid fa-trash"></i></button></td>` : `<td class="p-3 text-center no-print">-</td>`;
-                    
-                    tbody.innerHTML += `<tr class="hover:bg-slate-50 transition"><td class="p-3 font-bold text-slate-500">${item.num_relatorio}</td><td class="p-3 text-slate-600 font-medium">${dataBr}</td><td class="p-3 font-bold text-slate-800">${item.tecnico}</td><td class="p-3"><span class="block font-bold text-slate-800">${item.cliente}</span><span class="text-[10px] text-slate-400 uppercase tracking-wider">${item.cidade}</span></td><td class="p-3"><span class="block text-slate-700">${item.descricao}</span><span class="text-[10px] px-2 py-0.5 rounded-md font-bold mt-1 inline-block ${c}">${item.categoria}</span></td><td class="p-3 text-right font-black text-sky-700 text-sm">${formatarMoeda(item.valor)}</td>${tdAcao}</tr>`;
-                });
-            }
-            document.getElementById('desp-total-acumulado').innerText = formatarMoeda(totalAcumulado);
+            document.getElementById('desp-total-acumulado').innerText = `R$ ${total.toFixed(2)}`;
         };
 
-        window.limparFiltros = function() {
-            document.getElementById('filter-mes-desp').value = ''; document.getElementById('filter-data-desp').value = ''; document.getElementById('filter-tecnico-desp').value = 'Todos'; document.getElementById('filter-categoria-desp').value = 'Todas'; document.getElementById('filter-search-desp').value = ''; window.renderizarRelatoriosDespesas();
+        window.mostrarNotificacao = function(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 3000);
         };
 
-        window.exportarExcel = function() {
-            if(!window.isUserAdmin) return;
-            try {
-                let dados = [["RELATÓRIO DE DESPESAS - GRUPO CIJ"], ["Data:", new Date().toLocaleDateString('pt-BR')], [""], ["Nº RELATÓRIO", "DATA", "TÉCNICO", "CLIENTE", "CIDADE", "CATEGORIA", "DESCRIÇÃO", "PAGAMENTO", "OBSERVAÇÕES", "VALOR (R$)"]];
-                const fMes = document.getElementById('filter-mes-desp').value; const fData = document.getElementById('filter-data-desp').value; const fTecnico = document.getElementById('filter-tecnico-desp').value; const fCategoria = document.getElementById('filter-categoria-desp').value; const fSearch = document.getElementById('filter-search-desp').value.toLowerCase();
-                const filtrados = (window.listaDespesas || []).filter(item => {
-                    let ok = true; if(fMes && (!item.data || !item.data.startsWith(fMes))) ok = false; if(fData && item.data !== fData) ok = false; if(fTecnico !== "Todos" && item.tecnico !== fTecnico) ok = false; if(fCategoria !== "Todas" && item.categoria !== fCategoria) ok = false; if(fSearch && !`${item.cliente} ${item.cidade} ${item.descricao} ${item.num_relatorio}`.toLowerCase().includes(fSearch)) ok = false; return ok;
-                });
-                let somaTotal = 0;
-                filtrados.forEach(d => { somaTotal += d.valor; dados.push([d.num_relatorio, d.data ? d.data.split('-').reverse().join('/') : '', d.tecnico, d.cliente, d.cidade, d.categoria, d.descricao, d.cartao, d.observacoes || '-', d.valor]); });
-                dados.push(["", "", "", "", "", "", "", "", "TOTAL ACUMULADO:", somaTotal]);
-                const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(dados); XLSX.utils.book_append_sheet(wb, ws, "Despesas"); XLSX.writeFile(wb, `Despesas_${Date.now()}.xlsx`);
-            } catch (e) {}
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('desp_data').value = new Date().toISOString().split('T')[0];
-            setTimeout(() => { window.renderizarRelatoriosDespesas(); window.inicializarNumeroRelatorio(); }, 500);
-        });
-
-        window.addEventListener('beforeunload', (e) => {
-            const relAtual = document.getElementById('desp_num_relatorio')?.value;
-            const temItensNesteRelatorio = window.listaDespesas && window.listaDespesas.some(i => i.num_relatorio === relAtual);
-            if (temItensNesteRelatorio) { e.preventDefault(); e.returnValue = ''; }
+        window.addEventListener('DOMContentLoaded', () => { 
+            document.getElementById('desp_data').valueAsDate = new Date();
+            document.getElementById('desp-num-badge').innerText = window.numRelatorioAtual;
         });
     </script>
 </body>
