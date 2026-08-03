@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Biblioteca SheetJS para exportação em Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
     <style>
@@ -25,8 +23,8 @@
             .no-print { display: none !important; }
             body > header { display: none !important; }
             main { padding: 0 !important; max-width: 100% !important; margin-top: 0 !important; }
-            #sec-form-despesas { display: none !important; } /* Esconde o form ao imprimir */
-            .lg\:col-span-8 { grid-column: span 12 / span 12 !important; } /* Expande a tabela */
+            #sec-form-despesas { display: none !important; }
+            .lg\:col-span-8 { grid-column: span 12 / span 12 !important; }
             table th { background-color: #0f172a !important; color: white !important; }
             table td { border-bottom: 1px solid #e2e8f0 !important; }
         }
@@ -47,6 +45,7 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-300 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">MÓDULO OPERACIONAL</span>
+                            <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
                         </div>
                         <h1 class="text-base font-bold tracking-tight text-white leading-tight">Controle de Despesas</h1>
                     </div>
@@ -63,7 +62,6 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <!-- COLUNA ESQUERDA: FORMULÁRIO -->
             <section id="sec-form-despesas" class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit no-print">
                 <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
                     <div class="flex items-center gap-2">
@@ -74,20 +72,13 @@
                 </div>
                 
                 <form id="expense-form" class="space-y-4" onsubmit="salvarDespesa(event)">
-                    <div class="hidden">
-                        <input type="text" id="desp_num_relatorio" value="REL-1001" readonly>
-                    </div>
+                    <div class="hidden"><input type="text" id="desp_num_relatorio" value="REL-1001" readonly></div>
                     
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Técnico / Vendedor *</label>
                         <select id="desp_tecnico" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-sky-500 transition">
                             <option value="" disabled selected>Selecione seu nome...</option>
-                            <option value="Filipe">Filipe</option>
-                            <option value="Anderson">Anderson</option>
-                            <option value="Adriano">Adriano</option>
-                            <option value="Rafael">Rafael</option>
-                            <option value="Gabriel">Gabriel</option>
-                            <option value="Sidnei">Sidnei</option>
+                            <option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option>
                         </select>
                     </div>
                     
@@ -96,7 +87,7 @@
                         <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Cidade *</label><input type="text" id="desp_cidade" required placeholder="Ex: Joinville" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
                     </div>
                     
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Descrição do Item / Compra *</label><input type="text" id="desp_descricao" required placeholder="Ex: Gasolina, Almoço, Parafusos..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Descrição do Item *</label><input type="text" id="desp_descricao" required placeholder="Ex: Gasolina, Almoço..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
                     
                     <div class="grid grid-cols-2 gap-3">
                         <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Valor (R$) *</label><input type="number" id="desp_valor" step="0.01" min="0.01" required placeholder="0,00" class="w-full px-3 py-2.5 bg-sky-50 border border-sky-300 text-sky-900 rounded-xl text-xs font-bold outline-none focus:border-sky-600 transition"></div>
@@ -118,83 +109,54 @@
                         </div>
                     </div>
                     
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Observações (Opcional)</label><input type="text" id="desp_observacoes" placeholder="Nº NF, nome do posto, etc..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
+                    <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Observações (Opcional)</label><input type="text" id="desp_observacoes" placeholder="Nº NF, etc..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs outline-none focus:border-sky-500 transition"></div>
                     
                     <div class="space-y-2 pt-4">
-                        <button type="submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-plus-circle"></i> Adicionar Despesa ao Relatório
-                        </button>
-                        <button type="button" onclick="finalizarRelatorioAtual()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-check-double text-emerald-400"></i> Finalizar Viagem / Relatório
-                        </button>
+                        <button type="submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-plus-circle"></i> Adicionar Despesa ao Relatório</button>
+                        <button type="button" onclick="finalizarRelatorioAtual()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-check-double text-emerald-400"></i> Finalizar Viagem / Relatório</button>
                     </div>
                 </form>
             </section>
 
-            <!-- COLUNA DIREITA: RELATÓRIOS E FILTROS -->
             <section class="lg:col-span-8 space-y-4">
                 
-                <!-- CARD DE TOTAIS -->
-                <div class="bg-gradient-to-br from-slate-900 to-sky-950 text-white p-5 rounded-2xl shadow-md flex justify-between items-center border border-slate-800">
-                    <div>
-                        <span class="text-[10px] uppercase tracking-widest text-sky-300 font-black">Total Acumulado</span>
-                        <h3 class="text-xs text-slate-300 mt-0.5">Resumo conforme os filtros aplicados</h3>
-                    </div>
-                    <div class="text-right">
-                        <div id="desp-total-acumulado" class="text-3xl font-black text-white tracking-tight">R$ 0,00</div>
-                    </div>
+                <div id="card-total-admin" class="bg-gradient-to-br from-slate-900 to-sky-950 text-white p-5 rounded-2xl shadow-md flex justify-between items-center border border-slate-800 hidden">
+                    <div><span class="text-[10px] uppercase tracking-widest text-sky-300 font-black">Total Acumulado</span><h3 class="text-xs text-slate-300 mt-0.5">Resumo conforme filtros</h3></div>
+                    <div class="text-right"><div id="desp-total-acumulado" class="text-3xl font-black text-white tracking-tight">R$ 0,00</div></div>
                 </div>
                 
-                <!-- BARRA DE FILTROS -->
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 no-print">
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mês</label><input type="month" id="filter-mes-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium outline-none"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Exata</label><input type="date" id="filter-data-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium outline-none"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico</label><select id="filter-tecnico-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium outline-none"><option value="Todos">Todos</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria</label><select id="filter-categoria-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs font-medium outline-none"><option value="Todas">Todas</option><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
-                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar Palavra</label><input type="text" id="filter-search-desp" onkeyup="renderizarRelatoriosDespesas()" placeholder="Cliente, Item..." class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg text-xs outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mês</label><input type="month" id="filter-mes-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data</label><input type="date" id="filter-data-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico</label><select id="filter-tecnico-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"><option value="Todos">Todos</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria</label><select id="filter-categoria-desp" onchange="renderizarRelatoriosDespesas()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"><option value="Todas">Todas</option><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar Palavra</label><input type="text" id="filter-search-desp" onkeyup="renderizarRelatoriosDespesas()" placeholder="Buscar..." class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none"></div>
                 </div>
                 
                 <div class="flex flex-wrap items-center justify-end gap-2 no-print">
-                    <button onclick="limparFiltros()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5"><i class="fa-solid fa-eraser"></i> Limpar</button>
-                    <button onclick="exportarExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Exportar</button>
-                    <button onclick="window.print()" class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-print"></i> Imprimir</button>
+                    <button onclick="limparFiltros()" class="px-3 py-2 bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5"><i class="fa-solid fa-eraser"></i> Limpar Filtros</button>
+                    <button id="btn-export-excel" onclick="exportarExcel()" class="px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 hidden"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
+                    <button onclick="window.print()" class="px-3 py-2 bg-sky-600 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-print"></i> Imprimir</button>
                 </div>
                 
-                <!-- TABELA DE RESULTADOS -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs whitespace-nowrap">
                             <thead class="bg-slate-900 text-white font-bold border-b border-slate-800">
                                 <tr>
-                                    <th class="p-3 w-16">REL.</th>
-                                    <th class="p-3">DATA</th>
-                                    <th class="p-3">TÉCNICO</th>
-                                    <th class="p-3">CLIENTE / CIDADE</th>
-                                    <th class="p-3">DESCRIÇÃO / CATEGORIA</th>
-                                    <th class="p-3 text-right">VALOR (R$)</th>
-                                    <th class="p-3 text-center no-print w-10">AÇÃO</th>
+                                    <th class="p-3 w-16">REL.</th><th class="p-3">DATA</th><th class="p-3">TÉCNICO</th><th class="p-3">CLIENTE / CIDADE</th><th class="p-3">DESCRIÇÃO / CATEGORIA</th><th class="p-3 text-right">VALOR</th><th class="p-3 text-center no-print w-10">AÇÃO</th>
                                 </tr>
                             </thead>
-                            <tbody id="despesas-body" class="divide-y divide-slate-100">
-                                <!-- Preenchido via JS -->
-                            </tbody>
+                            <tbody id="despesas-body" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
-                    
-                    <div id="empty-state" class="hidden p-8 text-center text-slate-400">
-                        <i class="fa-solid fa-receipt text-3xl mb-2 opacity-50"></i>
-                        <p class="text-sm font-medium">Nenhuma despesa encontrada para os filtros atuais.</p>
-                    </div>
+                    <div id="empty-state" class="hidden p-8 text-center text-slate-400"><i class="fa-solid fa-receipt text-3xl mb-2 opacity-50"></i><p class="text-sm font-medium">Nenhuma despesa encontrada.</p></div>
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- Notificação Flutuante -->
-    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
-    </div>
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i><span id="toast-message" class="text-xs font-semibold">Sucesso!</span></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -202,72 +164,74 @@
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         try {
-            const firebaseConfig = {
-                apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
-                authDomain: "plataforma-cij.firebaseapp.com",
-                projectId: "plataforma-cij",
-                storageBucket: "plataforma-cij.firebasestorage.app",
-                messagingSenderId: "949985395100",
-                appId: "1:949985395100:web:cf881e0c91c63175228859"
-            };
-
+            const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
             const appId = 'plataforma-cij';
 
-            // Verifica Permissão
             onAuthStateChanged(auth, (user) => {
                 if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                     window.location.href = 'index.html'; // No Github, descomente essa linha
+                    // window.location.href = 'index.html'; // No Github, descomente essa linha
+                } else if(user) {
+                    if(typeof window.definirPerfilUsuario === 'function') window.definirPerfilUsuario(user.email);
                 }
             });
 
-            // Conexão em tempo real com as Despesas
             const despesasRef = collection(db, 'artifacts', appId, 'public', 'data', 'despesas');
             const q = query(despesasRef, orderBy('timestamp', 'desc'));
 
             onSnapshot(q, (snapshot) => {
-                const docs = [];
-                snapshot.forEach(d => docs.push(d.data()));
-                window.listaDespesas = docs;
-                
-                if(typeof window.renderizarRelatoriosDespesas === 'function') {
-                    window.renderizarRelatoriosDespesas();
-                    window.inicializarNumeroRelatorio(); // Recalcula o número se houver mudança
-                }
-            }, (error) => {
-                console.error("Erro ao ler despesas:", error);
+                const docs = []; snapshot.forEach(d => docs.push(d.data())); window.listaDespesas = docs;
+                localStorage.setItem('cij_local_despesas', JSON.stringify(docs));
+                if(typeof window.renderizarRelatoriosDespesas === 'function') { window.renderizarRelatoriosDespesas(); window.inicializarNumeroRelatorio(); }
             });
 
-            // Funções de Escrita expostas globalmente
-            window.dbSalvarDespesa = async function(despesaObj) {
-                await setDoc(doc(despesasRef, despesaObj.id), despesaObj);
-            };
-            window.dbExcluirDespesa = async function(id) {
-                await deleteDoc(doc(despesasRef, id));
-            };
+            window.dbSalvarDespesa = async function(obj) { await setDoc(doc(despesasRef, obj.id), obj); };
+            window.dbExcluirDespesa = async function(id) { await deleteDoc(doc(despesasRef, id)); };
 
         } catch(e) {
-            console.warn("Modo Preview: Firebase isolado. Rodando com memória local.");
-            window.listaDespesas = JSON.parse(localStorage.getItem('cij_local_despesas') || '[]');
+            console.warn("Modo Preview Detectado.");
+            try { window.listaDespesas = JSON.parse(localStorage.getItem('cij_local_despesas') || '[]'); } catch(err){ window.listaDespesas = []; }
         }
     </script>
 
     <script>
-        // Fallback local se o Firebase demorar ou falhar
-        window.listaDespesas = window.listaDespesas || [];
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+        const EMAILS_TECNICOS = ['tecnico.cij3@gmail.com', 'tecnico.cij1@gmail.com', 'engenharia@grupocij.com', 'estoque@grupocij.com'];
+        
+        window.definirPerfilUsuario = function(email) {
+            const clean = (email||'').toLowerCase().trim();
+            window.isUserAdmin = EMAILS_ADMIN_FINANCEIRO.includes(clean) || clean.includes('admin') || clean.includes('financeiro');
+            let isTecnico = EMAILS_TECNICOS.includes(clean) || clean.includes('tecnico');
+            
+            const badge = document.getElementById('user-role-badge');
+            if(badge) {
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1";
+                if(window.isUserAdmin) {
+                    badge.innerText = 'Admin / Financeiro';
+                    badge.classList.add('bg-purple-950', 'text-purple-300', 'border-purple-800');
+                    document.getElementById('card-total-admin')?.classList.remove('hidden');
+                    document.getElementById('btn-export-excel')?.classList.remove('hidden');
+                } else if (isTecnico) {
+                    badge.innerText = 'Técnico';
+                    badge.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
+                } else {
+                    badge.innerText = 'Vendedor';
+                    badge.classList.add('bg-blue-950', 'text-blue-300', 'border-blue-800');
+                }
+            }
+            if(typeof window.renderizarRelatoriosDespesas === 'function') window.renderizarRelatoriosDespesas();
+        };
 
-        function formatarMoeda(val) { 
-            return (parseFloat(val)||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); 
-        }
+        window.listaDespesas = window.listaDespesas || [];
+        function formatarMoeda(val) { return (parseFloat(val)||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
 
         window.mostrarNotificacao = function(msg, isError = false) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerText = msg;
             document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3500);
+            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 3500);
         };
 
         window.inicializarNumeroRelatorio = function() {
@@ -278,16 +242,13 @@
                     if (!isNaN(num) && num > maxRel) maxRel = num;
                 });
             }
-            const prox = `REL-${maxRel}`; // Mantém o número atual para agrupar as despesas da viagem
+            const prox = `REL-${maxRel}`; 
             document.getElementById('desp_num_relatorio').value = prox;
             document.getElementById('desp-num-badge').innerText = prox;
         };
 
         window.finalizarRelatorioAtual = function() {
-            if(confirm("Deseja fechar o relatório atual? Ao confirmar, as próximas despesas serão salvas em um novo número de relatório.")) {
-                // Forçamos o sistema a "pular" adicionando um item invisível ou simplesmente 
-                // assumimos que a próxima viagem pega o ID mais alto e soma 1 se quisermos.
-                // Aqui vamos apenas avisar o front-end para incrementar visualmente.
+            if(confirm("Deseja fechar o relatório atual? As próximas despesas serão salvas em um novo número.")) {
                 let maxRel = 1000;
                 window.listaDespesas.forEach(item => {
                     const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
@@ -296,263 +257,106 @@
                 const prox = `REL-${maxRel + 1}`;
                 document.getElementById('desp_num_relatorio').value = prox;
                 document.getElementById('desp-num-badge').innerText = prox;
-                
-                // Limpa os campos da viagem
                 document.getElementById('desp_cliente').value = '';
                 document.getElementById('desp_cidade').value = '';
                 document.getElementById('desp_descricao').value = '';
                 document.getElementById('desp_valor').value = '';
-                
                 window.mostrarNotificacao("Novo relatório iniciado!");
             }
         };
 
         window.salvarDespesa = async function(e) {
             e.preventDefault();
-            
-            const btn = e.submitter;
-            const textoOriginal = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
-            btn.disabled = true;
+            const btn = e.submitter; const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; btn.disabled = true;
 
             const novaDespesa = {
-                id: Date.now().toString(),
-                num_relatorio: document.getElementById('desp_num_relatorio').value,
-                tecnico: document.getElementById('desp_tecnico').value,
-                cliente: document.getElementById('desp_cliente').value.trim(),
-                cidade: document.getElementById('desp_cidade').value.trim(),
-                descricao: document.getElementById('desp_descricao').value.trim(),
-                valor: parseFloat(document.getElementById('desp_valor').value),
-                data: document.getElementById('desp_data').value,
-                categoria: document.getElementById('desp_categoria').value,
-                cartao: document.getElementById('desp_cartao').value,
-                observacoes: document.getElementById('desp_observacoes').value.trim(),
-                timestamp: new Date().getTime()
+                id: Date.now().toString(), num_relatorio: document.getElementById('desp_num_relatorio').value, tecnico: document.getElementById('desp_tecnico').value, cliente: document.getElementById('desp_cliente').value.trim(), cidade: document.getElementById('desp_cidade').value.trim(), descricao: document.getElementById('desp_descricao').value.trim(), valor: parseFloat(document.getElementById('desp_valor').value), data: document.getElementById('desp_data').value, categoria: document.getElementById('desp_categoria').value, cartao: document.getElementById('desp_cartao').value, observacoes: document.getElementById('desp_observacoes').value.trim(), timestamp: new Date().getTime()
             };
 
-            // Salva Local Backup
             window.listaDespesas.unshift(novaDespesa);
             localStorage.setItem('cij_local_despesas', JSON.stringify(window.listaDespesas));
 
-            // Tenta Salvar no Firebase
             try {
-                if(typeof window.dbSalvarDespesa === 'function') {
-                    await window.dbSalvarDespesa(novaDespesa);
-                }
-                window.mostrarNotificacao('Despesa lançada com sucesso!');
-                
-                // Limpa só os campos específicos, mantém cliente e data para facilitar digitação em lote
-                document.getElementById('desp_descricao').value = '';
-                document.getElementById('desp_valor').value = '';
-                document.getElementById('desp_descricao').focus();
-            } catch(error) {
-                console.error(error);
-                window.mostrarNotificacao('Erro ao comunicar com a nuvem.', true);
-            } finally {
-                btn.innerHTML = textoOriginal;
-                btn.disabled = false;
-                window.renderizarRelatoriosDespesas();
-            }
+                if(typeof window.dbSalvarDespesa === 'function') await window.dbSalvarDespesa(novaDespesa);
+                window.mostrarNotificacao('Despesa lançada!');
+                document.getElementById('desp_descricao').value = ''; document.getElementById('desp_valor').value = ''; document.getElementById('desp_descricao').focus();
+            } catch(err) {} finally { btn.innerHTML = textoOriginal; btn.disabled = false; window.renderizarRelatoriosDespesas(); }
         };
 
         window.excluirDespesa = async function(id) {
-            if(confirm("Tem certeza que deseja apagar este lançamento?")) {
+            if(confirm("Apagar este lançamento?")) {
                 window.listaDespesas = window.listaDespesas.filter(d => d.id !== id);
                 localStorage.setItem('cij_local_despesas', JSON.stringify(window.listaDespesas));
-                
-                try {
-                    if(typeof window.dbExcluirDespesa === 'function') await window.dbExcluirDespesa(id);
-                    window.mostrarNotificacao('Registro excluído.');
-                } catch(e) {
-                    console.error(e);
-                }
+                try { if(typeof window.dbExcluirDespesa === 'function') await window.dbExcluirDespesa(id); } catch(e){}
                 window.renderizarRelatoriosDespesas();
             }
         };
 
-        // Função Master de Renderização com Filtros
         window.renderizarRelatoriosDespesas = function() {
             const tbody = document.getElementById('despesas-body');
             const empty = document.getElementById('empty-state');
             if(!tbody) return;
 
-            // Pega os valores dos filtros
-            const fMes = document.getElementById('filter-mes-desp').value; // Formato "YYYY-MM"
-            const fData = document.getElementById('filter-data-desp').value;
-            const fTecnico = document.getElementById('filter-tecnico-desp').value;
-            const fCategoria = document.getElementById('filter-categoria-desp').value;
-            const fSearch = document.getElementById('filter-search-desp').value.toLowerCase();
+            const fMes = document.getElementById('filter-mes-desp').value; const fData = document.getElementById('filter-data-desp').value; const fTecnico = document.getElementById('filter-tecnico-desp').value; const fCategoria = document.getElementById('filter-categoria-desp').value; const fSearch = document.getElementById('filter-search-desp').value.toLowerCase();
 
-            let dadosFiltrados = window.listaDespesas || [];
-
-            // Aplica os filtros
-            dadosFiltrados = dadosFiltrados.filter(item => {
+            let dadosFiltrados = (window.listaDespesas || []).filter(item => {
                 let ok = true;
-                if(fMes) {
-                    if(!item.data || !item.data.startsWith(fMes)) ok = false;
-                }
-                if(fData) {
-                    if(item.data !== fData) ok = false;
-                }
-                if(fTecnico !== "Todos") {
-                    if(item.tecnico !== fTecnico) ok = false;
-                }
-                if(fCategoria !== "Todas") {
-                    if(item.categoria !== fCategoria) ok = false;
-                }
-                if(fSearch) {
-                    const txt = `${item.cliente} ${item.cidade} ${item.descricao} ${item.num_relatorio}`.toLowerCase();
-                    if(!txt.includes(fSearch)) ok = false;
-                }
+                if(fMes && (!item.data || !item.data.startsWith(fMes))) ok = false;
+                if(fData && item.data !== fData) ok = false;
+                if(fTecnico !== "Todos" && item.tecnico !== fTecnico) ok = false;
+                if(fCategoria !== "Todas" && item.categoria !== fCategoria) ok = false;
+                if(fSearch && !`${item.cliente} ${item.cidade} ${item.descricao} ${item.num_relatorio}`.toLowerCase().includes(fSearch)) ok = false;
                 return ok;
             });
 
-            // Calcula Totais
-            let totalAcumulado = 0;
-            tbody.innerHTML = '';
+            let totalAcumulado = 0; tbody.innerHTML = '';
 
             if (dadosFiltrados.length === 0) {
                 empty.classList.remove('hidden');
             } else {
                 empty.classList.add('hidden');
-                
                 dadosFiltrados.forEach(item => {
                     totalAcumulado += item.valor;
-                    
                     const dataBr = item.data ? item.data.split('-').reverse().join('/') : '-';
-                    const corCat = getCategoriaColor(item.categoria);
+                    const c = item.categoria === 'Combustível'?'bg-orange-100 text-orange-700':item.categoria==='Alimentação/Bebida'?'bg-emerald-100 text-emerald-700':item.categoria==='Hotel'?'bg-purple-100 text-purple-700':item.categoria==='Pedágio'?'bg-slate-200 text-slate-700':'bg-sky-100 text-sky-700';
                     
-                    // A lixeira de exclusão só é gerada se o usuário for Admin
-                    const tdAcao = window.isUserAdmin ? `
-                        <td class="p-3 text-center no-print">
-                            <button onclick="excluirDespesa('${item.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition" title="Excluir">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </td>
-                    ` : '';
+                    const tdAcao = window.isUserAdmin ? `<td class="p-3 text-center no-print"><button onclick="excluirDespesa('${item.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition"><i class="fa-solid fa-trash"></i></button></td>` : `<td class="p-3 text-center no-print">-</td>`;
                     
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="p-3 font-bold text-slate-500">${item.num_relatorio}</td>
-                            <td class="p-3 text-slate-600 font-medium">${dataBr}</td>
-                            <td class="p-3 font-bold text-slate-800">${item.tecnico}</td>
-                            <td class="p-3">
-                                <span class="block font-bold text-slate-800">${item.cliente}</span>
-                                <span class="text-[10px] text-slate-400 uppercase tracking-wider">${item.cidade}</span>
-                            </td>
-                            <td class="p-3">
-                                <span class="block text-slate-700">${item.descricao}</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-md font-bold mt-1 inline-block ${corCat}">${item.categoria}</span>
-                            </td>
-                            <td class="p-3 text-right font-black text-sky-700 text-sm">${formatarMoeda(item.valor)}</td>
-                            ${tdAcao}
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr class="hover:bg-slate-50 transition"><td class="p-3 font-bold text-slate-500">${item.num_relatorio}</td><td class="p-3 text-slate-600 font-medium">${dataBr}</td><td class="p-3 font-bold text-slate-800">${item.tecnico}</td><td class="p-3"><span class="block font-bold text-slate-800">${item.cliente}</span><span class="text-[10px] text-slate-400 uppercase tracking-wider">${item.cidade}</span></td><td class="p-3"><span class="block text-slate-700">${item.descricao}</span><span class="text-[10px] px-2 py-0.5 rounded-md font-bold mt-1 inline-block ${c}">${item.categoria}</span></td><td class="p-3 text-right font-black text-sky-700 text-sm">${formatarMoeda(item.valor)}</td>${tdAcao}</tr>`;
                 });
             }
-
             document.getElementById('desp-total-acumulado').innerText = formatarMoeda(totalAcumulado);
         };
 
-        function getCategoriaColor(cat) {
-            switch(cat) {
-                case 'Combustível': return 'bg-orange-100 text-orange-700 border border-orange-200';
-                case 'Alimentação/Bebida': return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
-                case 'Hotel': return 'bg-purple-100 text-purple-700 border border-purple-200';
-                case 'Pedágio': return 'bg-slate-200 text-slate-700 border border-slate-300';
-                default: return 'bg-sky-100 text-sky-700 border border-sky-200';
-            }
-        }
-
         window.limparFiltros = function() {
-            document.getElementById('filter-mes-desp').value = '';
-            document.getElementById('filter-data-desp').value = '';
-            document.getElementById('filter-tecnico-desp').value = 'Todos';
-            document.getElementById('filter-categoria-desp').value = 'Todas';
-            document.getElementById('filter-search-desp').value = '';
-            window.renderizarRelatoriosDespesas();
+            document.getElementById('filter-mes-desp').value = ''; document.getElementById('filter-data-desp').value = ''; document.getElementById('filter-tecnico-desp').value = 'Todos'; document.getElementById('filter-categoria-desp').value = 'Todas'; document.getElementById('filter-search-desp').value = ''; window.renderizarRelatoriosDespesas();
         };
 
-        // Exportação Dinâmica (Lê os dados da tabela filtrada)
         window.exportarExcel = function() {
+            if(!window.isUserAdmin) return;
             try {
-                // Cabeçalhos
-                let dados = [
-                    ["RELATÓRIO DE DESPESAS - GRUPO CIJ"],
-                    ["Data de Emissão:", new Date().toLocaleDateString('pt-BR')],
-                    [""],
-                    ["Nº RELATÓRIO", "DATA", "TÉCNICO", "CLIENTE", "CIDADE", "CATEGORIA", "DESCRIÇÃO", "PAGAMENTO", "OBSERVAÇÕES", "VALOR (R$)"]
-                ];
-
-                // Varre as linhas visíveis na tabela (para pegar apenas o que o filtro selecionou)
-                // Vamos refiltrar na memória usando as mesmas regras para garantir precisão
-                const fMes = document.getElementById('filter-mes-desp').value;
-                const fData = document.getElementById('filter-data-desp').value;
-                const fTecnico = document.getElementById('filter-tecnico-desp').value;
-                const fCategoria = document.getElementById('filter-categoria-desp').value;
-                const fSearch = document.getElementById('filter-search-desp').value.toLowerCase();
-
+                let dados = [["RELATÓRIO DE DESPESAS - GRUPO CIJ"], ["Data:", new Date().toLocaleDateString('pt-BR')], [""], ["Nº RELATÓRIO", "DATA", "TÉCNICO", "CLIENTE", "CIDADE", "CATEGORIA", "DESCRIÇÃO", "PAGAMENTO", "OBSERVAÇÕES", "VALOR (R$)"]];
+                const fMes = document.getElementById('filter-mes-desp').value; const fData = document.getElementById('filter-data-desp').value; const fTecnico = document.getElementById('filter-tecnico-desp').value; const fCategoria = document.getElementById('filter-categoria-desp').value; const fSearch = document.getElementById('filter-search-desp').value.toLowerCase();
                 const filtrados = (window.listaDespesas || []).filter(item => {
-                    let ok = true;
-                    if(fMes && (!item.data || !item.data.startsWith(fMes))) ok = false;
-                    if(fData && item.data !== fData) ok = false;
-                    if(fTecnico !== "Todos" && item.tecnico !== fTecnico) ok = false;
-                    if(fCategoria !== "Todas" && item.categoria !== fCategoria) ok = false;
-                    if(fSearch) {
-                        const txt = `${item.cliente} ${item.cidade} ${item.descricao} ${item.num_relatorio}`.toLowerCase();
-                        if(!txt.includes(fSearch)) ok = false;
-                    }
-                    return ok;
+                    let ok = true; if(fMes && (!item.data || !item.data.startsWith(fMes))) ok = false; if(fData && item.data !== fData) ok = false; if(fTecnico !== "Todos" && item.tecnico !== fTecnico) ok = false; if(fCategoria !== "Todas" && item.categoria !== fCategoria) ok = false; if(fSearch && !`${item.cliente} ${item.cidade} ${item.descricao} ${item.num_relatorio}`.toLowerCase().includes(fSearch)) ok = false; return ok;
                 });
-
                 let somaTotal = 0;
-
-                filtrados.forEach(d => {
-                    somaTotal += d.valor;
-                    const dataBr = d.data ? d.data.split('-').reverse().join('/') : '';
-                    dados.push([
-                        d.num_relatorio, dataBr, d.tecnico, d.cliente, d.cidade, 
-                        d.categoria, d.descricao, d.cartao, d.observacoes || '-', d.valor
-                    ]);
-                });
-
+                filtrados.forEach(d => { somaTotal += d.valor; dados.push([d.num_relatorio, d.data ? d.data.split('-').reverse().join('/') : '', d.tecnico, d.cliente, d.cidade, d.categoria, d.descricao, d.cartao, d.observacoes || '-', d.valor]); });
                 dados.push(["", "", "", "", "", "", "", "", "TOTAL ACUMULADO:", somaTotal]);
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(dados);
-                XLSX.utils.book_append_sheet(wb, ws, "Despesas");
-                XLSX.writeFile(wb, `Relatorio_Despesas_CIJ_${Date.now()}.xlsx`);
-                
-                window.mostrarNotificacao("Planilha Excel exportada com sucesso!");
-            } catch (e) {
-                console.error(e);
-                window.mostrarNotificacao("Erro ao gerar Excel. Atualize a página e tente novamente.", true);
-            }
+                const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(dados); XLSX.utils.book_append_sheet(wb, ws, "Despesas"); XLSX.writeFile(wb, `Despesas_${Date.now()}.xlsx`);
+            } catch (e) {}
         };
 
-        // Inicia
         window.addEventListener('DOMContentLoaded', () => {
-            const dataHoje = new Date().toISOString().split('T')[0];
-            document.getElementById('desp_data').value = dataHoje;
-            
-            // Força a renderização se o firebase demorar
-            setTimeout(() => {
-                window.renderizarRelatoriosDespesas();
-                window.inicializarNumeroRelatorio();
-            }, 500);
+            document.getElementById('desp_data').value = new Date().toISOString().split('T')[0];
+            setTimeout(() => { window.renderizarRelatoriosDespesas(); window.inicializarNumeroRelatorio(); }, 500);
         });
 
-        // Trava de segurança: Avisar ao tentar sair/atualizar a página com relatório em andamento
         window.addEventListener('beforeunload', (e) => {
             const relAtual = document.getElementById('desp_num_relatorio')?.value;
-            // Verifica se na lista existe alguma despesa com o número do relatório atual
             const temItensNesteRelatorio = window.listaDespesas && window.listaDespesas.some(i => i.num_relatorio === relAtual);
-            
-            if (temItensNesteRelatorio) {
-                // Ao acionar e.preventDefault() e e.returnValue, o navegador exibe o alerta de proteção
-                e.preventDefault();
-                e.returnValue = ''; 
-            }
+            if (temItensNesteRelatorio) { e.preventDefault(); e.returnValue = ''; }
         });
     </script>
 </body>
