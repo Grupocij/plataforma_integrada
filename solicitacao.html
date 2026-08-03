@@ -209,74 +209,60 @@
         <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
     </div>
 
+    <!-- SCRIPT DO FIREBASE 100% LIMPO (SEM MODO TESTE) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        try {
-            const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const appId = 'plataforma-cij';
+        const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
 
-            // Verifica Autenticação
-            onAuthStateChanged(auth, (user) => {
-                if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                    // window.location.href = 'index.html'; // Descomente esta linha quando for subir para o Github
-                } else if(user) {
-                    if(typeof window.definirPerfilUsuario === 'function') window.definirPerfilUsuario(user.email);
-                    
-                    const campoVendedor = document.getElementById('ven_vendedor');
-                    if(campoVendedor && !campoVendedor.value) {
-                        campoVendedor.value = user.email.split('@')[0].toUpperCase();
-                    }
-                }
-            });
-
-            // Função Segura para Salvar na Nuvem e Gerar Sequencial
-            window.processarSalvamentoFirebase = async function(solicitacaoObj) {
-                try {
-                    // Proteção contra Sandbox: Se estiver no preview, simula o salvamento para não dar erro na tela
-                    if(window.location.hostname === "localhost" || window.location.hostname === "") {
-                        throw new Error("Ambiente de teste (Sandbox)");
-                    }
-
-                    const counterRef = doc(db, 'artifacts', appId, 'public', 'counters', 'solicitacao');
-                    
-                    const numFormatado = await runTransaction(db, async (transaction) => {
-                        const counterDoc = await transaction.get(counterRef);
-                        let currentNum = 1000;
-                        if (counterDoc.exists()) {
-                            currentNum = counterDoc.data().current || 1000;
-                        }
-                        const nextNum = currentNum + 1;
-                        transaction.set(counterRef, { current: nextNum }, { merge: true });
-                        
-                        const numeroGerado = `SOL-${nextNum}`;
-                        solicitacaoObj.numero_solicitacao = numeroGerado;
-                        solicitacaoObj.timestamp = new Date().getTime();
-                        
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', numeroGerado);
-                        transaction.set(docRef, solicitacaoObj);
-                        
-                        return numeroGerado;
-                    });
-                    
-                    document.getElementById('ven_num_solicitacao').value = numFormatado;
-                    window.mostrarNotificacao(`Salvo com sucesso! Número: ${numFormatado}`);
-                    
-                } catch (error) { 
-                    console.warn("Salvando localmente em modo preview:", error);
-                    // Como deu erro de Sandbox, cria um número fictício para o teste não quebrar
-                    const numeroTeste = `SOL-TESTE-${Math.floor(Math.random() * 1000)}`;
-                    document.getElementById('ven_num_solicitacao').value = numeroTeste;
-                    window.mostrarNotificacao(`[MODO TESTE] Salvo! Número gerado: ${numeroTeste}`);
+        onAuthStateChanged(auth, (user) => {
+            if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
+                // window.location.href = 'index.html'; // Descomente para forçar login no Github
+            } else if(user) {
+                if(typeof window.definirPerfilUsuario === 'function') window.definirPerfilUsuario(user.email);
+                const campoVendedor = document.getElementById('ven_vendedor');
+                if(campoVendedor && !campoVendedor.value) {
+                    campoVendedor.value = user.email.split('@')[0].toUpperCase();
                 }
             }
-        } catch(e) { 
-            console.warn("Modo Preview Detectado. Firebase não será carregado."); 
+        });
+
+        window.processarSalvamentoFirebase = async function(solicitacaoObj) {
+            try {
+                const counterRef = doc(db, 'artifacts', appId, 'public', 'counters', 'solicitacao');
+                
+                const numFormatado = await runTransaction(db, async (transaction) => {
+                    const counterDoc = await transaction.get(counterRef);
+                    let currentNum = 1000;
+                    if (counterDoc.exists()) {
+                        currentNum = counterDoc.data().current || 1000;
+                    }
+                    const nextNum = currentNum + 1;
+                    transaction.set(counterRef, { current: nextNum }, { merge: true });
+                    
+                    const numeroGerado = `SOL-${nextNum}`;
+                    solicitacaoObj.numero_solicitacao = numeroGerado;
+                    solicitacaoObj.timestamp = new Date().getTime();
+                    
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', numeroGerado);
+                    transaction.set(docRef, solicitacaoObj);
+                    
+                    return numeroGerado;
+                });
+                
+                document.getElementById('ven_num_solicitacao').value = numFormatado;
+                window.mostrarNotificacao(`Salvo com sucesso! Número Oficial: ${numFormatado}`);
+                
+            } catch (error) { 
+                console.error("ERRO DETALHADO DO FIREBASE:", error);
+                alert("❌ ERRO AO SALVAR NO FIREBASE:\n\nMotivo: " + error.message + "\n\nO servidor bloqueou a gravação. Verifique se o e-mail está logado no Hub e se as Regras do banco estão corretas.");
+            }
         }
     </script>
 
@@ -305,7 +291,6 @@
             }
         };
 
-        // Dicionário Oficial Fornecido pela CIJ
         const modelosPorCategoria = {
             "Impressora CIJ": ["8820", "8860", "8860P", "8910", "8610", "Outro (Digitar)"],
             "Impressora TIJ": ["T-110H", "T110M", "291", "280", "Outro (Digitar)"],
@@ -333,7 +318,6 @@
             }
         };
 
-        // Lógica de Formulário: Cascata e Adição de Linhas
         window.atualizarModelos = function(selectEl) {
             const tr = selectEl.closest('tr'); 
             const cat = selectEl.value; 
@@ -487,7 +471,7 @@
                     btn.innerHTML = originalText; btn.disabled = false;
                 });
             } else { 
-                window.mostrarNotificacao("Ambiente de teste offline ativo.", true); 
+                alert("Erro: O sistema do banco de dados (Firebase) ainda está carregando ou falhou. Tente novamente em alguns segundos ou verifique sua conexão com a internet."); 
                 btn.innerHTML = originalText; btn.disabled = false;
             }
         };
@@ -556,7 +540,6 @@
                 const wb = XLSX.utils.book_new(); 
                 const ws = XLSX.utils.aoa_to_sheet(dados); 
                 
-                // Ajustando largura das colunas
                 ws['!cols'] = [{wch: 25}, {wch: 40}, {wch: 10}, {wch: 15}, {wch: 15}];
                 
                 XLSX.utils.book_append_sheet(wb, ws, "Solicitacao_CIJ"); 
