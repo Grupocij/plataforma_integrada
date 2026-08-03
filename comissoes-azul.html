@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comissões Azul - Portal Grupo CIJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-[#0f172a] text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <h1 class="text-base font-bold"><i class="fa-solid fa-chart-line mr-2 text-blue-400"></i>Comissões Azul</h1>
+            <div class="flex items-center gap-4">
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border">Verificando...</span>
+                <a href="index.html" class="text-xs font-bold hover:text-blue-300 transition"><i class="fa-solid fa-arrow-left mr-2"></i>Voltar ao Hub</a>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="max-w-7xl mx-auto p-6 space-y-6 hidden">
+        <!-- Conteúdo do módulo aqui -->
+        <h2 class="text-xl font-bold">Módulo de Comissões</h2>
+        <!-- O resto do conteúdo do módulo de comissões... -->
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        
+        const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+        const EMAILS_VENDEDORES = ['comercial.rs@grupocij.com', 'comercial.sc@grupocij.com', 'comercial02.sc@grupocij.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const email = user.email.toLowerCase().trim();
+            const isAdmin = EMAILS_ADMIN_FINANCEIRO.includes(email) || email.includes('admin') || email.includes('financeiro');
+            const isVendedor = EMAILS_VENDEDORES.includes(email) || email.includes('vendedor') || email.includes('vendas');
+
+            const badge = document.getElementById('user-role-badge');
+            
+            if (isAdmin || isVendedor) {
+                document.getElementById('main-content').classList.remove('hidden');
+                badge.innerText = isAdmin ? 'Admin / Financeiro' : 'Vendedor';
+                badge.className = isAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-950 text-blue-300 border-blue-800';
+            } else {
+                alert("Acesso Negado: Perfil técnico não possui permissão para este módulo.");
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
