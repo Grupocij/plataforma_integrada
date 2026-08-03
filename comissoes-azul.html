@@ -3,86 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comissões Azul - Portal Grupo CIJ</title>
+    <title>Comissões Azul - Gestão Integrada</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     </style>
 </head>
-<body class="min-h-screen">
-    <header class="bg-[#0f172a] text-white p-4 shadow-md">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <h1 class="text-base font-bold"><i class="fa-solid fa-chart-line mr-2 text-blue-400"></i>Comissões Azul</h1>
-            <div class="flex items-center gap-4">
-                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border">Verificando...</span>
-                <a href="index.html" class="text-xs font-bold hover:text-blue-300 transition"><i class="fa-solid fa-arrow-left mr-2"></i>Voltar ao Hub</a>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-8 rounded-3xl text-white shadow-xl">
+            <h1 class="text-2xl font-black">Controle de Comissões Azul</h1>
+            <p class="text-blue-100 text-sm opacity-90">Gestão inteligente de vendas, regras de liberação e liquidação.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-blue-600">Total de Vendas</p><h3 id="kpiTotalSalesAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p id="kpiSalesCountAzul" class="text-xs text-slate-500">0 vendas</p></div>
+            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-indigo-600">Total Comissões</p><h3 id="kpiTotalCommissionsAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p class="text-xs text-slate-500">Média do período</p></div>
+            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-amber-700">Comissões Pendentes</p><h3 id="kpiPendingCommissionsAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p class="text-xs text-slate-500">Aguardando quitação</p></div>
+            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-emerald-700">Comissões Pagas</p><h3 id="kpiPaidCommissionsAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p class="text-xs text-slate-500">Liquidadas</p></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border shadow-sm">
+            <div class="flex items-center justify-between mb-6">
+                <h3 id="formTitleAzul" class="font-black text-slate-800 text-lg flex items-center gap-2"><i class="fa-solid fa-cart-plus text-blue-600"></i> Nova Venda</h3>
+                <button type="button" id="btnCancelEditAzul" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl transition" onclick="resetFormAzul()">Cancelar Edição</button>
+            </div>
+            
+            <form id="commissionFormAzul" onsubmit="salvarVendaAzul(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vendedor *</label><input type="text" id="azul_sellerName" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data da Venda *</label><input type="date" id="azul_date" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº da NF *</label><input type="text" id="azul_nfNumber" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente *</label><input type="text" id="azul_client" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
+                
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Cliente</label><select id="azul_clientType" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"><option value="Atual">Cliente Atual</option><option value="Novo">Cliente Novo</option></select></div>
+                
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Item Vendido</label>
+                    <select id="azul_itemType" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50">
+                        <option value="Maquina">Maquina</option>
+                        <option value="Alternativo">Alternativo</option>
+                        <option value="Locação">Locação</option>
+                        <option value="Consumíveis">Consumíveis</option>
+                        <option value="Corpo de Prova">Corpo de Prova</option>
+                        <option value="Certificação">Certificação</option>
+                        <option value="Contrato">Contrato</option>
+                    </select>
+                </div>
+
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor da Venda (R$) *</label><input type="number" step="0.01" id="azul_saleValue" required class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entrada (%) *</label><input type="number" id="azul_entryPercent" required class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
+                
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Condição de Pagamento</label><select id="azul_paymentCond" onchange="updatePaymentFieldsAzul()" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"><option value="À Vista">À Vista</option><option value="Parcelado">Parcelado</option></select></div>
+                <div id="azul_containerInstallments" class="hidden"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Número de parcelas</label><input type="number" id="azul_installmentsCount" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
+                <div id="azul_containerInterval" class="hidden"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Intervalo (dias)</label><select id="azul_installmentInterval" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"><option value="7">7 dias</option><option value="10">10 dias</option><option value="14">14 dias</option><option value="21">21 dias</option><option value="28">28 dias</option><option value="30">30 dias</option><option value="35">35 dias</option></select></div>
+                
+                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Comissão (%) *</label><input type="number" id="azul_commissionPercent" required class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
+                
+                <button type="submit" id="btnSubmitAzul" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl transition col-span-1 md:col-span-2 lg:col-span-4 mt-2">Salvar Venda</button>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border shadow-sm">
+            <div class="flex flex-wrap gap-4 mb-6">
+                <input type="text" id="azul_filterSeller" oninput="renderTableAzul()" placeholder="Filtrar Vendedor..." class="border p-2 rounded-xl text-sm">
+                <input type="text" id="azul_filterClient" oninput="renderTableAzul()" placeholder="Filtrar Cliente..." class="border p-2 rounded-xl text-sm">
+                <select id="azul_filterStatus" onchange="renderTableAzul()" class="border p-2 rounded-xl text-sm"><option value="">Todos Status</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option></select>
+                <button onclick="exportToExcelAzul()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold ml-auto"><i class="fa-solid fa-file-excel mr-2"></i> Exportar Excel</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead><tr class="bg-slate-900 text-white text-left">
+                        <th class="p-4">Vendedor</th><th class="p-4">NF</th><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Valor</th><th class="p-4">Comissão</th><th class="p-4">Previsão</th><th class="p-4">Status</th><th class="p-4">Ações</th>
+                    </tr></thead>
+                    <tbody id="tableBodyAzul"></tbody>
+                    <tfoot id="tableFooterAzul" class="font-bold text-slate-800"></tfoot>
+                </table>
             </div>
         </div>
-    </header>
+    </div>
 
-    <main id="main-content" class="max-w-7xl mx-auto p-6 space-y-6 hidden">
-        <h2 class="text-xl font-bold">Módulo de Comissões - Azul</h2>
-        <div id="content-container" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <!-- Conteúdo carregado via JS -->
-            <p class="text-slate-500">Carregando dados da plataforma...</p>
-        </div>
-    </main>
+    <script>
+        /* LÓGICA DO MÓDULO COMISSÕES AZUL */
+        window.listaComissoesAzul = JSON.parse(localStorage.getItem('banco_comissoes_azul_cij') || '[]');
+        window.isUserAdminOrFinance = true; 
+        window.currentUser = { email: 'admin@cij.com' };
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        window.safeGetVal = (id) => document.getElementById(id)?.value || '';
+        window.safeSetVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
+        window.safeSetText = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+        window.formatarMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        window.mostrarNotificacao = (msg) => console.log(msg);
+        window.mostrarModalConfirm = (t, m, cb) => { if(confirm(m)) cb(); };
 
-        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
-        const EMAILS_VENDEDORES = ['comercial.rs@grupocij.com', 'comercial.sc@grupocij.com', 'comercial02.sc@grupocij.com'];
+        let azul_editingIndex = null;
+        let azul_sortColumn = 'date';
+        let azul_sortAsc = false;
 
-        onAuthStateChanged(auth, (user) => {
-            const badge = document.getElementById('user-role-badge');
-            
-            if (!user) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const email = user.email.toLowerCase().trim();
-            const isAdmin = EMAILS_ADMIN_FINANCEIRO.includes(email) || email.includes('admin') || email.includes('financeiro');
-            const isVendedor = EMAILS_VENDEDORES.includes(email) || email.includes('vendedor') || email.includes('vendas');
-
-            if (isAdmin || isVendedor) {
-                document.getElementById('main-content').classList.remove('hidden');
-                badge.innerText = isAdmin ? 'Admin / Financeiro' : 'Vendedor';
-                badge.className = isAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-950 text-blue-300 border-blue-800';
-                
-                // Conecta e busca dados
-                const comissoesRef = collection(db, 'artifacts', 'plataforma-cij', 'public', 'data', 'comissoes_azul');
-                onSnapshot(comissoesRef, (snapshot) => {
-                    const dados = [];
-                    snapshot.forEach(d => dados.push(d.data()));
-                    console.log("Dados carregados:", dados);
-                    window.renderizarConteudo(dados);
-                });
+        window.updatePaymentFieldsAzul = function() {
+            const isParcelado = document.getElementById('azul_paymentCond').value === 'Parcelado';
+            const contInst = document.getElementById('azul_containerInstallments');
+            const contInt = document.getElementById('azul_containerInterval');
+            if (isParcelado) {
+                contInst.classList.remove('hidden');
+                contInt.classList.remove('hidden');
             } else {
-                alert("Acesso Negado.");
-                window.location.href = 'index.html';
-            }
-        });
-
-        window.renderizarConteudo = function(dados) {
-            const container = document.getElementById('content-container');
-            if (dados.length === 0) {
-                container.innerHTML = '<p class="text-slate-500">Nenhuma comissão registrada.</p>';
-            } else {
-                container.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-100"><th class="p-2">Vendedor</th><th class="p-2">NF</th><th class="p-2">Cliente</th><th class="p-2">Valor</th></tr></thead>
-                <tbody>${dados.map(d => `<tr><td class="p-2">${d.sellerName || '-'}</td><td class="p-2">${d.nf || '-'}</td><td class="p-2">${d.client || '-'}</td><td class="p-2">R$ ${parseFloat(d.saleValue||0).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+                contInst.classList.add('hidden');
+                contInt.classList.add('hidden');
             }
         };
+
+        function getNextPaymentDateAzul(saleDateStr) {
+            if (!saleDateStr) return '-';
+            const parts = saleDateStr.split('-');
+            if (parts.length !== 3) return '-';
+
+            let year = parseInt(parts[0], 10);
+            let month = parseInt(parts[1], 10) - 1;
+            let day = parseInt(parts[2], 10);
+
+            if (day < 15) { day = 15; } 
+            else if (day < 30) { day = 30; } 
+            else { day = 15; month++; if (month > 11) { month = 0; year++; } }
+
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            if (day > lastDay) day = lastDay;
+
+            return `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+        }
+
+        function getCommissionEligibilityAzul(sale) {
+            const entryPercent = parseFloat(sale.entryPercent) || 0;
+            const paymentCond = sale.paymentCond || (entryPercent >= 100 ? 'À Vista' : 'Parcelado');
+            const itemType = sale.itemType;
+            const clientType = sale.clientType;
+
+            const isSpecialRule = (itemType === 'Alternativo') && clientType === 'Novo';
+            const requiredPercent = isSpecialRule ? 100 : 20;
+
+            if (paymentCond === 'À Vista' || entryPercent >= requiredPercent) {
+                const payDate = getNextPaymentDateAzul(sale.date);
+                const label = requiredPercent === 100 ? `Lib. 100% Pago (${payDate})` : `Lib. Entrada (${payDate})`;
+                return { unlocked: true, info: label, detail: `Previsão: ${payDate}`, class: 'text-emerald-800 bg-emerald-100 border-emerald-300' };
+            }
+
+            const installments = parseInt(sale.installmentsCount) || 1;
+            const intervalDays = parseInt(sale.installmentInterval) || 30;
+            const percentPerInstallment = (100 - entryPercent) / installments;
+
+            let k = Math.ceil((requiredPercent - entryPercent) / percentPerInstallment);
+            if (k < 1) k = 1;
+            if (k > installments) k = installments;
+
+            const saleDateObj = new Date(sale.date + 'T00:00:00');
+            saleDateObj.setDate(saleDateObj.getDate() + (k * intervalDays));
+
+            const targetDateStr = `${saleDateObj.getFullYear()}-${String(saleDateObj.getMonth() + 1).padStart(2, '0')}-${String(saleDateObj.getDate()).padStart(2, '0')}`;
+            const payDate = getNextPaymentDateAzul(targetDateStr);
+
+            const isQuitacao = (requiredPercent === 100);
+            const label = isQuitacao ? `Lib. Quitação (${k}ª Parc - ${payDate})` : `Lib. ${k}ª Parc (${payDate})`;
+
+            return { unlocked: false, info: label, detail: isQuitacao ? `Alternativo/Novo: Exige 100% pago na ${k}ª parc.` : `Atinge 20% na ${k}ª parc.`, class: 'text-amber-800 bg-amber-100 border-amber-300' };
+        }
+
+        window.getFilteredSalesAzul = function() {
+            const seller = safeGetVal('azul_filterSeller').toLowerCase();
+            const client = safeGetVal('azul_filterClient').toLowerCase();
+            const status = safeGetVal('azul_filterStatus');
+
+            const isVendedor = !window.isUserAdminOrFinance;
+            const currentUserEmail = window.currentUser ? window.currentUser.email : '';
+
+            return window.listaComissoesAzul.filter(s => {
+                if (isVendedor && s.autor !== currentUserEmail) return false;
+                if (seller && !s.sellerName.toLowerCase().includes(seller)) return false;
+                if (client && !s.client.toLowerCase().includes(client)) return false;
+                if (status && (s.status || 'Pendente') !== status) return false;
+                return true;
+            });
+        };
+
+        window.sortTableAzul = function(column) {
+            if (azul_sortColumn === column) azul_sortAsc = !azul_sortAsc;
+            else { azul_sortColumn = column; azul_sortAsc = true; }
+            window.renderTableAzul();
+        };
+
+        window.renderTableAzul = function() {
+            let filtered = window.getFilteredSalesAzul();
+
+            filtered.sort((a, b) => {
+                let valA = a[azul_sortColumn] || '';
+                let valB = b[azul_sortColumn] || '';
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return azul_sortAsc ? -1 : 1;
+                if (valA > valB) return azul_sortAsc ? 1 : -1;
+                return 0;
+            });
+
+            const tbody = document.getElementById('tableBodyAzul');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalSalesVal = 0, totalCommissionVal = 0;
+
+            filtered.forEach((sale) => {
+                const saleVal = parseFloat(sale.saleValue) || 0;
+                const commVal = parseFloat(sale.commissionValue) || 0;
+                totalSalesVal += saleVal;
+                totalCommissionVal += commVal;
+
+                const elig = getCommissionEligibilityAzul(sale);
+                const dateFormatted = sale.date ? sale.date.split('-').reverse().join('/') : '-';
+
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3 font-bold">${sale.sellerName}</td>
+                        <td class="p-3">${sale.nf}</td>
+                        <td class="p-3">${dateFormatted}</td>
+                        <td class="p-3">${sale.client}</td>
+                        <td class="p-3">${formatarMoeda(saleVal)}</td>
+                        <td class="p-3 text-blue-700 font-black">${formatarMoeda(commVal)}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-lg text-[10px] font-bold ${elig.class}">${elig.info}</span></td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-lg text-[10px] font-bold ${sale.status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${sale.status || 'Pendente'}</span></td>
+                        <td class="p-3 space-x-2">
+                            <button onclick="editSaleAzul('${sale.id}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteSaleAzul('${sale.id}')" class="text-red-600"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        };
+
+        window.salvarVendaAzul = function(e) {
+            e.preventDefault();
+            const saleValue = parseFloat(safeGetVal('azul_saleValue')) || 0;
+            const commissionPercent = parseFloat(safeGetVal('azul_commissionPercent')) || 0;
+            const entryPercent = parseFloat(safeGetVal('azul_entryPercent')) || 0;
+            const paymentCond = safeGetVal('azul_paymentCond');
+
+            const saleData = {
+                id: azul_editingIndex !== null ? azul_editingIndex : Date.now().toString(),
+                autor: window.currentUser ? window.currentUser.email : '',
+                sellerName: safeGetVal('azul_sellerName'),
+                date: safeGetVal('azul_date'),
+                nf: safeGetVal('azul_nfNumber'),
+                client: safeGetVal('azul_client'),
+                clientType: safeGetVal('azul_clientType'),
+                itemType: safeGetVal('azul_itemType'),
+                saleValue: saleValue,
+                entryPercent: entryPercent,
+                paymentCond: paymentCond,
+                installmentsCount: paymentCond === 'Parcelado' ? (parseInt(safeGetVal('azul_installmentsCount')) || 1) : 1,
+                installmentInterval: paymentCond === 'Parcelado' ? (parseInt(safeGetVal('azul_installmentInterval')) || 30) : 30,
+                commissionPercent: commissionPercent,
+                commissionValue: saleValue * (commissionPercent / 100),
+                status: 'Pendente'
+            };
+
+            if (azul_editingIndex !== null) {
+                const idx = window.listaComissoesAzul.findIndex(s => s.id === azul_editingIndex);
+                if(idx > -1) { saleData.status = window.listaComissoesAzul[idx].status; window.listaComissoesAzul[idx] = saleData; }
+                azul_editingIndex = null;
+            } else {
+                window.listaComissoesAzul.push(saleData);
+            }
+
+            localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+            window.resetFormAzul();
+            window.renderTableAzul();
+        };
+
+        window.resetFormAzul = function() {
+            document.getElementById('commissionFormAzul').reset();
+            azul_editingIndex = null;
+            safeSetText('formTitleAzul', "Nova Venda");
+            document.getElementById('btnSubmitAzul').innerHTML = 'Salvar Venda';
+            document.getElementById('btnCancelEditAzul').classList.add('hidden');
+            window.updatePaymentFieldsAzul();
+        };
+
+        window.deleteSaleAzul = function(id) {
+            if(confirm('Excluir?')) {
+                window.listaComissoesAzul = window.listaComissoesAzul.filter(s => s.id !== id);
+                localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+                window.renderTableAzul();
+            }
+        };
+
+        window.editSaleAzul = function(id) {
+            const sale = window.listaComissoesAzul.find(s => s.id === id);
+            if (!sale) return;
+            azul_editingIndex = id;
+            safeSetVal('azul_sellerName', sale.sellerName);
+            safeSetVal('azul_date', sale.date);
+            safeSetVal('azul_nfNumber', sale.nf);
+            safeSetVal('azul_client', sale.client);
+            safeSetVal('azul_clientType', sale.clientType);
+            safeSetVal('azul_itemType', sale.itemType);
+            safeSetVal('azul_saleValue', sale.saleValue);
+            safeSetVal('azul_entryPercent', sale.entryPercent);
+            safeSetVal('azul_paymentCond', sale.paymentCond);
+            safeSetVal('azul_installmentsCount', sale.installmentsCount);
+            safeSetVal('azul_installmentInterval', sale.installmentInterval);
+            safeSetVal('azul_commissionPercent', sale.commissionPercent);
+            window.updatePaymentFieldsAzul();
+            safeSetText('formTitleAzul', "Editar Venda");
+            document.getElementById('btnSubmitAzul').innerHTML = 'Atualizar';
+            document.getElementById('btnCancelEditAzul').classList.remove('hidden');
+        };
+
+        window.exportToExcelAzul = function() { alert('Exportação acionada.'); };
+        window.renderTableAzul();
     </script>
 </body>
 </html>
