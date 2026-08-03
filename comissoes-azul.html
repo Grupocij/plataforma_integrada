@@ -23,23 +23,29 @@
     </header>
 
     <main id="main-content" class="max-w-7xl mx-auto p-6 space-y-6 hidden">
-        <!-- Conteúdo do módulo aqui -->
-        <h2 class="text-xl font-bold">Módulo de Comissões</h2>
-        <!-- O resto do conteúdo do módulo de comissões... -->
+        <h2 class="text-xl font-bold">Módulo de Comissões - Azul</h2>
+        <div id="content-container" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <!-- Conteúdo carregado via JS -->
+            <p class="text-slate-500">Carregando dados da plataforma...</p>
+        </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
         const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
         const EMAILS_VENDEDORES = ['comercial.rs@grupocij.com', 'comercial.sc@grupocij.com', 'comercial02.sc@grupocij.com'];
 
         onAuthStateChanged(auth, (user) => {
+            const badge = document.getElementById('user-role-badge');
+            
             if (!user) {
                 window.location.href = 'index.html';
                 return;
@@ -49,17 +55,34 @@
             const isAdmin = EMAILS_ADMIN_FINANCEIRO.includes(email) || email.includes('admin') || email.includes('financeiro');
             const isVendedor = EMAILS_VENDEDORES.includes(email) || email.includes('vendedor') || email.includes('vendas');
 
-            const badge = document.getElementById('user-role-badge');
-            
             if (isAdmin || isVendedor) {
                 document.getElementById('main-content').classList.remove('hidden');
                 badge.innerText = isAdmin ? 'Admin / Financeiro' : 'Vendedor';
                 badge.className = isAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-950 text-blue-300 border-blue-800';
+                
+                // Conecta e busca dados
+                const comissoesRef = collection(db, 'artifacts', 'plataforma-cij', 'public', 'data', 'comissoes_azul');
+                onSnapshot(comissoesRef, (snapshot) => {
+                    const dados = [];
+                    snapshot.forEach(d => dados.push(d.data()));
+                    console.log("Dados carregados:", dados);
+                    window.renderizarConteudo(dados);
+                });
             } else {
-                alert("Acesso Negado: Perfil técnico não possui permissão para este módulo.");
+                alert("Acesso Negado.");
                 window.location.href = 'index.html';
             }
         });
+
+        window.renderizarConteudo = function(dados) {
+            const container = document.getElementById('content-container');
+            if (dados.length === 0) {
+                container.innerHTML = '<p class="text-slate-500">Nenhuma comissão registrada.</p>';
+            } else {
+                container.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-100"><th class="p-2">Vendedor</th><th class="p-2">NF</th><th class="p-2">Cliente</th><th class="p-2">Valor</th></tr></thead>
+                <tbody>${dados.map(d => `<tr><td class="p-2">${d.sellerName || '-'}</td><td class="p-2">${d.nf || '-'}</td><td class="p-2">${d.client || '-'}</td><td class="p-2">R$ ${parseFloat(d.saleValue||0).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+            }
+        };
     </script>
 </body>
 </html>
