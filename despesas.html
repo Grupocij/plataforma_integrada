@@ -21,7 +21,10 @@
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
                     <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
-                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/><path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/></svg>
+                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
+                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
+                        </svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -32,7 +35,9 @@
                     </div>
                 </div>
                 <nav class="flex space-x-2 items-center">
-                    <a href="index.html" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 shadow-sm"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+                    <a href="index.html" id="btn-voltar-hub" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 shadow-sm">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar ao Hub
+                    </a>
                 </nav>
             </div>
         </div>
@@ -40,141 +45,473 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- FORMULÁRIO DE LANÇAMENTO -->
             <section id="sec-form-despesas" class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit no-print">
                 <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-receipt text-sky-600 text-lg"></i><h2 class="text-base font-bold text-slate-900">Novo Lançamento</h2></div>
-                    <span id="desp-num-badge" class="text-[10px] px-2.5 py-1 bg-sky-100 text-sky-800 font-extrabold rounded-full border border-sky-300">Carregando...</span>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-sky-600 text-lg"></i>
+                        <h2 class="text-base font-bold text-slate-900" id="form-title">Novo Lançamento</h2>
+                    </div>
+                    <span id="desp-num-badge" class="text-[10px] px-2.5 py-1 bg-sky-100 text-sky-800 font-extrabold rounded-full border border-sky-300">REL-1000</span>
                 </div>
+                
                 <form id="expense-form" class="space-y-4" onsubmit="salvarDespesa(event)">
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Técnico / Vendedor *</label><select id="desp_tecnico" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:border-sky-500"><option value="" disabled selected>Selecione...</option><option value="Filipe">Filipe</option><option value="Anderson">Anderson</option><option value="Adriano">Adriano</option><option value="Rafael">Rafael</option><option value="Gabriel">Gabriel</option><option value="Sidnei">Sidnei</option></select></div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cliente *</label><input type="text" id="desp_cliente" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cidade *</label><input type="text" id="desp_cidade" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"></div>
+                    <input type="hidden" id="edit_id" value="">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Técnico / Vendedor *</label>
+                        <select id="desp_tecnico" required onchange="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:border-sky-500">
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="Filipe">Filipe</option>
+                            <option value="Anderson">Anderson</option>
+                            <option value="Adriano">Adriano</option>
+                            <option value="Rafael">Rafael</option>
+                            <option value="Gabriel">Gabriel</option>
+                            <option value="Sidnei">Sidnei</option>
+                        </select>
                     </div>
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Descrição *</label><input type="text" id="desp_descricao" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"></div>
+
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Valor (R$) *</label><input type="number" id="desp_valor" step="0.01" required class="w-full px-3 py-2.5 bg-sky-50 border border-sky-300 text-sky-900 rounded-xl text-xs font-bold outline-none focus:border-sky-600"></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Data *</label><input type="date" id="desp_data" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-sky-500"></div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cliente *</label>
+                            <input type="text" id="desp_cliente" required oninput="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cidade *</label>
+                            <input type="text" id="desp_cidade" required oninput="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500">
+                        </div>
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Descrição *</label>
+                        <input type="text" id="desp_descricao" required oninput="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500">
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoria *</label><select id="desp_categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:border-sky-500"><option value="Combustível">Combustível</option><option value="Pedágio">Pedágio</option><option value="Alimentação/Bebida">Alimentação/Bebida</option><option value="Peças/Ferramentas">Peças/Ferramentas</option><option value="Hotel">Hotel</option><option value="Outros">Outros</option></select></div>
-                        <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pagamento *</label><select id="desp_cartao" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500"><option value="Mastercard **0067">Mastercard **0067</option><option value="Mastercard **9553">Mastercard **9553</option><option value="Visa **7543">Visa **7543</option><option value="Dinheiro / Pix">Dinheiro / Pix</option></select></div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Valor (R$) *</label>
+                            <input type="number" id="desp_valor" step="0.01" required oninput="marcarFormModificado()" class="w-full px-3 py-2.5 bg-sky-50 border border-sky-300 text-sky-900 rounded-xl text-xs font-bold outline-none focus:border-sky-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Data *</label>
+                            <input type="date" id="desp_data" required onchange="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-sky-500">
+                        </div>
                     </div>
-                    <button type="submit" id="btn-submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-xs shadow-md">Adicionar Despesa</button>
-                    <button type="button" onclick="iniciarNovoRelatorio()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs">Novo Relatório</button>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoria *</label>
+                            <select id="desp_categoria" required onchange="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:border-sky-500">
+                                <option value="Combustível">Combustível</option>
+                                <option value="Pedágio">Pedágio</option>
+                                <option value="Alimentação/Bebida">Alimentação/Bebida</option>
+                                <option value="Peças/Ferramentas">Peças/Ferramentas</option>
+                                <option value="Hotel">Hotel</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pagamento *</label>
+                            <select id="desp_cartao" required onchange="marcarFormModificado()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-sky-500">
+                                <option value="Mastercard **0067">Mastercard **0067</option>
+                                <option value="Mastercard **9553">Mastercard **9553</option>
+                                <option value="Visa **7543">Visa **7543</option>
+                                <option value="Dinheiro / Pix">Dinheiro / Pix</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-xs shadow-md transition">Adicionar Despesa</button>
+                    <button type="button" id="btn-cancelar-edit" onclick="cancelarEdicao()" class="w-full py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl text-xs hidden">Cancelar Edição</button>
+                    
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <button type="button" onclick="iniciarNovoRelatorio()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-folder-plus text-sky-400"></i> Encerrar e Abrir Novo Relatório
+                        </button>
+                    </div>
                 </form>
             </section>
 
+            <!-- HISTÓRICO DE RELATÓRIOS (LISTA SUSPENSA / ACORDEÃO) -->
             <section class="lg:col-span-8 space-y-4">
-                <div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 class="text-sm font-bold text-slate-900">Histórico de Relatórios</h3>
-                    <div id="desp-total-acumulado" class="text-lg font-black text-sky-800">R$ 0,00</div>
+                <div class="flex items-center justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Histórico de Relatórios</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Clique no card para expandir e visualizar todos os itens do relatório.</p>
+                    </div>
+                    <div id="desp-total-acumulado" class="text-xl font-black text-sky-900 bg-sky-50 px-4 py-2 rounded-xl border border-sky-200">R$ 0,00</div>
                 </div>
+
                 <div id="despesas-list" class="space-y-3">
-                    <!-- Lista de Acordeons será injetada aqui -->
+                    <!-- Cards de Relatórios serão injetados aqui em formato de Lista Suspensa -->
                 </div>
             </section>
         </div>
     </main>
 
-    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i><span id="toast-message" class="text-xs font-semibold">Sucesso!</span></div>
+    <!-- NOTIFICAÇÃO TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", 
+            authDomain: "plataforma-cij.firebaseapp.com", 
+            projectId: "plataforma-cij", 
+            storageBucket: "plataforma-cij.firebasestorage.app", 
+            messagingSenderId: "949985395100", 
+            appId: "1:949985395100:web:cf881e0c91c63175228859" 
+        };
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'plataforma-cij';
 
-        // Carregar Dados
-        onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'despesas'), orderBy('timestamp', 'desc')), (snap) => {
-            window.listaDespesas = []; snap.forEach(d => window.listaDespesas.push(d.data()));
-            if(window.renderizar) window.renderizar();
+        // Verifica perfil de login
+        onAuthStateChanged(auth, (user) => {
+            const badge = document.getElementById('user-role-badge');
+            if (user) {
+                if(badge) {
+                    badge.innerText = 'Autenticado';
+                    badge.className = "text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-emerald-950 text-emerald-300 border-emerald-800";
+                }
+            } else if (badge) {
+                badge.innerText = 'Visitante / Mod. Livre';
+            }
         });
 
+        // Escutador em Tempo Real para Buscar Despesas
+        const despRef = collection(db, 'artifacts', appId, 'public', 'data', 'despesas');
+        const q = query(despRef, orderBy('timestamp', 'desc'));
+
+        onSnapshot(q, (snap) => {
+            window.listaDespesas = [];
+            snap.forEach(d => window.listaDespesas.push(d.data()));
+            if (window.renderizar) window.renderizar();
+        }, (err) => {
+            console.error("Erro ao escutar dados:", err);
+        });
+
+        // Obter Próximo Relatório do Banco
+        window.obterUltimoRelatorioFirebase = async function() {
+            try {
+                const counterRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'despesas');
+                let num = "REL-1000";
+                await runTransaction(db, async (t) => {
+                    const cDoc = await t.get(counterRef);
+                    const current = cDoc.exists() ? (cDoc.data().current || 1000) : 1000;
+                    num = `REL-${current}`;
+                });
+                return num;
+            } catch(e) {
+                return "REL-1000";
+            }
+        };
+
+        // Salvar ou Atualizar Despesa no Firebase
         window.dbSalvar = async function(desp) {
             const counterRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'despesas');
             await runTransaction(db, async (t) => {
                 const cDoc = await t.get(counterRef);
-                const current = cDoc.exists() ? cDoc.data().current : 1000;
-                if(!desp.num_relatorio) { // Se não tiver número, busca o último ou cria
+                const current = cDoc.exists() ? (cDoc.data().current || 1000) : 1000;
+                
+                if (!desp.num_relatorio) {
                     desp.num_relatorio = `REL-${current}`;
-                    t.set(counterRef, { current: current + 1 }, { merge: true });
                 }
-                t.set(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', desp.id), desp);
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'despesas', desp.id);
+                t.set(docRef, desp, { merge: true });
             });
         };
 
-        window.dbExcluir = async function(id) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', id)); };
+        // Avançar Sequencial do Relatório no Firebase
+        window.dbAvancarSequencialRelatorio = async function() {
+            const counterRef = doc(db, 'artifacts', appId, 'public', 'data', 'counters', 'despesas');
+            let novoRel = "REL-1001";
+            await runTransaction(db, async (t) => {
+                const cDoc = await t.get(counterRef);
+                const current = cDoc.exists() ? (cDoc.data().current || 1000) : 1000;
+                const next = current + 1;
+                t.set(counterRef, { current: next }, { merge: true });
+                novoRel = `REL-${next}`;
+            });
+            return novoRel;
+        };
+
+        // Excluir Despesa
+        window.dbExcluir = async function(id) {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'despesas', id));
+        };
     </script>
 
     <script>
         window.listaDespesas = [];
-        window.numRelatorioAtual = localStorage.getItem('cij_last_rel') || 'REL-1001';
-        
-        window.iniciarNovoRelatorio = function() {
-            const num = parseInt(window.numRelatorioAtual.replace('REL-', '')) + 1;
-            window.numRelatorioAtual = `REL-${num}`;
-            localStorage.setItem('cij_last_rel', window.numRelatorioAtual);
-            document.getElementById('desp-num-badge').innerText = window.numRelatorioAtual;
-            window.mostrarNotificacao("Novo relatório iniciado: " + window.numRelatorioAtual);
+        window.formModificado = false;
+        window.numRelatorioAtual = localStorage.getItem('cij_last_rel') || 'REL-1000';
+
+        // Avisar ao tentar fechar a página com alterações não salvas
+        window.marcarFormModificado = function() {
+            window.formModificado = true;
         };
 
+        window.addEventListener('beforeunload', (e) => {
+            if (window.formModificado) {
+                e.preventDefault();
+                e.returnValue = 'Você tem um lançamento em andamento. Deseja realmente sair sem finalizar?';
+            }
+        });
+
+        // Lógica de Salvar Despesa
         window.salvarDespesa = async function(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-submit'); btn.disabled = true;
+            const btn = document.getElementById('btn-submit'); 
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salva...';
+
+            const editId = document.getElementById('edit_id').value;
             const nova = {
-                id: Date.now().toString(), num_relatorio: window.numRelatorioAtual, tecnico: document.getElementById('desp_tecnico').value, 
-                cliente: document.getElementById('desp_cliente').value, cidade: document.getElementById('desp_cidade').value, 
-                descricao: document.getElementById('desp_descricao').value, valor: parseFloat(document.getElementById('desp_valor').value), 
-                data: document.getElementById('desp_data').value, categoria: document.getElementById('desp_categoria').value, 
+                id: editId || Date.now().toString(),
+                num_relatorio: window.numRelatorioAtual,
+                tecnico: document.getElementById('desp_tecnico').value,
+                cliente: document.getElementById('desp_cliente').value,
+                cidade: document.getElementById('desp_cidade').value,
+                descricao: document.getElementById('desp_descricao').value,
+                valor: parseFloat(document.getElementById('desp_valor').value) || 0,
+                data: document.getElementById('desp_data').value,
+                categoria: document.getElementById('desp_categoria').value,
+                cartao: document.getElementById('desp_cartao').value,
                 timestamp: Date.now()
             };
-            try { await window.dbSalvar(nova); window.mostrarNotificacao('Salvo!'); document.getElementById('expense-form').reset(); }
-            catch(err) { alert(err.message); } finally { btn.disabled = false; }
+
+            try {
+                if (typeof window.dbSalvar === 'function') {
+                    await window.dbSalvar(nova);
+                } else {
+                    // Fallback Local
+                    const idx = window.listaDespesas.findIndex(x => x.id === nova.id);
+                    if (idx >= 0) window.listaDespesas[idx] = nova;
+                    else window.listaDespesas.unshift(nova);
+                    window.renderizar();
+                }
+
+                window.mostrarNotificacao(editId ? 'Despesa atualizada com sucesso!' : 'Despesa adicionada com sucesso!');
+                window.cancelarEdicao();
+                window.formModificado = false;
+            } catch(err) {
+                alert("Erro ao salvar: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Adicionar Despesa';
+            }
         };
 
+        // Alternar para o Próximo Relatório Sequencial
+        window.iniciarNovoRelatorio = async function() {
+            if (confirm("Deseja encerrar o relatório atual " + window.numRelatorioAtual + " e iniciar o próximo?")) {
+                if (typeof window.dbAvancarSequencialRelatorio === 'function') {
+                    window.numRelatorioAtual = await window.dbAvancarSequencialRelatorio();
+                } else {
+                    const num = parseInt(window.numRelatorioAtual.replace('REL-', '')) + 1;
+                    window.numRelatorioAtual = `REL-${num}`;
+                }
+                localStorage.setItem('cij_last_rel', window.numRelatorioAtual);
+                document.getElementById('desp-num-badge').innerText = window.numRelatorioAtual;
+                window.mostrarNotificacao("Novo relatório iniciado: " + window.numRelatorioAtual);
+            }
+        };
+
+        // Preencher Campos para Edição (Para Todos os Usuários)
+        window.editarDespesa = function(id) {
+            const item = window.listaDespesas.find(x => x.id === id);
+            if (!item) return;
+
+            document.getElementById('edit_id').value = item.id;
+            document.getElementById('desp_tecnico').value = item.tecnico;
+            document.getElementById('desp_cliente').value = item.cliente;
+            document.getElementById('desp_cidade').value = item.cidade;
+            document.getElementById('desp_descricao').value = item.descricao;
+            document.getElementById('desp_valor').value = item.valor;
+            document.getElementById('desp_data').value = item.data;
+            document.getElementById('desp_categoria').value = item.categoria;
+            document.getElementById('desp_cartao').value = item.cartao;
+
+            window.numRelatorioAtual = item.num_relatorio;
+            document.getElementById('desp-num-badge').innerText = item.num_relatorio;
+
+            document.getElementById('form-title').innerText = "Editar Lançamento";
+            document.getElementById('btn-submit').innerText = "Atualizar Despesa";
+            document.getElementById('btn-cancelar-edit').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // Cancelar Edição
+        window.cancelarEdicao = function() {
+            document.getElementById('expense-form').reset();
+            document.getElementById('edit_id').value = "";
+            document.getElementById('desp_data').valueAsDate = new Date();
+            document.getElementById('form-title').innerText = "Novo Lançamento";
+            document.getElementById('btn-submit').innerText = "Adicionar Despesa";
+            document.getElementById('btn-cancelar-edit').classList.add('hidden');
+            document.getElementById('desp-num-badge').innerText = window.numRelatorioAtual;
+            window.formModificado = false;
+        };
+
+        // Excluir Item
+        window.excluirDespesa = async function(id) {
+            if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+                try {
+                    if (typeof window.dbExcluir === 'function') {
+                        await window.dbExcluir(id);
+                    } else {
+                        window.listaDespesas = window.listaDespesas.filter(x => x.id !== id);
+                        window.renderizar();
+                    }
+                    window.mostrarNotificacao("Despesa removida.");
+                } catch(e) {
+                    alert("Erro ao excluir: " + e.message);
+                }
+            }
+        };
+
+        // Renderização em Lista Suspensa (Acordeão por REL-XXXX)
         window.renderizar = function() {
             const list = document.getElementById('despesas-list');
-            const grouped = window.listaDespesas.reduce((acc, obj) => { (acc[obj.num_relatorio] = acc[obj.num_relatorio] || []).push(obj); return acc; }, {});
-            
-            let total = 0; list.innerHTML = '';
-            Object.keys(grouped).sort().reverse().forEach(rel => {
+            if(!list) return;
+
+            const grouped = window.listaDespesas.reduce((acc, obj) => {
+                const relKey = obj.num_relatorio || 'REL-1000';
+                (acc[relKey] = acc[relKey] || []).push(obj);
+                return acc;
+            }, {});
+
+            let totalGeral = 0;
+            list.innerHTML = '';
+
+            const chavesOrdenadas = Object.keys(grouped).sort().reverse();
+
+            if (chavesOrdenadas.length === 0) {
+                list.innerHTML = `
+                    <div class="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-400">
+                        <i class="fa-solid fa-receipt text-3xl mb-2 opacity-40"></i>
+                        <p class="text-xs font-semibold">Nenhuma despesa cadastrada ainda.</p>
+                    </div>`;
+                document.getElementById('desp-total-acumulado').innerText = `R$ 0,00`;
+                return;
+            }
+
+            chavesOrdenadas.forEach((rel, index) => {
                 const items = grouped[rel];
-                const relTotal = items.reduce((sum, item) => sum + item.valor, 0);
-                total += relTotal;
-                
+                const relTotal = items.reduce((sum, i) => sum + (parseFloat(i.valor) || 0), 0);
+                totalGeral += relTotal;
+
                 const card = document.createElement('div');
-                card.className = "bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden";
+                card.className = "bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition";
+
+                // Abrir o primeiro relatório automaticamente
+                const estaAberto = index === 0 ? '' : 'hidden';
+                const iconeRotacao = index === 0 ? 'rotate-180' : '';
+
                 card.innerHTML = `
-                    <div class="p-4 bg-slate-50 flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        <div class="font-bold text-sky-900">${rel} <span class="text-slate-400 text-xs font-normal">(${items.length} itens)</span></div>
-                        <div class="font-black text-slate-800">R$ ${relTotal.toFixed(2)}</div>
+                    <!-- CABEÇALHO DA LISTA SUSPENSA (CARD CLICÁVEL) -->
+                    <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition select-none"
+                         onclick="
+                            const content = this.nextElementSibling;
+                            const icon = this.querySelector('.accordion-icon');
+                            content.classList.toggle('hidden');
+                            icon.classList.toggle('rotate-180');
+                         ">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-xl bg-sky-100 text-sky-800 font-extrabold text-xs flex items-center justify-center border border-sky-300">
+                                <i class="fa-solid fa-folder-closed"></i>
+                            </span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-slate-900 text-sm">${rel}</span>
+                                    <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">${items.length} item(ns)</span>
+                                </div>
+                                <span class="text-xs text-slate-500 font-medium">${items[0]?.tecnico || 'Técnico'} | ${items[0]?.cidade || ''}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <span class="text-base font-black text-sky-900">R$ ${relTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                            <i class="fa-solid fa-chevron-down accordion-icon text-slate-400 text-xs transition-transform duration-200 ${iconeRotacao}"></i>
+                        </div>
                     </div>
-                    <div class="hidden p-4">
-                        <table class="w-full text-xs">
-                            ${items.map(i => `<tr><td class="py-2">${i.data}</td><td class="py-2 font-bold">${i.cliente}</td><td class="py-2 text-right">R$ ${i.valor.toFixed(2)}</td></tr>`).join('')}
+
+                    <!-- CORPO DA LISTA SUSPENSA (TABELA COM AS DESPESAS) -->
+                    <div class="${estaAberto} p-4 bg-white overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead>
+                                <tr class="text-slate-400 font-bold uppercase border-b border-slate-100 text-[10px]">
+                                    <th class="py-2 px-2">Data</th>
+                                    <th class="py-2 px-2">Cliente / Cidade</th>
+                                    <th class="py-2 px-2">Descrição</th>
+                                    <th class="py-2 px-2">Categoria</th>
+                                    <th class="py-2 px-2">Pagamento</th>
+                                    <th class="py-2 px-2 text-right">Valor</th>
+                                    <th class="py-2 px-2 text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium">
+                                ${items.map(item => `
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-2.5 px-2 text-slate-600">${item.data ? item.data.split('-').reverse().join('/') : '-'}</td>
+                                        <td class="py-2.5 px-2 font-bold text-slate-800">${item.cliente || '-'}<br><span class="text-[10px] text-slate-400 font-normal">${item.cidade || ''}</span></td>
+                                        <td class="py-2.5 px-2 text-slate-700">${item.descricao || '-'}</td>
+                                        <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">${item.categoria || '-'}</span></td>
+                                        <td class="py-2.5 px-2 text-slate-500">${item.cartao || '-'}</td>
+                                        <td class="py-2.5 px-2 text-right font-black text-slate-900">R$ ${(parseFloat(item.valor)||0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                        <td class="py-2.5 px-2 text-center">
+                                            <div class="flex items-center justify-center gap-1">
+                                                <button onclick="editarDespesa('${item.id}')" title="Editar Despesa" class="p-1.5 text-sky-600 hover:bg-sky-50 rounded-lg transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button onclick="excluirDespesa('${item.id}')" title="Excluir Despesa" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
                         </table>
                     </div>
                 `;
                 list.appendChild(card);
             });
-            document.getElementById('desp-total-acumulado').innerText = `R$ ${total.toFixed(2)}`;
+
+            document.getElementById('desp-total-acumulado').innerText = `R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         };
 
         window.mostrarNotificacao = function(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerText = msg;
-            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 3000);
+            toast.classList.remove('hidden'); 
+            setTimeout(() => toast.classList.add('hidden'), 3500);
         };
 
-        window.addEventListener('DOMContentLoaded', () => { 
+        // Inicialização ao carregar a página
+        window.addEventListener('DOMContentLoaded', async () => { 
             document.getElementById('desp_data').valueAsDate = new Date();
+            
+            if (typeof window.obterUltimoRelatorioFirebase === 'function') {
+                window.numRelatorioAtual = await window.obterUltimoRelatorioFirebase();
+            }
             document.getElementById('desp-num-badge').innerText = window.numRelatorioAtual;
+            
+            if (window.renderizar) window.renderizar();
         });
     </script>
 </body>
 </html>
+```
+
+### O que você verá ao atualizar:
+- O histórico de relatórios no lado direito agora exibe apenas cards sanfona agrupados (`REL-1000`, `REL-1001`, etc.).
+- Ao clicar em qualquer card, a lista suspensa se abre com as despesas daquele relatório.
+- O botão **Editar (lápis)** pode ser usado por qualquer usuário em qualquer item.
+- Ao tentar mudar de página com um formulário preenchido, o navegador dispara o alerta de saída.
