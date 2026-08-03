@@ -219,7 +219,7 @@
             // Verifica Permissão
             onAuthStateChanged(auth, (user) => {
                 if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                    // window.location.href = 'index.html'; // No Github, descomente essa linha
+                     window.location.href = 'index.html'; // No Github, descomente essa linha
                 }
             });
 
