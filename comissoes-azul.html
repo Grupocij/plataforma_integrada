@@ -3,104 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comissões Azul - Gestão Integrada</title>
+    <title>Comissões Azul - Portal Grupo CIJ</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ExcelJS and FileSaver para exportação -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="min-h-screen pb-12 flex flex-col">
 
-    <div class="max-w-7xl mx-auto space-y-6">
-        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-8 rounded-3xl text-white shadow-xl">
-            <h1 class="text-2xl font-black">Controle de Comissões Azul</h1>
-            <p class="text-blue-100 text-sm opacity-90">Gestão inteligente de vendas, regras de liberação e liquidação.</p>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-blue-600">Total de Vendas</p><h3 id="kpiTotalSalesAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p id="kpiSalesCountAzul" class="text-xs text-slate-500">0 vendas</p></div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-indigo-600">Total Comissões</p><h3 id="kpiTotalCommissionsAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p class="text-xs text-slate-500">Média do período</p></div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-amber-700">Comissões Pendentes</p><h3 id="kpiPendingCommissionsAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p class="text-xs text-slate-500">Aguardando quitação</p></div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm"><p class="text-[10px] font-bold uppercase text-emerald-700">Comissões Pagas</p><h3 id="kpiPaidCommissionsAzul" class="text-2xl font-black text-slate-900 mt-1">R$ 0,00</h3><p class="text-xs text-slate-500">Liquidadas</p></div>
-        </div>
-
-        <div class="bg-white p-6 rounded-3xl border shadow-sm">
-            <div class="flex items-center justify-between mb-6">
-                <h3 id="formTitleAzul" class="font-black text-slate-800 text-lg flex items-center gap-2"><i class="fa-solid fa-cart-plus text-blue-600"></i> Nova Venda</h3>
-                <button type="button" id="btnCancelEditAzul" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl transition" onclick="resetFormAzul()">Cancelar Edição</button>
-            </div>
-            
-            <form id="commissionFormAzul" onsubmit="salvarVendaAzul(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vendedor *</label><input type="text" id="azul_sellerName" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data da Venda *</label><input type="date" id="azul_date" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº da NF *</label><input type="text" id="azul_nfNumber" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente *</label><input type="text" id="azul_client" required class="w-full border p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"></div>
-                
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Cliente</label><select id="azul_clientType" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"><option value="Atual">Cliente Atual</option><option value="Novo">Cliente Novo</option></select></div>
-                
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Item Vendido</label>
-                    <select id="azul_itemType" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50">
-                        <option value="Maquina">Maquina</option>
-                        <option value="Alternativo">Alternativo</option>
-                        <option value="Locação">Locação</option>
-                        <option value="Consumíveis">Consumíveis</option>
-                        <option value="Corpo de Prova">Corpo de Prova</option>
-                        <option value="Certificação">Certificação</option>
-                        <option value="Contrato">Contrato</option>
-                    </select>
-                </div>
-
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor da Venda (R$) *</label><input type="number" step="0.01" id="azul_saleValue" required class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entrada (%) *</label><input type="number" id="azul_entryPercent" required class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
-                
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Condição de Pagamento</label><select id="azul_paymentCond" onchange="updatePaymentFieldsAzul()" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"><option value="À Vista">À Vista</option><option value="Parcelado">Parcelado</option></select></div>
-                <div id="azul_containerInstallments" class="hidden"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Número de parcelas</label><input type="number" id="azul_installmentsCount" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
-                <div id="azul_containerInterval" class="hidden"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Intervalo (dias)</label><select id="azul_installmentInterval" class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"><option value="7">7 dias</option><option value="10">10 dias</option><option value="14">14 dias</option><option value="21">21 dias</option><option value="28">28 dias</option><option value="30">30 dias</option><option value="35">35 dias</option></select></div>
-                
-                <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Comissão (%) *</label><input type="number" id="azul_commissionPercent" required class="w-full border p-2.5 rounded-xl text-sm bg-slate-50"></div>
-                
-                <button type="submit" id="btnSubmitAzul" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl transition col-span-1 md:col-span-2 lg:col-span-4 mt-2">Salvar Venda</button>
+    <!-- TELA DE LOGIN / BLOQUEIO DE TÉCNICOS -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
+            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
             </form>
-        </div>
-
-        <div class="bg-white p-6 rounded-3xl border shadow-sm">
-            <div class="flex flex-wrap gap-4 mb-6">
-                <input type="text" id="azul_filterSeller" oninput="renderTableAzul()" placeholder="Filtrar Vendedor..." class="border p-2 rounded-xl text-sm">
-                <input type="text" id="azul_filterClient" oninput="renderTableAzul()" placeholder="Filtrar Cliente..." class="border p-2 rounded-xl text-sm">
-                <select id="azul_filterStatus" onchange="renderTableAzul()" class="border p-2 rounded-xl text-sm"><option value="">Todos Status</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option></select>
-                <button onclick="exportToExcelAzul()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold ml-auto"><i class="fa-solid fa-file-excel mr-2"></i> Exportar Excel</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead><tr class="bg-slate-900 text-white text-left">
-                        <th class="p-4">Vendedor</th><th class="p-4">NF</th><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Valor</th><th class="p-4">Comissão</th><th class="p-4">Previsão</th><th class="p-4">Status</th><th class="p-4">Ações</th>
-                    </tr></thead>
-                    <tbody id="tableBodyAzul"></tbody>
-                    <tfoot id="tableFooterAzul" class="font-bold text-slate-800"></tfoot>
-                </table>
-            </div>
         </div>
     </div>
 
+    <!-- HEADER -->
+    <header class="bg-[#0f172a] text-white p-4 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-blue-300 bg-blue-950 px-2.5 py-0.5 rounded border border-blue-800">Comissões Azul</span>
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+            </div>
+            <nav class="flex gap-4 items-center">
+                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+        
+        <!-- DASHBOARD KPIS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Total de Vendas</p>
+                <h3 id="kpiTotalSalesAzul" class="text-2xl font-black text-blue-950 mt-1">R$ 0,00</h3>
+                <p id="kpiSalesCountAzul" class="text-xs font-medium text-slate-500 mt-1">0 vendas</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">Total Comissões</p>
+                <h3 id="kpiTotalCommissionsAzul" class="text-2xl font-black text-indigo-950 mt-1">R$ 0,00</h3>
+                <p class="text-xs font-medium text-indigo-500 mt-1">Média do período</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Comissões Pendentes</p>
+                <h3 id="kpiPendingCommissionsAzul" class="text-2xl font-black text-amber-900 mt-1">R$ 0,00</h3>
+                <p class="text-xs font-medium text-amber-600 mt-1">Aguardando quitação</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Comissões Pagas</p>
+                <h3 id="kpiPaidCommissionsAzul" class="text-2xl font-black text-emerald-950 mt-1">R$ 0,00</h3>
+                <p class="text-xs font-medium text-emerald-600 mt-1">Liquidadas</p>
+            </div>
+        </div>
+
+        <!-- FORMULÁRIO DE CADASTRO / EDIÇÃO -->
+        <div class="bg-white p-6 rounded-3xl border shadow-sm">
+            <div class="flex items-center justify-between mb-5 border-b border-slate-200 pb-3">
+                <h3 id="formTitleAzul" class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-cart-plus text-blue-600"></i> Nova Venda
+                </h3>
+                <button type="button" id="btnCancelEditAzul" onclick="resetFormAzul()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
+                    Cancelar Edição
+                </button>
+            </div>
+
+            <form id="commissionFormAzul" onsubmit="salvarVendaAzul(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Vendedor *</label>
+                        <input type="text" id="azul_sellerName" required placeholder="Nome do Vendedor" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Data da Venda *</label>
+                        <input type="date" id="azul_date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nº da NF *</label>
+                        <input type="text" id="azul_nfNumber" required placeholder="Ex: NF-1092" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
+                        <input type="text" id="azul_client" required placeholder="Nome do Cliente" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Cliente</label>
+                        <select id="azul_clientType" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-blue-600">
+                            <option value="Atual">Cliente Atual</option>
+                            <option value="Novo">Cliente Novo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Item Vendido</label>
+                        <select id="azul_itemType" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-blue-600">
+                            <option value="Maquina">Maquina</option>
+                            <option value="Alternativo">Alternativo</option>
+                            <option value="Locação">Locação</option>
+                            <option value="Consumíveis">Consumíveis</option>
+                            <option value="Corpo de Prova">Corpo de Prova</option>
+                            <option value="Certificação">Certificação</option>
+                            <option value="Contrato">Contrato</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Valor da Venda (R$) *</label>
+                        <input type="number" step="0.01" min="0" id="azul_saleValue" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Entrada (%) *</label>
+                        <input type="number" step="0.1" min="0" max="100" id="azul_entryPercent" required placeholder="Ex: 20" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Condição de Pagamento</label>
+                        <select id="azul_paymentCond" onchange="updatePaymentFieldsAzul()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-blue-600">
+                            <option value="À Vista">À Vista</option>
+                            <option value="Parcelado">Parcelado</option>
+                        </select>
+                    </div>
+                    <div id="azul_containerInstallments" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Número de parcelas</label>
+                        <input type="number" id="azul_installmentsCount" min="1" max="72" value="1" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                    </div>
+                    <div id="azul_containerInterval" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Intervalo (dias)</label>
+                        <select id="azul_installmentInterval" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-blue-600">
+                            <option value="7">7 dias</option>
+                            <option value="10">10 dias</option>
+                            <option value="14">14 dias</option>
+                            <option value="21">21 dias</option>
+                            <option value="28">28 dias</option>
+                            <option value="30" selected>30 dias</option>
+                            <option value="35">35 dias</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Comissão (%) *</label>
+                        <input type="number" step="0.1" min="0" max="100" id="azul_commissionPercent" required placeholder="Ex: 5" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                    </div>
+                </div>
+                <div class="flex justify-end pt-3">
+                    <button type="submit" id="btnSubmitAzul" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Salvar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- FILTROS E TABELA -->
+        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-blue-600"></i> Filtros e Relatórios
+                </h3>
+                <button onclick="exportToExcelAzul()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vendedor</label>
+                    <input type="text" id="azul_filterSeller" oninput="renderTableAzul()" placeholder="Filtrar..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente</label>
+                    <input type="text" id="azul_filterClient" oninput="renderTableAzul()" placeholder="Filtrar..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                    <input type="date" id="azul_filterDateFrom" onchange="renderTableAzul()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                    <input type="date" id="azul_filterDateTo" onchange="renderTableAzul()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                    <select id="azul_filterStatus" onchange="renderTableAzul()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold outline-none focus:border-blue-600">
+                        <option value="">Todos</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Pago">Pago</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[950px] text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th onclick="sortTableAzul('sellerName')" class="p-3 cursor-pointer hover:bg-slate-800 select-none">Vendedor ↕</th>
+                            <th class="p-3">NF</th>
+                            <th onclick="sortTableAzul('date')" class="p-3 cursor-pointer hover:bg-slate-800 select-none">Data ↕</th>
+                            <th onclick="sortTableAzul('client')" class="p-3 cursor-pointer hover:bg-slate-800 select-none">Cliente ↕</th>
+                            <th class="p-3">Item</th>
+                            <th onclick="sortTableAzul('saleValue')" class="p-3 text-right cursor-pointer hover:bg-slate-800 select-none">Valor ↕</th>
+                            <th class="p-3 text-center">Entrada</th>
+                            <th onclick="sortTableAzul('commissionValue')" class="p-3 text-right cursor-pointer hover:bg-slate-800 select-none">Comissão ↕</th>
+                            <th class="p-3">Previsão Liberação</th>
+                            <th class="p-3 text-center">Status</th>
+                            <th class="p-3 text-center no-print">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyAzul" class="divide-y divide-slate-200 font-medium bg-white">
+                    </tbody>
+                    <tfoot id="tableFooterAzul" class="bg-slate-50/80 font-bold border-t border-slate-300 text-slate-900">
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <!-- FIREBASE SETUP & LÓGICA -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
+        const comissoesAzulCol = collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul');
+
+        window.listaComissoesAzul = JSON.parse(localStorage.getItem('banco_comissoes_azul_cij') || '[]');
+        window.isUserAdminOrFinance = false;
+        window.currentUser = null;
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+        const EMAILS_TECNICOS = ['tecnico.cij3@gmail.com', 'tecnico.cij1@gmail.com', 'engenharia@grupocij.com', 'estoque@grupocij.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                const cleanEmail = user.email.toLowerCase().trim();
+                if (EMAILS_TECNICOS.includes(cleanEmail) || cleanEmail.includes('tecnico')) {
+                    loginScreen.classList.remove('hidden');
+                    document.getElementById('login-message').innerHTML = '<span class="text-red-600 font-bold">Acesso Restrito: Técnicos não possuem permissão para este módulo.</span>';
+                    document.getElementById('auth-form').classList.add('hidden');
+                    signOut(auth);
+                    return;
+                }
+
+                loginScreen.classList.add('hidden');
+                window.currentUser = user;
+                window.isUserAdminOrFinance = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                
+                const badge = document.getElementById('user-role-badge');
+                if(badge) {
+                    badge.innerText = window.isUserAdminOrFinance ? 'Admin / Financeiro' : 'Vendedor';
+                    badge.className = window.isUserAdminOrFinance ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-950 text-blue-300 border-blue-800';
+                }
+
+                onSnapshot(comissoesAzulCol, (snap) => {
+                    window.listaComissoesAzul = [];
+                    snap.forEach(d => window.listaComissoesAzul.push(d.data()));
+                    localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+                    window.renderTableAzul();
+                });
+            } else {
+                loginScreen.classList.remove('hidden');
+                document.getElementById('auth-form').classList.remove('hidden');
+                document.getElementById('login-message').innerText = 'Faça login para continuar';
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        window.salvarComissaoAzulNuvem = async (item) => {
+            try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul', item.id), item); } catch(e){}
+        };
+        window.excluirComissaoAzulNuvem = async (id) => {
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul', id)); } catch(e){}
+        };
+    </script>
+
     <script>
         /* LÓGICA DO MÓDULO COMISSÕES AZUL */
-        window.listaComissoesAzul = JSON.parse(localStorage.getItem('banco_comissoes_azul_cij') || '[]');
-        window.isUserAdminOrFinance = true; 
-        window.currentUser = { email: 'admin@cij.com' };
+        let azul_editingIndex = null;
+        let azul_sortColumn = 'date';
+        let azul_sortAsc = false;
 
         window.safeGetVal = (id) => document.getElementById(id)?.value || '';
         window.safeSetVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
         window.safeSetText = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
         window.formatarMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        window.mostrarNotificacao = (msg) => console.log(msg);
+        window.mostrarNotificacao = (msg, isError = false) => {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3500);
+        };
         window.mostrarModalConfirm = (t, m, cb) => { if(confirm(m)) cb(); };
-
-        let azul_editingIndex = null;
-        let azul_sortColumn = 'date';
-        let azul_sortAsc = false;
 
         window.updatePaymentFieldsAzul = function() {
             const isParcelado = document.getElementById('azul_paymentCond').value === 'Parcelado';
@@ -172,6 +409,8 @@
         window.getFilteredSalesAzul = function() {
             const seller = safeGetVal('azul_filterSeller').toLowerCase();
             const client = safeGetVal('azul_filterClient').toLowerCase();
+            const dateFrom = safeGetVal('azul_filterDateFrom');
+            const dateTo = safeGetVal('azul_filterDateTo');
             const status = safeGetVal('azul_filterStatus');
 
             const isVendedor = !window.isUserAdminOrFinance;
@@ -181,6 +420,8 @@
                 if (isVendedor && s.autor !== currentUserEmail) return false;
                 if (seller && !s.sellerName.toLowerCase().includes(seller)) return false;
                 if (client && !s.client.toLowerCase().includes(client)) return false;
+                if (dateFrom && s.date < dateFrom) return false;
+                if (dateTo && s.date > dateTo) return false;
                 if (status && (s.status || 'Pendente') !== status) return false;
                 return true;
             });
@@ -209,34 +450,72 @@
             if(!tbody) return;
             tbody.innerHTML = '';
 
-            let totalSalesVal = 0, totalCommissionVal = 0;
+            let totalSalesVal = 0, totalCommissionVal = 0, totalPendingVal = 0, totalPaidVal = 0;
 
-            filtered.forEach((sale) => {
-                const saleVal = parseFloat(sale.saleValue) || 0;
-                const commVal = parseFloat(sale.commissionValue) || 0;
-                totalSalesVal += saleVal;
-                totalCommissionVal += commVal;
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-slate-500 font-medium">Nenhum registro encontrado.</td></tr>`;
+            } else {
+                filtered.forEach((sale) => {
+                    const saleVal = parseFloat(sale.saleValue) || 0;
+                    const commVal = parseFloat(sale.commissionValue) || 0;
+                    const isPaid = sale.status === 'Pago';
 
-                const elig = getCommissionEligibilityAzul(sale);
-                const dateFormatted = sale.date ? sale.date.split('-').reverse().join('/') : '-';
+                    totalSalesVal += saleVal;
+                    totalCommissionVal += commVal;
+                    if (isPaid) totalPaidVal += commVal; else totalPendingVal += commVal;
 
-                tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-3 font-bold">${sale.sellerName}</td>
-                        <td class="p-3">${sale.nf}</td>
-                        <td class="p-3">${dateFormatted}</td>
-                        <td class="p-3">${sale.client}</td>
-                        <td class="p-3">${formatarMoeda(saleVal)}</td>
-                        <td class="p-3 text-blue-700 font-black">${formatarMoeda(commVal)}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded-lg text-[10px] font-bold ${elig.class}">${elig.info}</span></td>
-                        <td class="p-3"><span class="px-2 py-1 rounded-lg text-[10px] font-bold ${sale.status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${sale.status || 'Pendente'}</span></td>
-                        <td class="p-3 space-x-2">
-                            <button onclick="editSaleAzul('${sale.id}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteSaleAzul('${sale.id}')" class="text-red-600"><i class="fa-solid fa-trash"></i></button>
-                        </td>
+                    const elig = getCommissionEligibilityAzul(sale);
+                    const dateFormatted = sale.date ? sale.date.split('-').reverse().join('/') : '-';
+
+                    let acoes = `-`;
+                    if (window.isUserAdminOrFinance || sale.autor === (window.currentUser ? window.currentUser.email : '')) {
+                        acoes = `
+                            <button onclick="editSaleAzul('${sale.id}')" title="Editar" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteSaleAzul('${sale.id}')" title="Excluir" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition"><i class="fa-solid fa-trash-can"></i></button>
+                        `;
+                    }
+
+                    let btnStatus = `<span class="px-2 py-1 rounded-md text-[10px] font-bold border ${isPaid ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}">${isPaid ? '✓ Pago' : '⏳ Pendente'}</span>`;
+                    if (window.isUserAdminOrFinance) {
+                        btnStatus = `<button onclick="toggleStatusAzul('${sale.id}')" class="px-2 py-1 rounded-md text-[10px] font-bold border transition hover:opacity-80 ${isPaid ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}">${isPaid ? '✓ Pago' : '⏳ Pendente'}</button>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-200">
+                            <td class="p-3 font-bold text-slate-900">${sale.sellerName}</td>
+                            <td class="p-3 font-bold text-blue-900">${sale.nf}</td>
+                            <td class="p-3 text-slate-600">${dateFormatted}</td>
+                            <td class="p-3 text-slate-800"><div>${sale.client}</div><span class="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">${sale.clientType}</span></td>
+                            <td class="p-3 text-slate-600">${sale.itemType}</td>
+                            <td class="p-3 text-right font-bold text-slate-900">${formatarMoeda(saleVal)}</td>
+                            <td class="p-3 text-center text-slate-600">${sale.entryPercent}%</td>
+                            <td class="p-3 text-right font-extrabold text-blue-700">${formatarMoeda(commVal)}</td>
+                            <td class="p-3"><span title="${elig.detail}" class="inline-block text-[10px] font-bold px-2 py-1 rounded-md border ${elig.class}">${elig.info}</span></td>
+                            <td class="p-3 text-center">${btnStatus}</td>
+                            <td class="p-3 text-center space-x-1 no-print">${acoes}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const tfoot = document.getElementById('tableFooterAzul');
+            if(tfoot) {
+                tfoot.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-3 text-right uppercase tracking-wider text-xs">Totais do Filtro:</td>
+                        <td class="p-3 text-right font-black text-blue-900">${formatarMoeda(totalSalesVal)}</td>
+                        <td class="p-3"></td>
+                        <td class="p-3 text-right font-black text-blue-900">${formatarMoeda(totalCommissionVal)}</td>
+                        <td colspan="3" class="p-3 text-xs text-slate-500 font-medium">(${filtered.length} registro(s))</td>
                     </tr>
                 `;
-            });
+            }
+
+            safeSetText('kpiTotalSalesAzul', formatarMoeda(totalSalesVal));
+            safeSetText('kpiSalesCountAzul', `${filtered.length} vendas`);
+            safeSetText('kpiTotalCommissionsAzul', formatarMoeda(totalCommissionVal));
+            safeSetText('kpiPendingCommissionsAzul', formatarMoeda(totalPendingVal));
+            safeSetText('kpiPaidCommissionsAzul', formatarMoeda(totalPaidVal));
         };
 
         window.salvarVendaAzul = function(e) {
@@ -261,43 +540,34 @@
                 installmentsCount: paymentCond === 'Parcelado' ? (parseInt(safeGetVal('azul_installmentsCount')) || 1) : 1,
                 installmentInterval: paymentCond === 'Parcelado' ? (parseInt(safeGetVal('azul_installmentInterval')) || 30) : 30,
                 commissionPercent: commissionPercent,
-                commissionValue: saleValue * (commissionPercent / 100),
-                status: 'Pendente'
+                commissionValue: saleValue * (commissionPercent / 100)
             };
 
             if (azul_editingIndex !== null) {
                 const idx = window.listaComissoesAzul.findIndex(s => s.id === azul_editingIndex);
-                if(idx > -1) { saleData.status = window.listaComissoesAzul[idx].status; window.listaComissoesAzul[idx] = saleData; }
+                if(idx > -1) {
+                    saleData.status = window.listaComissoesAzul[idx].status;
+                    saleData.autor = window.listaComissoesAzul[idx].autor;
+                    window.listaComissoesAzul[idx] = saleData;
+                }
                 azul_editingIndex = null;
             } else {
+                saleData.status = 'Pendente';
                 window.listaComissoesAzul.push(saleData);
             }
 
             localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+            if (typeof window.salvarComissaoAzulNuvem === 'function') window.salvarComissaoAzulNuvem(saleData);
+
             window.resetFormAzul();
             window.renderTableAzul();
-        };
-
-        window.resetFormAzul = function() {
-            document.getElementById('commissionFormAzul').reset();
-            azul_editingIndex = null;
-            safeSetText('formTitleAzul', "Nova Venda");
-            document.getElementById('btnSubmitAzul').innerHTML = 'Salvar Venda';
-            document.getElementById('btnCancelEditAzul').classList.add('hidden');
-            window.updatePaymentFieldsAzul();
-        };
-
-        window.deleteSaleAzul = function(id) {
-            if(confirm('Excluir?')) {
-                window.listaComissoesAzul = window.listaComissoesAzul.filter(s => s.id !== id);
-                localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
-                window.renderTableAzul();
-            }
+            window.mostrarNotificacao('Venda salva com sucesso!');
         };
 
         window.editSaleAzul = function(id) {
             const sale = window.listaComissoesAzul.find(s => s.id === id);
             if (!sale) return;
+
             azul_editingIndex = id;
             safeSetVal('azul_sellerName', sale.sellerName);
             safeSetVal('azul_date', sale.date);
@@ -307,18 +577,92 @@
             safeSetVal('azul_itemType', sale.itemType);
             safeSetVal('azul_saleValue', sale.saleValue);
             safeSetVal('azul_entryPercent', sale.entryPercent);
-            safeSetVal('azul_paymentCond', sale.paymentCond);
-            safeSetVal('azul_installmentsCount', sale.installmentsCount);
-            safeSetVal('azul_installmentInterval', sale.installmentInterval);
+            safeSetVal('azul_paymentCond', sale.paymentCond || 'À Vista');
+            safeSetVal('azul_installmentsCount', sale.installmentsCount || 1);
+            safeSetVal('azul_installmentInterval', sale.installmentInterval || 30);
             safeSetVal('azul_commissionPercent', sale.commissionPercent);
+
             window.updatePaymentFieldsAzul();
+
             safeSetText('formTitleAzul', "Editar Venda");
-            document.getElementById('btnSubmitAzul').innerHTML = 'Atualizar';
+            document.getElementById('btnSubmitAzul').innerHTML = '<i class="fa-solid fa-save"></i> Atualizar';
             document.getElementById('btnCancelEditAzul').classList.remove('hidden');
+
+            document.getElementById('commissionFormAzul').scrollIntoView({ behavior: 'smooth', block: 'center' });
         };
 
-        window.exportToExcelAzul = function() { alert('Exportação acionada.'); };
-        window.renderTableAzul();
+        window.resetFormAzul = function() {
+            document.getElementById('commissionFormAzul').reset();
+            azul_editingIndex = null;
+            safeSetText('formTitleAzul', "Nova Venda");
+            document.getElementById('btnSubmitAzul').innerHTML = '<i class="fa-solid fa-save"></i> Salvar Venda';
+            document.getElementById('btnCancelEditAzul').classList.add('hidden');
+            window.updatePaymentFieldsAzul();
+        };
+
+        window.toggleStatusAzul = function(id) {
+            if (!window.isUserAdminOrFinance) return;
+            const idx = window.listaComissoesAzul.findIndex(s => s.id === id);
+            if(idx > -1) {
+                window.listaComissoesAzul[idx].status = window.listaComissoesAzul[idx].status === 'Pago' ? 'Pendente' : 'Pago';
+                localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+                if (typeof window.salvarComissaoAzulNuvem === 'function') window.salvarComissaoAzulNuvem(window.listaComissoesAzul[idx]);
+                window.renderTableAzul();
+            }
+        };
+
+        window.deleteSaleAzul = function(id) {
+            mostrarModalConfirm('Excluir Venda', 'Deseja remover esta venda?', () => {
+                window.listaComissoesAzul = window.listaComissoesAzul.filter(s => s.id !== id);
+                localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+                if (typeof window.excluirComissaoAzulNuvem === 'function') window.excluirComissaoAzulNuvem(id);
+                window.renderTableAzul();
+                window.mostrarNotificacao('Venda removida.');
+            });
+        };
+
+        window.exportToExcelAzul = async function() {
+            if (typeof ExcelJS === 'undefined') { window.mostrarNotificacao('Carregando biblioteca Excel...', true); return; }
+            const filteredData = window.getFilteredSalesAzul();
+            if (filteredData.length === 0) { window.mostrarNotificacao('Nenhum dado para exportar.', true); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Comissões Azul');
+
+            ws.columns = [
+                { header: 'Vendedor', key: 'sellerName', width: 20 }, { header: 'NF', key: 'nf', width: 12 },
+                { header: 'Data', key: 'date', width: 12 }, { header: 'Cliente', key: 'client', width: 25 },
+                { header: 'Item', key: 'itemType', width: 15 }, { header: 'Valor (R$)', key: 'saleValue', width: 15 },
+                { header: 'Entrada (%)', key: 'entryPercent', width: 12 }, { header: 'Comissão (%)', key: 'commissionPercent', width: 15 },
+                { header: 'Valor Comissão', key: 'commissionValue', width: 18 }, { header: 'Status', key: 'status', width: 12 }
+            ];
+
+            const headerRow = ws.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } };
+
+            let tSales = 0, tComm = 0;
+            filteredData.forEach((s) => {
+                const row = ws.addRow({
+                    sellerName: s.sellerName, nf: s.nf, date: s.date ? s.date.split('-').reverse().join('/') : '',
+                    client: s.client, itemType: s.itemType, saleValue: s.saleValue,
+                    entryPercent: s.entryPercent / 100, commissionPercent: s.commissionPercent / 100,
+                    commissionValue: s.commissionValue, status: s.status || 'Pendente'
+                });
+                row.getCell('saleValue').numFmt = '"R$" #,##0.00';
+                row.getCell('entryPercent').numFmt = '0.0%';
+                row.getCell('commissionPercent').numFmt = '0.0%';
+                row.getCell('commissionValue').numFmt = '"R$" #,##0.00';
+                tSales += s.saleValue; tComm += s.commissionValue;
+            });
+
+            const tRow = ws.addRow({ sellerName: 'TOTAL', saleValue: tSales, commissionValue: tComm });
+            tRow.font = { bold: true }; tRow.getCell('saleValue').numFmt = '"R$" #,##0.00'; tRow.getCell('commissionValue').numFmt = '"R$" #,##0.00';
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Comissoes_Azul_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            window.mostrarNotificacao('Exportado com sucesso!');
+        };
     </script>
 </body>
 </html>
