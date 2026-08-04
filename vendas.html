@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendas (Saídas) - Portal Grupo CIJ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ExcelJS e FileSaver para exportação -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 flex flex-col">
+
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
+            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão de Administrador...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <header class="bg-[#0f172a] text-white p-4 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-rose-300 bg-rose-950 px-2.5 py-0.5 rounded border border-rose-800">Vendas (Saídas)</span>
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+            </div>
+            <nav class="flex gap-4 items-center">
+                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+        
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-rose-600">Faturamento Total</p>
+                <h3 id="kpiTotalFaturamento" class="text-2xl font-black text-rose-950 mt-1">R$ 0,00</h3>
+                <p class="text-xs font-medium text-slate-500 mt-1">Vendas faturadas</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Total de Vendas</p>
+                <h3 id="kpiTotalVendas" class="text-2xl font-black text-emerald-950 mt-1">0</h3>
+                <p class="text-xs font-medium text-emerald-500 mt-1">Registros de saídas</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Ticket Médio</p>
+                <h3 id="kpiTicketMedio" class="text-2xl font-black text-indigo-950 mt-1">R$ 0,00</h3>
+                <p class="text-xs font-medium text-indigo-600 mt-1">Por equipamento</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Equipamentos Entregues</p>
+                <h3 id="kpiEntregues" class="text-2xl font-black text-amber-900 mt-1">0</h3>
+                <p class="text-xs font-medium text-amber-600 mt-1">Concluídos</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border shadow-sm">
+            <div class="flex items-center justify-between mb-5 border-b border-slate-200 pb-3">
+                <h3 id="formTitleVenda" class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-rose-600"></i> Registrar Venda / Saída de Equipamento
+                </h3>
+                <button type="button" id="btnCancelEditVenda" onclick="resetFormVenda()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
+                    Cancelar Edição
+                </button>
+            </div>
+
+            <form id="vendaForm" onsubmit="salvarVenda(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
+                        <input type="text" id="v_cliente" required placeholder="Nome do Cliente / Empresa" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Modelo / Equipamento *</label>
+                        <select id="v_modelo" required onchange="verificarOutroModeloVendas(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-rose-600">
+                            <option value="8820">8820 (CIJ)</option>
+                            <option value="8860">8860 (CIJ)</option>
+                            <option value="8910">8910 (CIJ)</option>
+                            <option value="T-110H">T-110H (TIJ)</option>
+                            <option value="UV 5W">UV 5W (Laser)</option>
+                            <option value="CO2 30W">CO2 30W (Laser)</option>
+                            <option value="FIBRA 30W">FIBRA 30W (Laser)</option>
+                            <option value="Outro">Outro (Digitar)</option>
+                        </select>
+                        <input type="text" id="v_modelo_outro" placeholder="Digite o modelo..." class="w-full mt-2 px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 hidden">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nº de Série / Patrimônio *</label>
+                        <input type="text" id="v_serial" required placeholder="Ex: SN-998231" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Valor da Venda (R$) *</label>
+                        <input type="number" step="0.01" min="0" id="v_valor" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Data da Saída *</label>
+                        <input type="date" id="v_data" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Vendedor / Responsável *</label>
+                        <input type="text" id="v_vendedor" required placeholder="Nome do vendedor" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Status da Entrega *</label>
+                        <select id="v_status" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-rose-600">
+                            <option value="Faturado / Entregue">Faturado / Entregue</option>
+                            <option value="Em Trânsito">Em Trânsito</option>
+                            <option value="Aguardando Faturamento">Aguardando Faturamento</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Observações</label>
+                        <input type="text" id="v_obs" placeholder="Ex: NF-4091, Comodato..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                    </div>
+                </div>
+                <div class="flex justify-end pt-3">
+                    <button type="submit" id="btnSubmitVenda" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Salvar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-rose-600"></i> Histórico de Vendas Registradas
+                </h3>
+                <button onclick="exportToExcelVendas()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
+                </button>
+            </div>
+
+            <!-- FILTROS DE BUSCA (INCLUINDO PERÍODO/DATA) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente</label>
+                    <input type="text" id="filter_v_cliente" oninput="renderTableVendas()" placeholder="Filtrar cliente..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo</label>
+                    <input type="text" id="filter_v_modelo" oninput="renderTableVendas()" placeholder="Filtrar modelo..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº de Série</label>
+                    <input type="text" id="filter_v_serial" oninput="renderTableVendas()" placeholder="Filtrar serial..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                    <select id="filter_v_status" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold outline-none focus:border-rose-600">
+                        <option value="">Todos</option>
+                        <option value="Faturado / Entregue">Faturado / Entregue</option>
+                        <option value="Em Trânsito">Em Trânsito</option>
+                        <option value="Aguardando Faturamento">Aguardando Faturamento</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                    <input type="date" id="filter_v_date_from" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-rose-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                    <input type="date" id="filter_v_date_to" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-rose-600">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[950px] text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Modelo</th>
+                            <th class="p-3">Nº de Série</th>
+                            <th class="p-3 text-right">Valor (R$)</th>
+                            <th class="p-3">Data Saída</th>
+                            <th class="p-3">Vendedor</th>
+                            <th class="p-3 text-center">Status</th>
+                            <th class="p-3">Observações</th>
+                            <th class="p-3 text-center no-print">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyVendas" class="divide-y divide-slate-200 font-medium bg-white">
+                    </tbody>
+                    <tfoot id="tableFooterVendas" class="bg-slate-50/80 font-bold border-t border-slate-300 text-slate-900">
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
+        const vendasCol = collection(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas');
+
+        window.listaVendas = JSON.parse(localStorage.getItem('banco_vendas_registradas_cij') || '[]');
+        window.isUserAdminOrFinance = false;
+        window.currentUser = null;
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                const cleanEmail = user.email.toLowerCase().trim();
+                window.currentUser = user;
+                window.isUserAdminOrFinance = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                
+                if (!window.isUserAdminOrFinance) {
+                    loginScreen.classList.remove('hidden');
+                    document.getElementById('login-message').innerHTML = '<span class="text-red-600 font-bold">Acesso Restrito: Apenas Admin e Financeiro podem acessar o registro oficial de vendas.</span>';
+                    document.getElementById('auth-form').classList.add('hidden');
+                    signOut(auth);
+                    return;
+                }
+
+                loginScreen.classList.add('hidden');
+                const badge = document.getElementById('user-role-badge');
+                if(badge) {
+                    badge.innerText = 'Admin / Financeiro';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800';
+                }
+
+                onSnapshot(vendasCol, (snap) => {
+                    window.listaVendas = [];
+                    snap.forEach(d => window.listaVendas.push(d.data()));
+                    localStorage.setItem('banco_vendas_registradas_cij', JSON.stringify(window.listaVendas));
+                    window.renderTableVendas();
+                });
+            } else {
+                loginScreen.classList.remove('hidden');
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        window.salvarVendaNuvem = async (item) => {
+            try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas', item.id), item); } catch(e){}
+        };
+        window.excluirVendaNuvem = async (id) => {
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas', id)); } catch(e){}
+        };
+    </script>
+
+    <script>
+        let venda_editingIndex = null;
+
+        window.safeGetVal = (id) => document.getElementById(id)?.value || '';
+        window.safeSetVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
+        window.safeSetText = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+        window.formatarMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        window.mostrarNotificacao = (msg, isError = false) => {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3500);
+        };
+
+        window.verificarOutroModeloVendas = function(selectEl) {
+            const inputOutro = document.getElementById('v_modelo_outro');
+            if (selectEl.value === 'Outro') {
+                inputOutro.classList.remove('hidden');
+                inputOutro.required = true;
+                inputOutro.focus();
+            } else {
+                inputOutro.classList.add('hidden');
+                inputOutro.required = false;
+                inputOutro.value = '';
+            }
+        };
+
+        window.getFilteredVendas = function() {
+            const cliente = safeGetVal('filter_v_cliente').toLowerCase();
+            const modelo = safeGetVal('filter_v_modelo').toLowerCase();
+            const serial = safeGetVal('filter_v_serial').toLowerCase();
+            const status = safeGetVal('filter_v_status');
+            const dateFrom = safeGetVal('filter_v_date_from');
+            const dateTo = safeGetVal('filter_v_date_to');
+
+            return window.listaVendas.filter(item => {
+                if (cliente && !item.cliente.toLowerCase().includes(cliente)) return false;
+                if (modelo && !item.modelo.toLowerCase().includes(modelo)) return false;
+                if (serial && !item.serial.toLowerCase().includes(serial)) return false;
+                if (status && item.status !== status) return false;
+                if (dateFrom && item.data < dateFrom) return false;
+                if (dateTo && item.data > dateTo) return false;
+                return true;
+            });
+        };
+
+        window.renderTableVendas = function() {
+            let filtered = window.getFilteredVendas();
+            const tbody = document.getElementById('tableBodyVendas');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalFaturamento = 0;
+            let totalVendasCount = filtered.length;
+            let entreguesCount = 0;
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-500 font-medium">Nenhuma venda registrada com os filtros selecionados.</td></tr>`;
+            } else {
+                filtered.forEach((item) => {
+                    const valor = parseFloat(item.valor) || 0;
+                    totalFaturamento += valor;
+                    if (item.status === 'Faturado / Entregue') entreguesCount++;
+
+                    const dateFormatted = item.data ? item.data.split('-').reverse().join('/') : '-';
+                    const statusClass = item.status === 'Faturado / Entregue' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                                        item.status === 'Em Trânsito' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-blue-100 text-blue-800 border-blue-300';
+
+                    let statusBadge = `<span class="px-2.5 py-1 rounded-md text-[10px] font-bold border ${statusClass}">${item.status}</span>`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-200">
+                            <td class="p-3 font-bold text-slate-900">${item.cliente}</td>
+                            <td class="p-3 font-bold text-rose-900">${item.modelo}</td>
+                            <td class="p-3 font-mono text-slate-700">${item.serial}</td>
+                            <td class="p-3 text-right font-black text-rose-700">${formatarMoeda(valor)}</td>
+                            <td class="p-3 text-slate-600">${dateFormatted}</td>
+                            <td class="p-3 text-slate-700">${item.vendedor}</td>
+                            <td class="p-3 text-center">${statusBadge}</td>
+                            <td class="p-3 text-slate-500 text-[11px]">${item.obs || '-'}</td>
+                            <td class="p-3 text-center space-x-1 no-print">
+                                <button onclick="editVenda('${item.id}')" title="Editar" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteVenda('${item.id}')" title="Excluir" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const ticketMedio = totalVendasCount > 0 ? (totalFaturamento / totalVendasCount) : 0;
+
+            const tfoot = document.getElementById('tableFooterVendas');
+            if(tfoot) {
+                tfoot.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="p-3 text-right uppercase tracking-wider text-xs">Totais do Filtro:</td>
+                        <td class="p-3 text-right font-black text-rose-900">${formatarMoeda(totalFaturamento)}</td>
+                        <td colspan="5" class="p-3 text-xs text-slate-500 font-medium">(${totalVendasCount} venda(s) registrada(s))</td>
+                    </tr>
+                `;
+            }
+
+            safeSetText('kpiTotalFaturamento', formatarMoeda(totalFaturamento));
+            safeSetText('kpiTotalVendas', totalVendasCount);
+            safeSetText('kpiTicketMedio', formatarMoeda(ticketMedio));
+            safeSetText('kpiEntregues', entreguesCount);
+        };
+
+        window.salvarVenda = function(e) {
+            e.preventDefault();
+            const valor = parseFloat(safeGetVal('v_valor')) || 0;
+            let modeloVal = safeGetVal('v_modelo');
+            if (modeloVal === 'Outro') {
+                modeloVal = safeGetVal('v_modelo_outro');
+            }
+
+            const vendaData = {
+                id: venda_editingIndex !== null ? venda_editingIndex : Date.now().toString(),
+                cliente: safeGetVal('v_cliente'),
+                modelo: modeloVal,
+                serial: safeGetVal('v_serial'),
+                valor: valor,
+                data: safeGetVal('v_data'),
+                vendedor: safeGetVal('v_vendedor'),
+                status: safeGetVal('v_status'),
+                obs: safeGetVal('v_obs')
+            };
+
+            if (venda_editingIndex !== null) {
+                const idx = window.listaVendas.findIndex(i => i.id === venda_editingIndex);
+                if(idx > -1) window.listaVendas[idx] = vendaData;
+                venda_editingIndex = null;
+            } else {
+                window.listaVendas.push(vendaData);
+            }
+
+            localStorage.setItem('banco_vendas_registradas_cij', JSON.stringify(window.listaVendas));
+            if (typeof window.salvarVendaNuvem === 'function') window.salvarVendaNuvem(vendaData);
+
+            window.resetFormVenda();
+            window.renderTableVendas();
+            window.mostrarNotificacao('Venda registrada com sucesso!');
+        };
+
+        window.editVenda = function(id) {
+            const item = window.listaVendas.find(i => i.id === id);
+            if (!item) return;
+
+            venda_editingIndex = id;
+            const defaultModelos = ["8820", "8860", "8910", "T-110H", "UV 5W", "CO2 30W", "FIBRA 30W"];
+            if (defaultModelos.includes(item.modelo)) {
+                safeSetVal('v_modelo', item.modelo);
+                document.getElementById('v_modelo_outro').classList.add('hidden');
+                document.getElementById('v_modelo_outro').value = '';
+                document.getElementById('v_modelo_outro').required = false;
+            } else {
+                safeSetVal('v_modelo', 'Outro');
+                document.getElementById('v_modelo_outro').classList.remove('hidden');
+                safeSetVal('v_modelo_outro', item.modelo);
+                document.getElementById('v_modelo_outro').required = true;
+            }
+
+            safeSetVal('v_cliente', item.cliente);
+            safeSetVal('v_serial', item.serial);
+            safeSetVal('v_valor', item.valor);
+            safeSetVal('v_data', item.data);
+            safeSetVal('v_vendedor', item.vendedor);
+            safeSetVal('v_status', item.status);
+            safeSetVal('v_obs', item.obs);
+
+            safeSetText('formTitleVenda', "Editar Venda / Saída");
+            document.getElementById('btnSubmitVenda').innerHTML = '<i class="fa-solid fa-save"></i> Atualizar Venda';
+            document.getElementById('btnCancelEditVenda').classList.remove('hidden');
+
+            document.getElementById('vendaForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        window.resetFormVenda = function() {
+            document.getElementById('vendaForm').reset();
+            document.getElementById('v_data').valueAsDate = new Date();
+            document.getElementById('v_modelo_outro').classList.add('hidden');
+            document.getElementById('v_modelo_outro').value = '';
+            document.getElementById('v_modelo_outro').required = false;
+            venda_editingIndex = null;
+            safeSetText('formTitleVenda', "Registrar Venda / Saída de Equipamento");
+            document.getElementById('btnSubmitVenda').innerHTML = '<i class="fa-solid fa-save"></i> Salvar Venda';
+            document.getElementById('btnCancelEditVenda').classList.add('hidden');
+        };
+
+        window.deleteVenda = function(id) {
+            if(!window.isUserAdminOrFinance) {
+                window.mostrarNotificacao('Apenas Administradores podem excluir registros de vendas.', true);
+                return;
+            }
+            if(confirm('Deseja remover este registro de venda?')) {
+                window.listaVendas = window.listaVendas.filter(i => i.id !== id);
+                localStorage.setItem('banco_vendas_registradas_cij', JSON.stringify(window.listaVendas));
+                if (typeof window.excluirVendaNuvem === 'function') window.excluirVendaNuvem(id);
+                window.renderTableVendas();
+                window.mostrarNotificacao('Registro removido.');
+            }
+        };
+
+        window.exportToExcelVendas = async function() {
+            if (typeof ExcelJS === 'undefined') { window.mostrarNotificacao('Carregando biblioteca Excel...', true); return; }
+            const filteredData = window.getFilteredVendas();
+            if (filteredData.length === 0) { window.mostrarNotificacao('Nenhum dado para exportar.', true); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Vendas Registradas');
+
+            ws.columns = [
+                { header: 'Cliente', key: 'cliente', width: 25 },
+                { header: 'Modelo', key: 'modelo', width: 20 },
+                { header: 'Nº de Série', key: 'serial', width: 20 },
+                { header: 'Valor (R$)', key: 'valor', width: 15 },
+                { header: 'Data Saída', key: 'data', width: 15 },
+                { header: 'Vendedor', key: 'vendedor', width: 20 },
+                { header: 'Status', key: 'status', width: 20 },
+                { header: 'Observações', key: 'obs', width: 30 }
+            ];
+
+            const headerRow = ws.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '881337' } };
+
+            let totalVal = 0;
+            filteredData.forEach((i) => {
+                const row = ws.addRow({
+                    cliente: i.cliente,
+                    modelo: i.modelo,
+                    serial: i.serial,
+                    valor: i.valor,
+                    data: i.data ? i.data.split('-').reverse().join('/') : '',
+                    vendedor: i.vendedor,
+                    status: i.status,
+                    obs: i.obs
+                });
+                row.getCell('valor').numFmt = '"R$" #,##0.00';
+                totalVal += i.valor;
+            });
+
+            const tRow = ws.addRow({ cliente: 'TOTAL', valor: totalVal });
+            tRow.font = { bold: true };
+            tRow.getCell('valor').numFmt = '"R$" #,##0.00';
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Vendas_Registradas_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            window.mostrarNotificacao('Relatório de vendas exportado com sucesso!');
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('v_data').valueAsDate = new Date();
+        });
+    </script>
+</body>
+</html>
