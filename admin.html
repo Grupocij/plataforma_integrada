@@ -29,6 +29,7 @@
 </head>
 <body class="min-h-screen pb-12 flex flex-col">
 
+    <!-- ALERTA DE NOVA INFORMAÇÃO -->
     <div id="new-data-alert" class="hidden fixed top-0 inset-x-0 z-50 text-slate-950 px-4 py-3 font-extrabold text-xs flex items-center justify-between shadow-2xl blinking-alert border-b-2 border-amber-300">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-bell text-base animate-bounce"></i>
@@ -284,13 +285,11 @@
             solicitacoes: []
         };
 
-        let initialLoadDone = {
-            despesas: false,
-            vendas: false,
-            comissoes: false,
-            estoque: false,
-            solicitacoes: false
-        };
+        let loadedDespesas = false;
+        let loadedVendas = false;
+        let loadedComissoes = false;
+        let loadedEstoque = false;
+        let loadedSolicitacoes = false;
 
         function triggerNewDataAlert(sourceName) {
             const alertBanner = document.getElementById('new-data-alert');
@@ -328,10 +327,12 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo'), (snap) => {
                     window.adminData.despesas = [];
                     snap.forEach(d => window.adminData.despesas.push(d.data()));
-                    if (!initialLoadDone.despesas) {
-                        initialLoadDone.despesas = true;
+                    if (!loadedDespesas) {
+                        loadedDespesas = true;
                     } else {
-                        triggerNewDataAlert('Despesas');
+                        let hasNew = false;
+                        snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
+                        if (hasNew) triggerNewDataAlert('Despesas');
                     }
                     renderAdminDashboard();
                 });
@@ -339,10 +340,12 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas'), (snap) => {
                     window.adminData.vendas = [];
                     snap.forEach(d => window.adminData.vendas.push(d.data()));
-                    if (!initialLoadDone.vendas) {
-                        initialLoadDone.vendas = true;
+                    if (!loadedVendas) {
+                        loadedVendas = true;
                     } else {
-                        triggerNewDataAlert('Vendas');
+                        let hasNew = false;
+                        snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
+                        if (hasNew) triggerNewDataAlert('Vendas');
                     }
                     renderAdminDashboard();
                 });
@@ -350,10 +353,12 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul'), (snap) => {
                     window.adminData.comissoes = [];
                     snap.forEach(d => window.adminData.comissoes.push(d.data()));
-                    if (!initialLoadDone.comissoes) {
-                        initialLoadDone.comissoes = true;
+                    if (!loadedComissoes) {
+                        loadedComissoes = true;
                     } else {
-                        triggerNewDataAlert('Comissões Azul');
+                        let hasNew = false;
+                        snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
+                        if (hasNew) triggerNewDataAlert('Comissões Azul');
                     }
                     renderAdminDashboard();
                 });
@@ -361,10 +366,12 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'estoque_equipamentos'), (snap) => {
                     window.adminData.estoque = [];
                     snap.forEach(d => window.adminData.estoque.push(d.data()));
-                    if (!initialLoadDone.estoque) {
-                        initialLoadDone.estoque = true;
+                    if (!loadedEstoque) {
+                        loadedEstoque = true;
                     } else {
-                        triggerNewDataAlert('Estoque');
+                        let hasNew = false;
+                        snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
+                        if (hasNew) triggerNewDataAlert('Estoque');
                     }
                     renderAdminDashboard();
                 });
@@ -372,10 +379,12 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (snap) => {
                     window.adminData.solicitacoes = [];
                     snap.forEach(d => window.adminData.solicitacoes.push(d.data()));
-                    if (!initialLoadDone.solicitacoes) {
-                        initialLoadDone.solicitacoes = true;
+                    if (!loadedSolicitacoes) {
+                        loadedSolicitacoes = true;
                     } else {
-                        triggerNewDataAlert('Solicitações CIJ');
+                        let hasNew = false;
+                        snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
+                        if (hasNew) triggerNewDataAlert('Solicitações CIJ');
                     }
                     renderAdminDashboard();
                 });
@@ -571,7 +580,6 @@
             });
         };
 
-        // Helper to convert column index to Excel letter (e.g. 1 -> A, 8 -> H)
         function getColumnLetter(colIndex) {
             let letter = '';
             while (colIndex > 0) {
@@ -582,7 +590,6 @@
             return letter;
         }
 
-        // Professional Excel export with dynamic title span, blue styling, and totals row
         window.exportarDadosGlobaisExcel = async function() {
             if (typeof ExcelJS === 'undefined') { alert('Carregando ExcelJS...'); return; }
             const wb = new ExcelJS.Workbook();
@@ -611,18 +618,18 @@
                 const titleCell = ws.getCell('A1');
                 titleCell.value = title + " - Grupo CIJ";
                 titleCell.font = { name: 'Inter', size: 13, bold: true, color: { argb: 'FFFFFF' } };
-                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F172A' } }; // Dark slate
+                titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F172A' } };
                 titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
                 ws.getRow(1).height = 32;
 
-                ws.addRow([]); // Row 2 empty for spacing
+                ws.addRow([]);
 
                 ws.columns = columnsDef;
                 
                 const headerRow = ws.getRow(3);
                 headerRow.height = 26;
                 headerRow.font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FFFFFF' } };
-                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } }; // Dark blue #1e3a8a
+                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } };
                 headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
 
                 headerRow.eachCell(cell => {
@@ -654,7 +661,6 @@
                     });
                 });
 
-                // Totals Row if sumColIndices is specified
                 if (sumColIndices && sumColIndices.length > 0) {
                     const totalsRowData = new Array(columnsDef.length).fill('');
                     totalsRowData[0] = 'TOTAL GERAL';
@@ -700,7 +706,6 @@
                 });
             }
 
-            // 1. Sheet Vendas (7 cols)
             const wsVendas = wb.addWorksheet('Vendas');
             const vendasRows = vendasFilt.map(i => [i.cliente, i.modelo, i.serial, parseFloat(i.valor) || 0, i.data ? i.data.split('-').reverse().join('/') : '', i.vendedor, i.status]);
             styleWorksheet(wsVendas, 'Relatório de Vendas', [
@@ -713,7 +718,6 @@
                 { header: 'Status', key: 'c7', width: 18 }
             ], vendasRows, [4], [4]);
 
-            // 2. Sheet Comissões Azul (8 cols)
             const wsComissoes = wb.addWorksheet('Comissões Azul');
             const comissoesRows = comissoesFilt.map(i => [i.sellerName, i.nf, i.date ? i.date.split('-').reverse().join('/') : '', i.client, parseFloat(i.saleValue) || 0, parseFloat(i.commissionValue) || 0, getNextPaymentDateAdmin(i.date), i.status || 'Pendente']);
             styleWorksheet(wsComissoes, 'Comissões Azul', [
@@ -727,7 +731,6 @@
                 { header: 'Status', key: 'c8', width: 12 }
             ], comissoesRows, [5, 6], [5, 6]);
 
-            // 3. Sheet Estoque (6 cols)
             const wsEstoque = wb.addWorksheet('Estoque');
             const estoqueRows = estoqueFilt.map(i => [i.modelo, i.serial, i.status, i.local, i.reservadoPor || '-', i.data ? i.data.split('-').reverse().join('/') : '']);
             styleWorksheet(wsEstoque, 'Estoque de Equipamentos', [
@@ -739,7 +742,6 @@
                 { header: 'Data Entrada', key: 'c6', width: 14 }
             ], estoqueRows, [], []);
 
-            // 4. Sheet Solicitações CIJ (6 cols)
             const wsSolicitacoes = wb.addWorksheet('Solicitações CIJ');
             const solicitacoesRows = solicitacoesFilt.map(i => [i.numero_solicitacao || '-', i.cliente?.razao_social || '-', i.comercial?.pedido || '-', i.comercial?.vendedor || '-', i.totais?.valor_geral || '-', i.data_registro ? new Date(i.data_registro).toLocaleDateString('pt-BR') : '']);
             styleWorksheet(wsSolicitacoes, 'Solicitações CIJ', [
