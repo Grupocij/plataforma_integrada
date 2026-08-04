@@ -239,13 +239,6 @@
 
         const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
 
-        let loadedDespesas = false;
-        let loadedVendas = false;
-        let loadedComissoes = false;
-        let loadedEstoque = false;
-        let loadedSolicitacoes = false;
-        let loadedComissoesConsumiveis = false;
-
         function triggerNewDataAlert(sourceName) {
             const alertBanner = document.getElementById('new-data-alert');
             const alertText = document.getElementById('alert-text');
@@ -272,66 +265,40 @@
                 window.currentUser = user;
                 if(typeof window.verificarPermissoesUsuario === 'function') window.verificarPermissoesUsuario(user.email);
 
-                // Ativar escuta em tempo real para alerta global de novos dados (apenas para Admin/Financeiro)
+                // Inicializar carimbo de tempo da sessão se não existir
+                if (!sessionStorage.getItem('cij_session_start')) {
+                    sessionStorage.setItem('cij_session_start', Date.now().toString());
+                }
+                const sessionStartTime = parseInt(sessionStorage.getItem('cij_session_start'), 10);
+
+                // Escuta em tempo real baseada em timestamp para ignorar dados antigos e detectar novos com precisão
                 if (isAdmin) {
-                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo'), (snap) => {
-                        if (!loadedDespesas) { loadedDespesas = true; } 
-                        else {
-                            let hasNew = false;
-                            snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
-                            if (hasNew) triggerNewDataAlert('Despesas');
-                        }
-                    });
+                    const monitorarColecao = (colName, labelName) => {
+                        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', colName), (snap) => {
+                            snap.docChanges().forEach(change => {
+                                if (change.type === 'added') {
+                                    const data = change.doc.data();
+                                    const itemTime = data.timestamp || parseInt(change.doc.id, 10) || 0;
+                                    if (itemTime > sessionStartTime) {
+                                        triggerNewDataAlert(labelName);
+                                    }
+                                }
+                            });
+                        }, (err) => console.error(err));
+                    };
 
-                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas'), (snap) => {
-                        if (!loadedVendas) { loadedVendas = true; } 
-                        else {
-                            let hasNew = false;
-                            snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
-                            if (hasNew) triggerNewDataAlert('Vendas');
-                        }
-                    });
-
-                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul'), (snap) => {
-                        if (!loadedComissoes) { loadedComissoes = true; } 
-                        else {
-                            let hasNew = false;
-                            snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
-                            if (hasNew) triggerNewDataAlert('Comissões Azul');
-                        }
-                    });
-
-                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'estoque_equipamentos'), (snap) => {
-                        if (!loadedEstoque) { loadedEstoque = true; } 
-                        else {
-                            let hasNew = false;
-                            snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
-                            if (hasNew) triggerNewDataAlert('Estoque');
-                        }
-                    });
-
-                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (snap) => {
-                        if (!loadedSolicitacoes) { loadedSolicitacoes = true; } 
-                        else {
-                            let hasNew = false;
-                            snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
-                            if (hasNew) triggerNewDataAlert('Solicitações CIJ');
-                        }
-                    });
-
-                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_consumiveis'), (snap) => {
-                        if (!loadedComissoesConsumiveis) { loadedComissoesConsumiveis = true; } 
-                        else {
-                            let hasNew = false;
-                            snap.docChanges().forEach(change => { if (change.type === 'added') hasNew = true; });
-                            if (hasNew) triggerNewDataAlert('Comissões - Consumíveis');
-                        }
-                    });
+                    monitorarColecao('despesas_relatorio_novo', 'Despesas');
+                    monitorarColecao('vendas_registradas', 'Vendas');
+                    monitorarColecao('comissoes_azul', 'Comissões Azul');
+                    monitorarColecao('estoque_equipamentos', 'Estoque');
+                    monitorarColecao('solicitacoes', 'Solicitações CIJ');
+                    monitorarColecao('comissoes_consumiveis', 'Comissões - Consumíveis');
                 }
 
             } else {
                 if(loginScreen) loginScreen.classList.remove('hidden');
                 window.currentUser = null;
+                sessionStorage.removeItem('cij_session_start');
             }
         });
 
@@ -341,6 +308,7 @@
             const pass = document.getElementById('auth-password').value; 
             try { 
                 await signInWithEmailAndPassword(auth, email, pass); 
+                sessionStorage.setItem('cij_session_start', Date.now().toString());
                 window.mostrarNotificacao("Acesso Liberado!"); 
             } catch(err) { 
                 window.mostrarNotificacao("Erro no login: "+err.message, true); 
@@ -365,6 +333,7 @@
 
         window.fazerLogout = async function() { 
             await signOut(auth); 
+            sessionStorage.removeItem('cij_session_start');
             window.mostrarNotificacao("Sessão encerrada com sucesso."); 
         };
     </script>
@@ -420,4 +389,3 @@
     </script>
 </body>
 </html>
-```eof
