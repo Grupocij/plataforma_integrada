@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Comissões - Consumíveis - Portal Grupo CIJ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ExcelJS and FileSaver for professional Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 flex flex-col">
+
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
+            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <header class="bg-[#0f172a] text-white p-4 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300 bg-amber-950 px-2.5 py-0.5 rounded border border-amber-800">Comissões - Consumíveis</span>
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+            </div>
+            <nav class="flex gap-4 items-center">
+                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+        
+        <div class="bg-white p-6 rounded-3xl border shadow-sm">
+            <div class="flex items-center justify-between mb-5 border-b border-slate-200 pb-3">
+                <h3 id="formTitleConsumiveis" class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice-dollar text-amber-600"></i> Registrar Nova Venda / Consumível
+                </h3>
+                <button type="button" id="btnCancelEditConsumiveis" onclick="resetFormConsumiveis()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
+                    Cancelar Edição
+                </button>
+            </div>
+
+            <form id="consumiveisForm" onsubmit="registrarVendaConsumivel(event)" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Vendedor *</label>
+                        <input type="text" id="vendedor" required placeholder="Nome do Vendedor" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
+                        <input type="text" id="cliente" required placeholder="Nome do Cliente" oninput="filtrarDropdown(this.value)" autocomplete="off" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
+                        <div id="dropdownClientes" class="absolute z-20 bg-white border border-slate-300 w-full rounded-xl shadow-xl hidden mt-1 max-h-48 overflow-y-auto"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Data Base *</label>
+                        <input type="date" id="dataVenda" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
+                    </div>
+
+                    <div class="flex items-end">
+                        <button type="submit" id="btnSubmitConsumiveis" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-save"></i> Registrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-5">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-amber-600"></i> Histórico de Comissões de Consumíveis
+                </h3>
+                <button onclick="exportarExcelConsumiveis()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Vendedor</label>
+                    <input type="text" id="filtroVendedor" placeholder="Digite o vendedor..." oninput="renderizarTabela()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-amber-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Cliente</label>
+                    <input type="text" id="filtroCliente" placeholder="Digite o cliente..." oninput="renderizarTabela()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-amber-600">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[850px] text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th class="p-3">Vendedor</th>
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Data Base</th>
+                            <th class="p-3">Status (12 Meses)</th>
+                            <th class="p-3 text-center no-print">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaVendas" class="divide-y divide-slate-200 font-medium bg-white">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="modalConfirmacao" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 space-y-4">
+            <h4 class="text-base font-bold text-slate-900"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> Cliente Já Cadastrado</h4>
+            <p class="text-xs text-slate-600">Este cliente já possui registro de comissão. Deseja renovar a comissão atualizando a data base?</p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="confirmarRenovacao(false)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
+                <button onclick="confirmarRenovacao(true)" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition">Sim, Renovar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAcaoConfirmacao" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 space-y-4">
+            <h4 id="modalAcaoTitulo" class="text-base font-bold text-slate-900"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> Confirmação de Ação</h4>
+            <p id="modalAcaoTexto" class="text-xs text-slate-600">Deseja realmente executar esta ação?</p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalAcao()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
+                <button id="modalAcaoBtnSim" onclick="" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plataforma-cij';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const comissaoCol = collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_consumiveis');
+
+        window.vendas = [];
+        window.pendente = null;
+        window.consumiveis_editingId = null;
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Erro na autenticação Firebase:", err);
+            }
+        }
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                const cleanEmail = (user.email || '').toLowerCase().trim();
+                const isAdmin = !user.email || EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro') || cleanEmail.includes('faturamento') || cleanEmail.includes('marcos') || cleanEmail.includes('comercial') || cleanEmail.includes('suporte');
+
+                if (user.email && !isAdmin) {
+                    loginScreen.classList.remove('hidden');
+                    document.getElementById('login-message').innerHTML = '<span class="text-red-600 font-bold">Acesso Restrito: Apenas Administradores e Financeiro podem acessar este módulo.</span>';
+                    document.getElementById('auth-form').classList.remove('hidden');
+                    signOut(auth);
+                    return;
+                }
+
+                loginScreen.classList.add('hidden');
+                window.currentUser = user;
+                
+                const badge = document.getElementById('user-role-badge');
+                if(badge) {
+                    badge.innerText = user.email ? 'Admin / Financeiro' : 'Modo Teste / Online';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border bg-amber-950 text-amber-300 border-amber-800';
+                }
+
+                onSnapshot(comissaoCol, (snap) => {
+                    window.vendas = [];
+                    snap.forEach(d => {
+                        const data = d.data();
+                        window.vendas.push({
+                            ...data,
+                            dataVenda: data.dataVenda ? new Date(data.dataVenda) : new Date()
+                        });
+                    });
+                    if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
+                }, (err) => {
+                    console.error("Erro no Firestore onSnapshot:", err);
+                });
+            } else {
+                loginScreen.classList.remove('hidden');
+                document.getElementById('auth-form').classList.remove('hidden');
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        window.salvarConsumivelNuvem = async (item) => {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comissoes_consumiveis', item.id), {
+                    ...item,
+                    dataVenda: item.dataVenda instanceof Date ? item.dataVenda.toISOString() : item.dataVenda
+                });
+            } catch(e) { console.error(e); }
+        };
+
+        window.excluirConsumivelNuvem = async (id) => {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comissoes_consumiveis', id));
+            } catch(e) { console.error(e); }
+        };
+    </script>
+
+    <script>
+        window.mostrarNotificacao = function(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        };
+
+        window.filtrarDropdown = function(valor) {
+            const dropdown = document.getElementById('dropdownClientes');
+            dropdown.innerHTML = '';
+            if (valor.length === 0) { dropdown.classList.add('hidden'); return; }
+
+            const sugestoes = [...new Set(window.vendas.map(v => v.cliente))].filter(cli => cli.toLowerCase().includes(valor.toLowerCase()));
+            
+            if (sugestoes.length > 0) {
+                dropdown.classList.remove('hidden');
+                sugestoes.forEach(cli => {
+                    const div = document.createElement('div');
+                    div.className = "p-2.5 hover:bg-amber-50 cursor-pointer text-xs font-semibold text-slate-800 border-b border-slate-100 last:border-b-0";
+                    div.textContent = cli;
+                    div.onclick = () => { document.getElementById('cliente').value = cli; dropdown.classList.add('hidden'); };
+                    dropdown.appendChild(div);
+                });
+            } else { dropdown.classList.add('hidden'); }
+        };
+
+        window.registrarVendaConsumivel = function(e) {
+            e.preventDefault();
+            const vendedor = document.getElementById('vendedor').value.trim();
+            const cliente = document.getElementById('cliente').value.trim();
+            const dataVendaStr = document.getElementById('dataVenda').value;
+            
+            if (!cliente || !dataVendaStr || !vendedor) return;
+
+            if (window.consumiveis_editingId !== null) {
+                const index = window.vendas.findIndex(v => v.id === window.consumiveis_editingId);
+                if (index !== -1) {
+                    window.vendas[index] = {
+                        ...window.vendas[index],
+                        vendedor,
+                        cliente,
+                        dataVenda: new Date(dataVendaStr + 'T00:00:00')
+                    };
+                    if (typeof window.salvarConsumivelNuvem === 'function') {
+                        window.salvarConsumivelNuvem(window.vendas[index]);
+                    }
+                    window.mostrarNotificacao('Registro atualizado com sucesso!');
+                }
+                window.resetFormConsumiveis();
+                window.renderizarTabela();
+                return;
+            }
+
+            const existente = window.vendas.find(v => v.cliente.toLowerCase() === cliente.toLowerCase());
+            
+            if (existente) {
+                window.pendente = { id: existente.id || Date.now().toString(), vendedor, cliente, dataVenda: new Date(dataVendaStr + 'T00:00:00') };
+                document.getElementById('modalConfirmacao').classList.remove('hidden');
+            } else {
+                const newItem = { id: Date.now().toString(), vendedor, cliente, dataVenda: new Date(dataVendaStr + 'T00:00:00') };
+                window.vendas.push(newItem);
+                if (typeof window.salvarConsumivelNuvem === 'function') {
+                    window.salvarConsumivelNuvem(newItem);
+                }
+                window.mostrarNotificacao('Nova venda registrada!');
+                window.resetFormConsumiveis();
+                window.renderizarTabela();
+            }
+        };
+
+        window.confirmarRenovacao = function(aceitar) {
+            if (aceitar && window.pendente) {
+                const index = window.vendas.findIndex(v => v.cliente.toLowerCase() === window.pendente.cliente.toLowerCase());
+                if (index !== -1) {
+                    window.vendas[index] = window.pendente;
+                    if (typeof window.salvarConsumivelNuvem === 'function') {
+                        window.salvarConsumivelNuvem(window.vendas[index]);
+                    }
+                    window.mostrarNotificacao('Comissão renovada com sucesso!');
+                }
+            }
+            document.getElementById('modalConfirmacao').classList.add('hidden');
+            window.resetFormConsumiveis();
+            window.renderizarTabela();
+        };
+
+        window.resetFormConsumiveis = function() {
+            document.getElementById('consumiveisForm').reset();
+            document.getElementById('dataVenda').valueAsDate = new Date();
+            window.consumiveis_editingId = null;
+            document.getElementById('formTitleConsumiveis').innerHTML = '<i class="fa-solid fa-file-invoice-dollar text-amber-600"></i> Registrar Nova Venda / Consumível';
+            document.getElementById('btnSubmitConsumiveis').innerHTML = '<i class="fa-solid fa-save"></i> Registrar';
+            document.getElementById('btnCancelEditConsumiveis').classList.add('hidden');
+        };
+
+        window.fecharModalAcao = function() {
+            document.getElementById('modalAcaoConfirmacao').classList.add('hidden');
+        };
+
+        window.pedirConfirmacaoAcao = function(titulo, texto, callback) {
+            document.getElementById('modalAcaoTitulo').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> ${titulo}`;
+            document.getElementById('modalAcaoTexto').innerText = texto;
+            document.getElementById('modalAcaoBtnSim').onclick = () => {
+                fecharModalAcao();
+                callback();
+            };
+            document.getElementById('modalAcaoConfirmacao').classList.remove('hidden');
+        };
+
+        window.editarConsumivel = function(id) {
+            pedirConfirmacaoAcao('Editar Registro', 'Deseja realmente carregar este registro para edição?', () => {
+                const item = window.vendas.find(v => v.id === id);
+                if (!item) return;
+
+                window.consumiveis_editingId = id;
+                document.getElementById('vendedor').value = item.vendedor;
+                document.getElementById('cliente').value = item.cliente;
+                
+                const dtStr = item.dataVenda instanceof Date ? item.dataVenda.toISOString().split('T')[0] : new Date(item.dataVenda).toISOString().split('T')[0];
+                document.getElementById('dataVenda').value = dtStr;
+
+                document.getElementById('formTitleConsumiveis').innerHTML = '<i class="fa-solid fa-pen text-amber-600"></i> Editar Registro';
+                document.getElementById('btnSubmitConsumiveis').innerHTML = '<i class="fa-solid fa-save"></i> Atualizar';
+                document.getElementById('btnCancelEditConsumiveis').classList.remove('hidden');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        };
+
+        window.resetarConsumivel = function(id) {
+            pedirConfirmacaoAcao('Reiniciar Contagem', 'Deseja realmente reiniciar a contagem de 12 meses para a data de hoje?', () => {
+                const index = window.vendas.findIndex(v => v.id === id);
+                if (index !== -1) {
+                    window.vendas[index].dataVenda = new Date();
+                    if (typeof window.salvarConsumivelNuvem === 'function') {
+                        window.salvarConsumivelNuvem(window.vendas[index]);
+                    }
+                    window.renderizarTabela();
+                    window.mostrarNotificacao('Contagem de 12 meses reiniciada para hoje!');
+                }
+            });
+        };
+
+        window.apagarConsumivel = function(id) {
+            pedirConfirmacaoAcao('Excluir Registro', 'Deseja realmente apagar este registro do sistema?', () => {
+                window.vendas = window.vendas.filter(v => v.id !== id);
+                if (typeof window.excluirConsumivelNuvem === 'function') {
+                    window.excluirConsumivelNuvem(id);
+                }
+                window.renderizarTabela();
+                window.mostrarNotificacao('Registro removido.');
+            });
+        };
+
+        window.renderizarTabela = function() {
+            const tbody = document.getElementById('tabelaVendas');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            const hoje = new Date();
+            const fVendedor = (document.getElementById('filtroVendedor')?.value || '').toLowerCase();
+            const fCliente = (document.getElementById('filtroCliente')?.value || '').toLowerCase();
+            
+            const listaFiltrada = window.vendas.filter(v => 
+                (v.vendedor || '').toLowerCase().includes(fVendedor) && 
+                (v.cliente || '').toLowerCase().includes(fCliente)
+            );
+
+            if (listaFiltrada.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Nenhum registro encontrado.</td></tr>`;
+                return;
+            }
+
+            listaFiltrada.forEach(v => {
+                const dataVencimento = new Date(v.dataVenda);
+                dataVencimento.setMonth(dataVencimento.getMonth() + 12);
+                
+                const anosDiferenca = dataVencimento.getFullYear() - hoje.getFullYear();
+                const mesesDiferenca = dataVencimento.getMonth() - hoje.getMonth();
+                let diffMeses = (anosDiferenca * 12) + mesesDiferenca;
+                
+                if (hoje.getDate() > dataVencimento.getDate()) {
+                    diffMeses--;
+                }
+
+                let classeStatus = "bg-emerald-100 text-emerald-800 border-emerald-300", textoStatus = `${diffMeses} meses restantes`;
+                
+                if (diffMeses <= 0) { 
+                    classeStatus = "bg-rose-100 text-rose-800 border-rose-300"; 
+                    textoStatus = "Encerrado (0 meses)"; 
+                } else if (diffMeses === 1) { 
+                    classeStatus = "bg-amber-100 text-amber-800 border-amber-300"; 
+                    textoStatus = "1 mês restante";
+                } else if (diffMeses === 2) { 
+                    classeStatus = "bg-yellow-100 text-yellow-800 border-yellow-300"; 
+                    textoStatus = "2 meses restantes";
+                }
+
+                const dataFmt = v.dataVenda instanceof Date ? v.dataVenda.toLocaleDateString('pt-BR') : new Date(v.dataVenda).toLocaleDateString('pt-BR');
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-200">
+                        <td class="p-3 font-bold text-slate-900">${v.vendedor}</td>
+                        <td class="p-3 font-semibold text-slate-800">${v.cliente}</td>
+                        <td class="p-3 text-slate-600">${dataFmt}</td>
+                        <td class="p-3"><span class="px-2.5 py-1 rounded-md text-[10px] font-bold border ${classeStatus}">${textoStatus}</span></td>
+                        <td class="p-3 text-center space-x-1 no-print">
+                            <button onclick="resetarConsumivel('${v.id}')" title="Reset (Renovar para Hoje)" class="p-1.5 text-amber-600 hover:bg-amber-100 rounded-md transition"><i class="fa-solid fa-rotate-right"></i></button>
+                            <button onclick="editarConsumivel('${v.id}')" title="Editar" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="apagarConsumivel('${v.id}')" title="Apagar" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        };
+
+        window.exportarExcelConsumiveis = async function() {
+            if (typeof ExcelJS === 'undefined') { window.mostrarNotificacao('Carregando biblioteca Excel...', true); return; }
+            if (!window.vendas || window.vendas.length === 0) { window.mostrarNotificacao('Nenhum dado para exportar.', true); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Comissões Consumíveis');
+
+            ws.columns = [
+                { header: 'Vendedor', key: 'vendedor', width: 22 },
+                { header: 'Cliente', key: 'cliente', width: 28 },
+                { header: 'Data Base', key: 'dataVenda', width: 15 },
+                { header: 'Status / Validade', key: 'status', width: 22 }
+            ];
+
+            const headerRow = ws.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D97706' } };
+
+            const hoje = new Date();
+            window.vendas.forEach(v => {
+                const dataVencimento = new Date(v.dataVenda);
+                dataVencimento.setMonth(dataVencimento.getMonth() + 12);
+                const anosDiferenca = dataVencimento.getFullYear() - hoje.getFullYear();
+                const mesesDiferenca = dataVencimento.getMonth() - hoje.getMonth();
+                let diffMeses = (anosDiferenca * 12) + mesesDiferenca;
+                if (hoje.getDate() > dataVencimento.getDate()) diffMeses--;
+
+                const statusTxt = diffMeses <= 0 ? 'Encerrado' : `${diffMeses} meses restantes`;
+                const dataFmt = v.dataVenda instanceof Date ? v.dataVenda.toLocaleDateString('pt-BR') : new Date(v.dataVenda).toLocaleDateString('pt-BR');
+
+                ws.addRow({
+                    vendedor: v.vendedor,
+                    cliente: v.cliente,
+                    dataVenda: dataFmt,
+                    status: statusTxt
+                });
+            });
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Comissoes_Consumiveis_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            window.mostrarNotificacao('Planilha exportada com sucesso!');
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const dt = document.getElementById('dataVenda');
+            if(dt) dt.valueAsDate = new Date();
+            window.renderizarTabela();
+        });
+    </script>
+</body>
+</html>
