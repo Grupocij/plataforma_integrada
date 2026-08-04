@@ -15,7 +15,6 @@
 </head>
 <body class="min-h-screen pb-12 flex flex-col">
 
-    <!-- TELA DE LOGIN -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
             <div class="flex flex-col items-center justify-center gap-2">
@@ -39,8 +38,9 @@
                 <div class="flex items-center justify-between text-xs">
                     <label class="flex items-center gap-2 cursor-pointer text-slate-600 font-medium">
                         <input type="checkbox" id="auth-remember" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
-                        <span>Lembrar-me neste dispositivo</span>
+                        <span>Lembrar-me</span>
                     </label>
+                    <button type="button" onclick="recuperarSenha()" class="text-blue-600 hover:text-blue-800 font-bold transition">Esqueceu a senha?</button>
                 </div>
                 <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-[#002d72] hover:bg-blue-900 text-white font-extrabold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-to-bracket"></i> Entrar na Plataforma
@@ -49,7 +49,6 @@
         </div>
     </div>
 
-    <!-- CABEÇALHO DO PORTAL -->
     <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -78,7 +77,6 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
-        <!-- MÓDULO INÍCIO (HUB) -->
         <div id="view-inicio" class="space-y-8">
             <div class="bg-gradient-to-r from-[#1b2559] via-[#111827] to-[#0f172a] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
                 <div class="relative z-10 max-w-2xl">
@@ -90,7 +88,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-cards-inicio">
                 
-                <!-- CARD: SOLICITAÇÃO (Todos acessam) -->
+                <!-- CARD: SOLICITAÇÃO -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-signature"></i></div><span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">Operacional</span></div>
@@ -100,7 +98,7 @@
                     <a href="solicitacao.html" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: SIMULADOR (Todos acessam) -->
+                <!-- CARD: SIMULADOR -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-calculator"></i></div><span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">Operacional</span></div>
@@ -110,7 +108,7 @@
                     <a href="simulador.html" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: DESPESAS (Todos acessam) -->
+                <!-- CARD: DESPESAS -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div><span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Operacional</span></div>
@@ -120,7 +118,7 @@
                     <a href="despesas.html" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: DOCUMENTOS OFICIAIS (Admin e Vendedores) -->
+                <!-- CARD: DOCUMENTOS OFICIAIS -->
                 <div id="card-tabelas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-pdf"></i></div><span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Comercial & Gestão</span></div>
@@ -130,7 +128,7 @@
                     <a href="tabelas.html" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: COMISSÕES AZUL (Admin e Vendedores) -->
+                <!-- CARD: COMISSÕES AZUL -->
                 <div id="card-comissoes-azul" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-indigo-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div><span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-300">Comercial & Gestão</span></div>
@@ -140,7 +138,7 @@
                     <a href="comissoes-azul.html" class="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
                 
-                <!-- CARD: ESTOQUE EQUIPAMENTOS (Admin e Vendedores) -->
+                <!-- CARD: ESTOQUE EQUIPAMENTOS -->
                 <div id="card-estoque" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-cyan-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div><span class="text-[11px] font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-300">Comercial & Gestão</span></div>
@@ -150,7 +148,7 @@
                     <a href="estoque.html" class="mt-6 w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
                 
-                <!-- CARD: DASHBOARD GERENCIAL (Admin e Vendedores) -->
+                <!-- CARD: DASHBOARD GERENCIAL -->
                 <div id="card-dashboard" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div><span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Comercial & Gestão</span></div>
@@ -158,6 +156,16 @@
                         <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gráficos e indicadores de performance baseados nas vendas e estoques.</p>
                     </div>
                     <a href="dashboard-equip.html" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- CARD: COMISSÕES - CONSUMÍVEIS (Apenas Admin/Financeiro) -->
+                <div id="card-comissoes-consumiveis" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-invoice-dollar"></i></div><span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Gestão Global (Admin)</span></div>
+                        <h3 class="text-base font-bold text-slate-900">Comissões - Consumíveis</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle e renovação de comissões de consumíveis com validade de 12 meses.</p>
+                    </div>
+                    <a href="comissoes-consumiveis.html" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
                 <!-- CARD: VENDAS REGISTRADAS (Apenas Admin) -->
@@ -185,13 +193,11 @@
 
     </main>
 
-    <!-- NOTIFICAÇÃO -->
     <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i><span id="toast-message" class="text-xs font-semibold">Sucesso!</span></div>
 
-    <!-- FIREBASE MODULE SDK SETUP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
@@ -228,6 +234,22 @@
             } catch(err) { 
                 window.mostrarNotificacao("Erro no login: "+err.message, true); 
             } 
+        };
+
+        window.recuperarSenha = async function() {
+            const emailInput = document.getElementById('auth-email');
+            const email = emailInput ? emailInput.value.trim() : '';
+            if (!email) {
+                window.mostrarNotificacao("Por favor, digite seu e-mail corporativo acima para recuperar a senha.", true);
+                if(emailInput) emailInput.focus();
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                window.mostrarNotificacao("E-mail de recuperação de senha enviado! Verifique sua caixa de entrada.");
+            } catch (err) {
+                window.mostrarNotificacao("Erro ao enviar e-mail: " + err.message, true);
+            }
         };
 
         window.fazerLogout = async function() { 
@@ -280,6 +302,7 @@
             document.getElementById('card-estoque')?.classList.toggle('hidden', !pComercial);
             document.getElementById('card-dashboard')?.classList.toggle('hidden', !pComercial);
             
+            document.getElementById('card-comissoes-consumiveis')?.classList.toggle('hidden', !isAdmin);
             document.getElementById('card-vendas')?.classList.toggle('hidden', !isAdmin);
             document.getElementById('card-admin')?.classList.toggle('hidden', !isAdmin);
         };
