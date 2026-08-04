@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analítico - Despesas de Viagem - Grupo CIJ</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load SheetJS for reading Excel files directly in browser -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Load FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#003352',   // Corporate dark navy blue
+                        secondary: '#0284c7', // Cyan / Light Blue
+                        accent: '#10b981',    // Emerald Green
+                        background: '#f8fafc',
+                        card: '#ffffff',
+                        textMain: '#0f172a',
+                        textMuted: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background text-textMain min-h-screen p-4 md:p-8">
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
+            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <header class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <!-- Company Logo / Back to Hub -->
+                <a href="index.html" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-primary font-bold text-xs transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar ao Hub
+                </a>
+                
+                <div class="border-l-0 sm:border-l-2 border-gray-200 sm:pl-6">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded border border-emerald-300">Módulo Gerencial</span>
+                        <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-100 text-slate-700 border-slate-300">Sincronizando...</span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-primary">
+                        Dashboard de Despesas de Viagem
+                    </h1>
+                    <p class="text-textMuted text-sm mt-0.5" id="file-status-label">
+                        Coletando lançamentos em tempo real do Módulo de Controle de Despesas (Firebase).
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Excel Import Field / Actions -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="w-full lg:w-auto bg-slate-50 p-3.5 rounded-xl border border-dashed border-sky-300 flex items-center gap-3">
+                    <div class="flex items-center gap-2 text-primary font-medium text-sm">
+                        <i class="fa-solid fa-file-excel text-emerald-600 text-xl"></i>
+                        <span>Importar Extra:</span>
+                    </div>
+                    <label class="cursor-pointer bg-primary hover:bg-slate-800 text-white text-xs font-semibold py-2 px-4 rounded-lg transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-upload"></i> Arquivo (.xlsx)
+                        <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
+                    </label>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- 1. Total Spent Card -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between transition hover:-translate-y-1 duration-300">
+                <div>
+                    <p class="text-xs font-semibold text-textMuted uppercase tracking-wider">Total Gasto</p>
+                    <h2 class="text-2xl md:text-3xl font-bold text-primary mt-1" id="kpi-total">R$ 0,00</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-primary flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+            </div>
+
+            <!-- 2. Total Transactions Card -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between transition hover:-translate-y-1 duration-300">
+                <div>
+                    <p class="text-xs font-semibold text-textMuted uppercase tracking-wider">Qtd. Transações</p>
+                    <h2 class="text-2xl md:text-3xl font-bold text-primary mt-1" id="kpi-count">0</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+            </div>
+
+            <!-- 3. Most Expensive Category Card -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between transition hover:-translate-y-1 duration-300">
+                <div class="min-w-0 flex-1 pr-2">
+                    <p class="text-xs font-semibold text-textMuted uppercase tracking-wider">Maior Categoria</p>
+                    <h2 class="text-lg font-bold text-primary mt-1 truncate" id="kpi-top-category">-</h2>
+                    <p class="text-xs text-textMuted" id="kpi-top-category-val">R$ 0,00</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+            </div>
+
+            <!-- 4. Most Expensive Client Card -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between transition hover:-translate-y-1 duration-300">
+                <div class="min-w-0 flex-1 pr-2">
+                    <p class="text-xs font-semibold text-textMuted uppercase tracking-wider">Maior Cliente</p>
+                    <h2 class="text-lg font-bold text-primary mt-1 truncate" id="kpi-top-client">-</h2>
+                    <p class="text-xs text-textMuted" id="kpi-top-client-val">R$ 0,00</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Despesas por Categoria -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                <h3 class="text-base font-bold text-primary mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-bar text-secondary"></i> Despesas por Categoria
+                </h3>
+                <div class="relative h-[300px] w-full">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Cartão Utilizado -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-base font-bold text-primary mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-credit-card text-secondary"></i> Por Cartão Utilizado
+                </h3>
+                <div class="relative h-[300px] w-full flex justify-center">
+                    <canvas id="cardChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Timeline Chart -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                <h3 class="text-base font-bold text-primary mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-secondary"></i> Evolução Diária dos Gastos
+                </h3>
+                <div class="relative h-[300px] w-full">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Expenses List -->
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                <h3 class="text-base font-bold text-primary mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-secondary"></i> Maiores Gastos Individuais
+                </h3>
+                <div class="overflow-y-auto flex-grow" style="max-height: 300px;">
+                    <ul class="space-y-3" id="top-expenses-list">
+                        <!-- List items injected via JS -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
+                <h3 class="text-base font-bold text-primary flex items-center gap-2">
+                    <i class="fa-solid fa-table text-secondary"></i> Detalhamento das Despesas
+                </h3>
+                
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Table Filter -->
+                    <div class="relative flex-grow md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="table-search" placeholder="Buscar técnico, cliente, cat..." onkeyup="filterTable()" class="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30">
+                    </div>
+                    
+                    <button onclick="downloadCSV()" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-1.5 px-3 rounded-lg flex items-center gap-2 transition shadow-sm">
+                        <i class="fa-solid fa-download text-secondary"></i> Exportar Visão
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-gray-600">
+                    <thead class="text-[11px] text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th scope="col" class="px-5 py-3 font-semibold">Relatório</th>
+                            <th scope="col" class="px-5 py-3 font-semibold">Data</th>
+                            <th scope="col" class="px-5 py-3 font-semibold">Técnico / Vendedor</th>
+                            <th scope="col" class="px-5 py-3 font-semibold">Cliente</th>
+                            <th scope="col" class="px-5 py-3 font-semibold">Descrição</th>
+                            <th scope="col" class="px-5 py-3 font-semibold">Categoria</th>
+                            <th scope="col" class="px-5 py-3 font-semibold">Cartão / Pagto</th>
+                            <th scope="col" class="px-5 py-3 font-semibold text-right">Valor (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-gray-100">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FIREBASE MODULE SDK SETUP -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                const cleanEmail = user.email.toLowerCase().trim();
+                if(loginScreen) loginScreen.classList.add('hidden');
+                window.currentUser = user;
+                window.isUserAdmin = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                
+                const badge = document.getElementById('user-role-badge');
+                if(badge) {
+                    badge.innerText = window.isUserAdmin ? 'Admin / Financeiro' : 'Usuário / Técnico';
+                    badge.className = window.isUserAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-purple-100 text-purple-800 border-purple-300' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-100 text-blue-800 border-blue-300';
+                }
+
+                // Listen in real-time to expenses collection from Controle de Despesas
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo'), (snap) => {
+                    const rawList = [];
+                    snap.forEach(d => rawList.push(d.data()));
+                    
+                    if (rawList.length > 0) {
+                        window.processarDadosFirebase(rawList);
+                    } else {
+                        // Fallback to sample data if no records exist yet
+                        window.processarDadosFirebase(window.sampleMockData);
+                    }
+                }, (err) => {
+                    console.error("Erro no Firestore:", err);
+                    window.processarDadosFirebase(window.sampleMockData);
+                });
+
+            } else {
+                if(loginScreen) loginScreen.classList.remove('hidden');
+            }
+        });
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch(err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+    </script>
+
+    <script>
+        // Formatter for Brazilian Real currency
+        const brlFormatter = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
+
+        let categoryChartInstance = null;
+        let cardChartInstance = null;
+        let timelineChartInstance = null;
+        let currentExpenses = [];
+
+        // Sample initial data matching Grupo C.I.J domain
+        window.sampleMockData = [
+            {
+                id: '1',
+                num_relatorio: 'REL-1001',
+                data_pagamento: '2026-07-02',
+                tecnico: 'Carlos Eduardo',
+                cliente: 'Ambev Joinville',
+                cidade: 'Joinville',
+                descricao: 'Passagem Aérea Curitiba / São Paulo',
+                categoria: 'Transporte (Aéreo)',
+                cartao: 'Cartão Corporativo Itaú 1042',
+                pagamento: 'Cartão de Crédito',
+                valor: 1850.00
+            },
+            {
+                id: '2',
+                num_relatorio: 'REL-1001',
+                data_pagamento: '2026-07-03',
+                tecnico: 'Carlos Eduardo',
+                cliente: 'Ambev Joinville',
+                cidade: 'Joinville',
+                descricao: 'Hotel Ibis Paulista (3 diárias)',
+                categoria: 'Hotel',
+                cartao: 'Cartão Corporativo Itaú 1042',
+                pagamento: 'Cartão de Crédito',
+                valor: 1420.00
+            },
+            {
+                id: '3',
+                num_relatorio: 'REL-1002',
+                data_pagamento: '2026-07-04',
+                tecnico: 'Mariana Silva',
+                cliente: 'Tetra Pak',
+                cidade: 'Ponta Grossa',
+                descricao: 'Manutenção em Codificador Industrial',
+                categoria: 'Peças/Ferramentas',
+                cartao: 'Não se aplica',
+                pagamento: 'Pix',
+                valor: 890.50
+            }
+        ];
+
+        window.processarDadosFirebase = function(firebaseList) {
+            const mapped = firebaseList.map(item => {
+                const cat = item.categoria === 'Outros' && item.categoria_outros ? `Outros (${item.categoria_outros})` : (item.categoria || 'Geral');
+                const crd = item.cartao && item.cartao !== 'Não se aplica' ? item.cartao : (item.pagamento || 'Cartão Padrão');
+                
+                // If not admin, restrict to own email if author exists
+                if (window.currentUser && !window.isUserAdmin && item.autor && item.autor !== window.currentUser.email) {
+                    return null;
+                }
+
+                return {
+                    num_relatorio: item.num_relatorio || 'REL-1001',
+                    date: item.data_pagamento || new Date().toISOString().split('T')[0],
+                    technician: item.tecnico || 'N/I',
+                    client: `${item.cliente || 'Cliente'} (${item.cidade || 'Cidade'})`,
+                    clientOnly: item.cliente || 'Cliente',
+                    description: item.descricao || 'Despesa',
+                    category: cat,
+                    card: crd,
+                    amount: parseFloat(item.valor) || 0
+                };
+            }).filter(Boolean);
+
+            currentExpenses = mapped.length > 0 ? mapped : [...window.sampleMockData];
+            
+            document.getElementById('file-status-label').innerHTML = `
+                <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Sincronizado com o Módulo de Despesas (${currentExpenses.length} itens)</span>
+            `;
+
+            renderDashboard(currentExpenses);
+        };
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                    if (!rawRows || rawRows.length === 0) {
+                        alert('A planilha selecionada está vazia.');
+                        return;
+                    }
+
+                    const parsedData = rawRows.map(row => {
+                        const getVal = (possibleKeys) => {
+                            for (let key of Object.keys(row)) {
+                                const cleanKey = key.toString().trim().toLowerCase();
+                                if (possibleKeys.some(p => cleanKey.includes(p))) return row[key];
+                            }
+                            return '';
+                        };
+
+                        let rawDate = getVal(['data', 'date', 'dia']);
+                        let dateStr = '';
+                        if (rawDate instanceof Date) dateStr = rawDate.toISOString().split('T')[0];
+                        else if (rawDate) dateStr = String(rawDate).trim();
+                        else dateStr = new Date().toISOString().split('T')[0];
+
+                        let rawVal = getVal(['valor', 'val', 'amount', 'preço', 'preco', 'gasto']);
+                        let numericVal = 0;
+                        if (typeof rawVal === 'number') numericVal = rawVal;
+                        else if (typeof rawVal === 'string') numericVal = parseFloat(rawVal.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+
+                        return {
+                            num_relatorio: 'EXT-01',
+                            date: dateStr,
+                            technician: String(getVal(['técnico', 'tecnico', 'vendedor']) || 'N/I').trim(),
+                            client: String(getVal(['cliente', 'empresa']) || 'N/I').trim(),
+                            description: String(getVal(['descrição', 'descricao', 'item']) || 'Despesa').trim(),
+                            category: String(getVal(['categoria', 'tipo']) || 'Geral').trim(),
+                            card: String(getVal(['cartão', 'cartao', 'pagamento']) || 'Cartão Padrão').trim(),
+                            amount: numericVal
+                        };
+                    });
+
+                    currentExpenses = [...currentExpenses, ...parsedData];
+                    document.getElementById('file-status-label').innerHTML = `
+                        <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Adicionado arquivo: ${file.name}</span>
+                    `;
+                    renderDashboard(currentExpenses);
+
+                } catch (err) {
+                    console.error("Erro ao ler Excel:", err);
+                    alert("Erro ao processar o arquivo Excel.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderDashboard(data) {
+            if (!data || data.length === 0) return;
+
+            const totalSpent = data.reduce((sum, item) => sum + (item.amount || 0), 0);
+            const transactionCount = data.length;
+
+            const categoryTotals = {};
+            const clientTotals = {};
+            const cardTotals = {};
+            const dateTotals = {};
+
+            data.forEach(item => {
+                const cat = item.category || 'Outros';
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + item.amount;
+
+                const cli = item.client || 'Não Informado';
+                clientTotals[cli] = (clientTotals[cli] || 0) + item.amount;
+
+                const card = item.card || 'Outros';
+                cardTotals[card] = (cardTotals[card] || 0) + item.amount;
+
+                const dt = item.date || 'Desconhecido';
+                dateTotals[dt] = (dateTotals[dt] || 0) + item.amount;
+            });
+
+            let topCategory = '-';
+            let topCategoryVal = 0;
+            for (let [cat, val] of Object.entries(categoryTotals)) {
+                if (val > topCategoryVal) { topCategoryVal = val; topCategory = cat; }
+            }
+
+            let topClient = '-';
+            let topClientVal = 0;
+            for (let [cli, val] of Object.entries(clientTotals)) {
+                if (val > topClientVal) { topClientVal = val; topClient = cli; }
+            }
+
+            const top5Expenses = [...data].sort((a, b) => b.amount - a.amount).slice(0, 5);
+
+            document.getElementById('kpi-total').textContent = brlFormatter.format(totalSpent);
+            document.getElementById('kpi-count').textContent = transactionCount;
+            document.getElementById('kpi-top-category').textContent = topCategory;
+            document.getElementById('kpi-top-category-val').textContent = brlFormatter.format(topCategoryVal);
+            document.getElementById('kpi-top-client').textContent = topClient;
+            document.getElementById('kpi-top-client-val').textContent = brlFormatter.format(topClientVal);
+
+            const topListEl = document.getElementById('top-expenses-list');
+            topListEl.innerHTML = '';
+            top5Expenses.forEach(item => {
+                const li = document.createElement('li');
+                li.className = "p-2.5 bg-slate-50 rounded-lg hover:bg-slate-100 transition border border-slate-100 flex justify-between items-center";
+                li.innerHTML = `
+                    <div class="min-w-0 pr-3">
+                        <p class="text-xs font-bold text-gray-800 truncate">${item.description}</p>
+                        <p class="text-[11px] text-gray-500 mt-0.5 truncate"><i class="fa-solid fa-user text-[10px] text-sky-600"></i> ${item.technician} | <i class="fa-solid fa-building text-[10px] text-purple-600"></i> ${item.client}</p>
+                    </div>
+                    <div class="text-xs font-bold text-primary shrink-0">
+                        ${brlFormatter.format(item.amount)}
+                    </div>
+                `;
+                topListEl.appendChild(li);
+            });
+
+            renderTableRows(data);
+            renderCharts(categoryTotals, cardTotals, dateTotals);
+        }
+
+        function renderTableRows(data) {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '';
+
+            data.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = index % 2 === 0 ? "bg-white hover:bg-slate-50" : "bg-slate-50/60 hover:bg-slate-100/80";
+
+                const dataPartes = item.date ? item.date.split('-') : [];
+                const dataFormatada = dataPartes.length === 3 ? `${dataPartes[2]}/${dataPartes[1]}/${dataPartes[0]}` : item.date;
+
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-bold text-primary"><span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded">${item.num_relatorio}</span></td>
+                    <td class="px-5 py-3 whitespace-nowrap font-medium text-gray-700">${dataFormatada}</td>
+                    <td class="px-5 py-3 font-semibold text-primary">${item.technician}</td>
+                    <td class="px-5 py-3 font-medium text-gray-800">${item.client}</td>
+                    <td class="px-5 py-3 text-gray-600">${item.description}</td>
+                    <td class="px-5 py-3">
+                        <span class="bg-sky-50 text-sky-800 text-[10px] font-semibold px-2 py-0.5 rounded border border-sky-100">${item.category}</span>
+                    </td>
+                    <td class="px-5 py-3 text-gray-600">${item.card}</td>
+                    <td class="px-5 py-3 text-right font-bold text-primary">${brlFormatter.format(item.amount)}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const query = document.getElementById('table-search').value.toLowerCase();
+            const filtered = currentExpenses.filter(item => 
+                item.technician.toLowerCase().includes(query) ||
+                item.client.toLowerCase().includes(query) ||
+                item.description.toLowerCase().includes(query) ||
+                item.category.toLowerCase().includes(query) ||
+                item.card.toLowerCase().includes(query) ||
+                item.num_relatorio.toLowerCase().includes(query)
+            );
+            renderTableRows(filtered);
+        }
+
+        function renderCharts(categoryTotals, cardTotals, dateTotals) {
+            const palette = ['#003352', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
+
+            const sortedCat = Object.entries(categoryTotals).sort((a,b) => b[1] - a[1]);
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'bar',
+                data: {
+                    labels: sortedCat.map(x => x[0]),
+                    datasets: [{
+                        label: 'Gasto por Categoria',
+                        data: sortedCat.map(x => x[1]),
+                        backgroundColor: palette,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (c) => ' ' + brlFormatter.format(c.raw) } }
+                    },
+                    scales: {
+                        x: { grid: { borderDash: [2, 4] } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+
+            const ctxCard = document.getElementById('cardChart').getContext('2d');
+            if (cardChartInstance) cardChartInstance.destroy();
+
+            cardChartInstance = new Chart(ctxCard, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(cardTotals),
+                    datasets: [{
+                        data: Object.values(cardTotals),
+                        backgroundColor: ['#003352', '#0284c7', '#10b981', '#f59e0b', '#64748b'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: (c) => ` ${c.label}: ${brlFormatter.format(c.raw)}` } }
+                    }
+                }
+            });
+
+            const sortedDates = Object.keys(dateTotals).sort();
+            const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+            if (timelineChartInstance) timelineChartInstance.destroy();
+
+            timelineChartInstance = new Chart(ctxTimeline, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Gasto Diário (R$)',
+                        data: sortedDates.map(d => dateTotals[d]),
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#003352',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (c) => ' ' + brlFormatter.format(c.raw) } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [2, 4] },
+                            ticks: { callback: (v) => 'R$ ' + v }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function downloadCSV() {
+            if (!currentExpenses || currentExpenses.length === 0) return;
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "Relatorio,Data,Tecnico,Cliente,Descricao,Categoria,Cartao,Valor\r\n";
+
+            currentExpenses.forEach(row => {
+                const line = [
+                    row.num_relatorio,
+                    row.date,
+                    `"${row.technician}"`,
+                    `"${row.client}"`,
+                    `"${row.description}"`,
+                    `"${row.category}"`,
+                    `"${row.card}"`,
+                    row.amount.toFixed(2)
+                ].join(",");
+                csvContent += line + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Despesas_Viagem_GrupoCIJ.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
