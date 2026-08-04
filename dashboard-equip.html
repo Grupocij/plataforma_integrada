@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Analítico - Despesas de Viagem - Grupo CIJ</title>
-    <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Load SheetJS for reading Excel files directly in browser -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Load FontAwesome for icons -->
+    <!-- Load ExcelJS and FileSaver for professional Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -50,34 +48,36 @@
         }
     </style>
 </head>
-<body class="bg-background text-textMain min-h-screen p-4 md:p-8">
+<body class="bg-background text-textMain min-h-screen p-4 md:p-8 flex flex-col">
 
-    <!-- TELA DE LOGIN -->
-    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
-            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
-            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão...</p>
+    <!-- TELA DE LOGIN / BLOQUEIO DE ACESSO PADRÃO DO PORTAL -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-purple-900/50 text-center space-y-6">
+            <h1 class="text-2xl font-black text-purple-400">ACESSO RESTRITO</h1>
+            <p id="login-message" class="text-xs text-slate-400">Apenas Administradores e Financeiro podem acessar este Dashboard...</p>
             <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
-                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
-                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
-                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition">Entrar</button>
             </form>
+            <div class="pt-2">
+                <a href="index.html" class="text-xs text-slate-400 hover:text-white transition"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+            </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6 w-full flex-1">
         
         <header class="bg-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <!-- Company Logo / Back to Hub -->
                 <a href="index.html" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-primary font-bold text-xs transition flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> Voltar ao Hub
                 </a>
                 
                 <div class="border-l-0 sm:border-l-2 border-gray-200 sm:pl-6">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded border border-emerald-300">Módulo Gerencial</span>
-                        <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-100 text-slate-700 border-slate-300">Sincronizando...</span>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded border border-emerald-300">Dashboard Gerencial</span>
+                        <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-100 text-slate-700 border-slate-300">Verificando...</span>
                     </div>
                     <h1 class="text-2xl md:text-3xl font-bold text-primary">
                         Dashboard de Despesas de Viagem
@@ -88,18 +88,14 @@
                 </div>
             </div>
             
-            <!-- Excel Import Field / Actions -->
+            <!-- Export Excel Button -->
             <div class="flex flex-wrap items-center gap-3">
-                <div class="w-full lg:w-auto bg-slate-50 p-3.5 rounded-xl border border-dashed border-sky-300 flex items-center gap-3">
-                    <div class="flex items-center gap-2 text-primary font-medium text-sm">
-                        <i class="fa-solid fa-file-excel text-emerald-600 text-xl"></i>
-                        <span>Importar Extra:</span>
-                    </div>
-                    <label class="cursor-pointer bg-primary hover:bg-slate-800 text-white text-xs font-semibold py-2 px-4 rounded-lg transition flex items-center gap-2 shadow-sm">
-                        <i class="fa-solid fa-upload"></i> Arquivo (.xlsx)
-                        <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
-                    </label>
-                </div>
+                <button onclick="exportarDashboardExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3 px-5 rounded-xl transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-file-excel text-base"></i> Exportar para Excel (.xlsx)
+                </button>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-600 hover:text-red-700 transition px-3 py-2 bg-red-50 rounded-xl border border-red-200">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
+                </button>
             </div>
         </header>
 
@@ -151,6 +147,45 @@
                 </div>
             </div>
 
+        </div>
+
+        <div class="bg-card p-5 rounded-xl shadow-sm border border-gray-100 space-y-3">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                <h3 class="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-secondary"></i> Filtros do Dashboard
+                </h3>
+                <button onclick="limparFiltrosDashboard()" class="text-xs text-textMuted hover:text-primary font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-right"></i> Limpar Filtros
+                </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-textMuted uppercase mb-1">Técnico / Vendedor</label>
+                    <select id="filtro-tecnico" onchange="aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-medium text-textMain outline-none focus:border-secondary">
+                        <option value="">Todos os Técnicos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-textMuted uppercase mb-1">Cliente</label>
+                    <select id="filtro-cliente" onchange="aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-medium text-textMain outline-none focus:border-secondary">
+                        <option value="">Todos os Clientes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-textMuted uppercase mb-1">Categoria</label>
+                    <select id="filtro-categoria" onchange="aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-medium text-textMain outline-none focus:border-secondary">
+                        <option value="">Todas as Categorias</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-textMuted uppercase mb-1">Data De</label>
+                    <input type="date" id="filtro-data-de" onchange="aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-medium text-textMain outline-none focus:border-secondary">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-textMuted uppercase mb-1">Data Até</label>
+                    <input type="date" id="filtro-data-ate" onchange="aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-lg text-xs font-medium text-textMain outline-none focus:border-secondary">
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -211,8 +246,8 @@
                         <input type="text" id="table-search" placeholder="Buscar técnico, cliente, cat..." onkeyup="filterTable()" class="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30">
                     </div>
                     
-                    <button onclick="downloadCSV()" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-1.5 px-3 rounded-lg flex items-center gap-2 transition shadow-sm">
-                        <i class="fa-solid fa-download text-secondary"></i> Exportar Visão
+                    <button onclick="exportarDashboardExcel()" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-1.5 px-3 rounded-lg flex items-center gap-2 transition shadow-sm">
+                        <i class="fa-solid fa-file-excel text-emerald-600"></i> Exportar Excel
                     </button>
                 </div>
             </div>
@@ -240,13 +275,13 @@
 
     </div>
 
-    <!-- FIREBASE MODULE SDK SETUP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plataforma-cij';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
             authDomain: "plataforma-cij.firebaseapp.com",
             projectId: "plataforma-cij",
@@ -258,25 +293,45 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'plataforma-cij';
 
         const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Erro na autenticação Firebase:", err);
+            }
+        }
+        initAuth();
 
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
             if(user) {
-                const cleanEmail = user.email.toLowerCase().trim();
-                if(loginScreen) loginScreen.classList.add('hidden');
+                const cleanEmail = (user.email || '').toLowerCase().trim();
+                const isAdmin = !user.email || EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro') || cleanEmail.includes('faturamento') || cleanEmail.includes('marcos') || cleanEmail.includes('comercial') || cleanEmail.includes('suporte');
+
+                if (user.email && !isAdmin) {
+                    loginScreen.classList.remove('hidden');
+                    document.getElementById('login-message').innerHTML = '<span class="text-red-400 font-bold">Acesso Restrito: Apenas Administradores e Financeiro podem acessar este Dashboard.</span>';
+                    document.getElementById('auth-form').classList.remove('hidden');
+                    signOut(auth);
+                    return;
+                }
+
+                loginScreen.classList.add('hidden');
                 window.currentUser = user;
-                window.isUserAdmin = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
                 
                 const badge = document.getElementById('user-role-badge');
                 if(badge) {
-                    badge.innerText = window.isUserAdmin ? 'Admin / Financeiro' : 'Usuário / Técnico';
-                    badge.className = window.isUserAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-purple-100 text-purple-800 border-purple-300' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-100 text-blue-800 border-blue-300';
+                    badge.innerText = user.email ? 'Admin / Financeiro' : 'Modo Teste / Admin';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border bg-purple-100 text-purple-800 border-purple-300';
                 }
 
-                // Listen in real-time to expenses collection from Controle de Despesas
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo'), (snap) => {
                     const rawList = [];
                     snap.forEach(d => rawList.push(d.data()));
@@ -284,31 +339,31 @@
                     if (rawList.length > 0) {
                         window.processarDadosFirebase(rawList);
                     } else {
-                        // Fallback to sample data if no records exist yet
                         window.processarDadosFirebase(window.sampleMockData);
                     }
                 }, (err) => {
                     console.error("Erro no Firestore:", err);
                     window.processarDadosFirebase(window.sampleMockData);
                 });
-
             } else {
-                if(loginScreen) loginScreen.classList.remove('hidden');
+                loginScreen.classList.remove('hidden');
+                document.getElementById('auth-form').classList.remove('hidden');
             }
         });
 
-        window.handleLogin = async function(e) {
+        window.handleLogin = async (e) => {
             e.preventDefault();
             try {
                 await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
-            } catch(err) {
+            } catch (err) {
                 alert("Erro no login: " + err.message);
             }
         };
+
+        window.fazerLogout = () => signOut(auth);
     </script>
 
     <script>
-        // Formatter for Brazilian Real currency
         const brlFormatter = new Intl.NumberFormat('pt-BR', {
             style: 'currency',
             currency: 'BRL'
@@ -318,8 +373,8 @@
         let cardChartInstance = null;
         let timelineChartInstance = null;
         let currentExpenses = [];
+        let rawExpensesMaster = [];
 
-        // Sample initial data matching Grupo C.I.J domain
         window.sampleMockData = [
             {
                 id: '1',
@@ -367,11 +422,6 @@
                 const cat = item.categoria === 'Outros' && item.categoria_outros ? `Outros (${item.categoria_outros})` : (item.categoria || 'Geral');
                 const crd = item.cartao && item.cartao !== 'Não se aplica' ? item.cartao : (item.pagamento || 'Cartão Padrão');
                 
-                // If not admin, restrict to own email if author exists
-                if (window.currentUser && !window.isUserAdmin && item.autor && item.autor !== window.currentUser.email) {
-                    return null;
-                }
-
                 return {
                     num_relatorio: item.num_relatorio || 'REL-1001',
                     date: item.data_pagamento || new Date().toISOString().split('T')[0],
@@ -385,81 +435,73 @@
                 };
             }).filter(Boolean);
 
-            currentExpenses = mapped.length > 0 ? mapped : [...window.sampleMockData];
+            rawExpensesMaster = mapped.length > 0 ? mapped : [...window.sampleMockData];
             
             document.getElementById('file-status-label').innerHTML = `
-                <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Sincronizado com o Módulo de Despesas (${currentExpenses.length} itens)</span>
+                <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Sincronizado com o Módulo de Despesas (${rawExpensesMaster.length} itens)</span>
             `;
+
+            popularFiltrosSelects(rawExpensesMaster);
+            aplicarFiltrosDashboard();
+        };
+
+        function popularFiltrosSelects(data) {
+            const tecnicos = [...new Set(data.map(i => i.technician))].sort();
+            const clientes = [...new Set(data.map(i => i.clientOnly))].sort();
+            const categorias = [...new Set(data.map(i => i.category))].sort();
+
+            const selTec = document.getElementById('filtro-tecnico');
+            const selCli = document.getElementById('filtro-cliente');
+            const selCat = document.getElementById('filtro-categoria');
+
+            const currentTec = selTec.value;
+            const currentCli = selCli.value;
+            const currentCat = selCat.value;
+
+            selTec.innerHTML = '<option value="">Todos os Técnicos</option>';
+            tecnicos.forEach(t => selTec.innerHTML += `<option value="${t}">${t}</option>`);
+            selTec.value = currentTec;
+
+            selCli.innerHTML = '<option value="">Todos os Clientes</option>';
+            clientes.forEach(c => selCli.innerHTML += `<option value="${c}">${c}</option>`);
+            selCli.value = currentCli;
+
+            selCat.innerHTML = '<option value="">Todas as Categorias</option>';
+            categorias.forEach(cat => selCat.innerHTML += `<option value="${cat}">${cat}</option>`);
+            selCat.value = currentCat;
+        }
+
+        window.aplicarFiltrosDashboard = function() {
+            const fTec = document.getElementById('filtro-tecnico').value;
+            const fCli = document.getElementById('filtro-cliente').value;
+            const fCat = document.getElementById('filtro-categoria').value;
+            const fDe = document.getElementById('filtro-data-de').value;
+            const fAte = document.getElementById('filtro-data-ate').value;
+
+            currentExpenses = rawExpensesMaster.filter(item => {
+                if (fTec && item.technician !== fTec) return false;
+                if (fCli && item.clientOnly !== fCli) return false;
+                if (fCat && item.category !== fCat) return false;
+                if (fDe && item.date < fDe) return false;
+                if (fAte && item.date > fAte) return false;
+                return true;
+            });
 
             renderDashboard(currentExpenses);
         };
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-
-                    if (!rawRows || rawRows.length === 0) {
-                        alert('A planilha selecionada está vazia.');
-                        return;
-                    }
-
-                    const parsedData = rawRows.map(row => {
-                        const getVal = (possibleKeys) => {
-                            for (let key of Object.keys(row)) {
-                                const cleanKey = key.toString().trim().toLowerCase();
-                                if (possibleKeys.some(p => cleanKey.includes(p))) return row[key];
-                            }
-                            return '';
-                        };
-
-                        let rawDate = getVal(['data', 'date', 'dia']);
-                        let dateStr = '';
-                        if (rawDate instanceof Date) dateStr = rawDate.toISOString().split('T')[0];
-                        else if (rawDate) dateStr = String(rawDate).trim();
-                        else dateStr = new Date().toISOString().split('T')[0];
-
-                        let rawVal = getVal(['valor', 'val', 'amount', 'preço', 'preco', 'gasto']);
-                        let numericVal = 0;
-                        if (typeof rawVal === 'number') numericVal = rawVal;
-                        else if (typeof rawVal === 'string') numericVal = parseFloat(rawVal.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
-
-                        return {
-                            num_relatorio: 'EXT-01',
-                            date: dateStr,
-                            technician: String(getVal(['técnico', 'tecnico', 'vendedor']) || 'N/I').trim(),
-                            client: String(getVal(['cliente', 'empresa']) || 'N/I').trim(),
-                            description: String(getVal(['descrição', 'descricao', 'item']) || 'Despesa').trim(),
-                            category: String(getVal(['categoria', 'tipo']) || 'Geral').trim(),
-                            card: String(getVal(['cartão', 'cartao', 'pagamento']) || 'Cartão Padrão').trim(),
-                            amount: numericVal
-                        };
-                    });
-
-                    currentExpenses = [...currentExpenses, ...parsedData];
-                    document.getElementById('file-status-label').innerHTML = `
-                        <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Adicionado arquivo: ${file.name}</span>
-                    `;
-                    renderDashboard(currentExpenses);
-
-                } catch (err) {
-                    console.error("Erro ao ler Excel:", err);
-                    alert("Erro ao processar o arquivo Excel.");
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
+        window.limparFiltrosDashboard = function() {
+            document.getElementById('filtro-tecnico').value = '';
+            document.getElementById('filtro-cliente').value = '';
+            document.getElementById('filtro-categoria').value = '';
+            document.getElementById('filtro-data-de').value = '';
+            document.getElementById('filtro-data-ate').value = '';
+            document.getElementById('table-search').value = '';
+            aplicarFiltrosDashboard();
+        };
 
         function renderDashboard(data) {
-            if (!data || data.length === 0) return;
+            if (!data) return;
 
             const totalSpent = data.reduce((sum, item) => sum + (item.amount || 0), 0);
             const transactionCount = data.length;
@@ -486,16 +528,24 @@
             let topCategory = '-';
             let topCategoryVal = 0;
             for (let [cat, val] of Object.entries(categoryTotals)) {
-                if (val > topCategoryVal) { topCategoryVal = val; topCategory = cat; }
+                if (val > topCategoryVal) {
+                    topCategoryVal = val;
+                    topCategory = cat;
+                }
             }
 
             let topClient = '-';
             let topClientVal = 0;
             for (let [cli, val] of Object.entries(clientTotals)) {
-                if (val > topClientVal) { topClientVal = val; topClient = cli; }
+                if (val > topClientVal) {
+                    topClientVal = val;
+                    topClient = cli;
+                }
             }
 
-            const top5Expenses = [...data].sort((a, b) => b.amount - a.amount).slice(0, 5);
+            const top5Expenses = [...data]
+                .sort((a, b) => b.amount - a.amount)
+                .slice(0, 5);
 
             document.getElementById('kpi-total').textContent = brlFormatter.format(totalSpent);
             document.getElementById('kpi-count').textContent = transactionCount;
@@ -506,6 +556,9 @@
 
             const topListEl = document.getElementById('top-expenses-list');
             topListEl.innerHTML = '';
+            if(top5Expenses.length === 0) {
+                topListEl.innerHTML = '<li class="text-xs text-slate-400 text-center py-4">Nenhum gasto encontrado.</li>';
+            }
             top5Expenses.forEach(item => {
                 const li = document.createElement('li');
                 li.className = "p-2.5 bg-slate-50 rounded-lg hover:bg-slate-100 transition border border-slate-100 flex justify-between items-center";
@@ -528,6 +581,11 @@
         function renderTableRows(data) {
             const tableBody = document.getElementById('data-table-body');
             tableBody.innerHTML = '';
+
+            if(data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="px-5 py-4 text-center text-slate-400">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
+                return;
+            }
 
             data.forEach((item, index) => {
                 const tr = document.createElement('tr');
@@ -661,34 +719,123 @@
             });
         }
 
-        function downloadCSV() {
-            if (!currentExpenses || currentExpenses.length === 0) return;
+        function getColumnLetter(colIndex) {
+            let letter = '';
+            while (colIndex > 0) {
+                let remainder = (colIndex - 1) % 26;
+                letter = String.fromCharCode(65 + remainder) + letter;
+                colIndex = Math.floor((colIndex - 1) / 26);
+            }
+            return letter;
+        }
 
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "Relatorio,Data,Tecnico,Cliente,Descricao,Categoria,Cartao,Valor\r\n";
+        window.exportarDashboardExcel = async function() {
+            if (typeof ExcelJS === 'undefined') { alert('Carregando ExcelJS...'); return; }
+            if (!currentExpenses || currentExpenses.length === 0) { alert('Nenhum dado disponível para exportar com os filtros atuais.'); return; }
 
-            currentExpenses.forEach(row => {
-                const line = [
-                    row.num_relatorio,
-                    row.date,
-                    `"${row.technician}"`,
-                    `"${row.client}"`,
-                    `"${row.description}"`,
-                    `"${row.category}"`,
-                    `"${row.card}"`,
-                    row.amount.toFixed(2)
-                ].join(",");
-                csvContent += line + "\r\n";
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Despesas Filtradas');
+
+            const columnsDef = [
+                { header: 'Relatório', key: 'c1', width: 14 },
+                { header: 'Data', key: 'c2', width: 14 },
+                { header: 'Técnico / Vendedor', key: 'c3', width: 22 },
+                { header: 'Cliente', key: 'c4', width: 25 },
+                { header: 'Descrição', key: 'c5', width: 30 },
+                { header: 'Categoria', key: 'c6', width: 22 },
+                { header: 'Cartão / Pagto', key: 'c7', width: 25 },
+                { header: 'Valor (R$)', key: 'c8', width: 16 }
+            ];
+
+            const dataRows = currentExpenses.map(i => [
+                i.num_relatorio || 'REL-1001',
+                i.date ? i.date.split('-').reverse().join('/') : '',
+                i.technician,
+                i.client,
+                i.description,
+                i.category,
+                i.card,
+                parseFloat(i.amount) || 0
+            ]);
+
+            const lastColLetter = getColumnLetter(columnsDef.length);
+            ws.mergeCells(`A1:${lastColLetter}1`);
+            const titleCell = ws.getCell('A1');
+            titleCell.value = "Dashboard Analítico - Despesas de Viagem - Grupo CIJ";
+            titleCell.font = { name: 'Inter', size: 13, bold: true, color: { argb: 'FFFFFF' } };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '003352' } };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            ws.getRow(1).height = 32;
+
+            ws.addRow([]);
+
+            ws.columns = columnsDef;
+            
+            const headerRow = ws.getRow(3);
+            headerRow.height = 26;
+            headerRow.font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0284c7' } };
+            headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            headerRow.eachCell(cell => {
+                cell.border = {
+                    top: { style: 'thin', color: { argb: '003352' } },
+                    bottom: { style: 'medium', color: { argb: '003352' } },
+                    left: { style: 'thin', color: { argb: 'CBD5E1' } },
+                    right: { style: 'thin', color: { argb: 'CBD5E1' } }
+                };
             });
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Despesas_Viagem_GrupoCIJ.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+            dataRows.forEach(rowData => {
+                const row = ws.addRow(rowData);
+                row.height = 20;
+                row.eachCell((cell, colNumber) => {
+                    cell.font = { name: 'Inter', size: 9, color: { argb: '0F172A' } };
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'E2E8F0' } },
+                        bottom: { style: 'thin', color: { argb: 'E2E8F0' } },
+                        left: { style: 'thin', color: { argb: 'E2E8F0' } },
+                        right: { style: 'thin', color: { argb: 'E2E8F0' } }
+                    };
+                    if (colNumber === 8) {
+                        cell.numFmt = '"R$ "#,##0.00';
+                        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+                    } else if (colNumber === 1 || colNumber === 2) {
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    } else {
+                        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+                    }
+                });
+            });
+
+            const totalsRowData = new Array(columnsDef.length).fill('');
+            totalsRowData[0] = 'TOTAL GERAL';
+            let sumVal = 0;
+            dataRows.forEach(r => sumVal += parseFloat(r[7]) || 0);
+            totalsRowData[7] = sumVal;
+
+            const tRow = ws.addRow(totalsRowData);
+            tRow.height = 24;
+            tRow.font = { name: 'Inter', size: 10, bold: true, color: { argb: '003352' } };
+            tRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+            tRow.eachCell((cell, colNumber) => {
+                cell.border = {
+                    top: { style: 'thin', color: { argb: '003352' } },
+                    bottom: { style: 'double', color: { argb: '003352' } },
+                    left: { style: 'thin', color: { argb: 'CBD5E1' } },
+                    right: { style: 'thin', color: { argb: 'CBD5E1' } }
+                };
+                if (colNumber === 8) {
+                    cell.numFmt = '"R$ "#,##0.00';
+                    cell.alignment = { horizontal: 'right', vertical: 'middle' };
+                } else {
+                    cell.alignment = { horizontal: 'left', vertical: 'middle' };
+                }
+            });
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Dashboard_Despesas_GrupoCIJ_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        };
     </script>
 </body>
 </html>
