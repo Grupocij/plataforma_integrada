@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Solicitações CIJ - Portal Grupo CIJ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ExcelJS and FileSaver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12 flex flex-col">
+
+    <!-- TELA DE LOGIN / BLOQUEIO -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
+            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO -->
+    <header class="bg-[#0f172a] text-white p-4 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-300 bg-emerald-950 px-2.5 py-0.5 rounded border border-emerald-800">Consulta de Solicitações</span>
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+            </div>
+            <nav class="flex gap-4 items-center">
+                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+        
+        <!-- KPIS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Total de Solicitações</p>
+                <h3 id="kpiTotalSolicitacoes" class="text-2xl font-black text-emerald-950 mt-1">0</h3>
+                <p class="text-xs font-medium text-slate-500 mt-1">Cadastradas na base</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Valor Geral Estimado</p>
+                <h3 id="kpiValorGeral" class="text-2xl font-black text-blue-950 mt-1">R$ 0,00</h3>
+                <p class="text-xs font-medium text-slate-500 mt-1">Soma dos pedidos</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-purple-600">Vendedores Ativos</p>
+                <h3 id="kpiVendedores" class="text-2xl font-black text-purple-950 mt-1">0</h3>
+                <p class="text-xs font-medium text-slate-500 mt-1">Com propostas emitidas</p>
+            </div>
+        </div>
+
+        <!-- FILTROS E TABELA -->
+        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-5">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-emerald-600"></i> Histórico de Solicitações CIJ
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="exportarExcelSolicitacoes()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                    </button>
+                    <a href="solicitacao.html" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Nova Solicitação
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Cliente</label>
+                    <input type="text" id="filtroCliente" placeholder="Razão social..." oninput="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº Solicitação / Pedido</label>
+                    <input type="text" id="filtroNumero" placeholder="SOL-1001 ou Pedido..." oninput="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vendedor</label>
+                    <input type="text" id="filtroVendedor" placeholder="Nome..." oninput="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                    <input type="date" id="filtroDataDe" onchange="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                    <input type="date" id="filtroDataAte" onchange="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-emerald-600">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[900px] text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th class="p-3">Nº Solicitação</th>
+                            <th class="p-3">Data</th>
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Pedido / Proposta</th>
+                            <th class="p-3">Vendedor</th>
+                            <th class="p-3 text-right">Valor Total</th>
+                            <th class="p-3 text-center no-print">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaSolicitacoes" class="divide-y divide-slate-200 font-medium bg-white">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE VISUALIZAÇÃO COMPLETA -->
+    <div id="modalDetalhes" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-[#0f172a] text-white p-5 flex items-center justify-between">
+                <div>
+                    <span id="modalNumSol" class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">SOL-1000</span>
+                    <h3 id="modalRazaoSocial" class="text-lg font-bold mt-1">Nome do Cliente</h3>
+                </div>
+                <button onclick="fecharModalDetalhes()" class="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar text-xs text-slate-700">
+                
+                <!-- SEÇÃO 1 -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <h4 class="font-bold text-slate-900 uppercase tracking-wide text-blue-900 border-b pb-1"><i class="fa-solid fa-building mr-1"></i> 1. Dados do Cliente</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div><strong class="text-slate-500 block">CNPJ / CPF:</strong> <span id="detCnpj">-</span></div>
+                        <div><strong class="text-slate-500 block">Cidade / UF:</strong> <span id="detCidade">-</span></div>
+                        <div><strong class="text-slate-500 block">Contato:</strong> <span id="detContato">-</span></div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2 -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <h4 class="font-bold text-slate-900 uppercase tracking-wide text-blue-900 border-b pb-1"><i class="fa-solid fa-file-contract mr-1"></i> 2. Dados Comerciais</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div><strong class="text-slate-500 block">Nº Pedido:</strong> <span id="detPedido">-</span></div>
+                        <div><strong class="text-slate-500 block">Nº Proposta:</strong> <span id="detProposta">-</span></div>
+                        <div><strong class="text-slate-500 block">Vendedor:</strong> <span id="detVendedor">-</span></div>
+                        <div><strong class="text-slate-500 block">Modalidade:</strong> <span id="detModalidade">-</span></div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3 -->
+                <div class="space-y-2">
+                    <h4 class="font-bold text-slate-900 uppercase tracking-wide text-blue-900 border-b pb-1"><i class="fa-solid fa-boxes-stacked mr-1"></i> 3. Relação de Itens</h4>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-900 text-white font-bold">
+                                <tr class="text-[10px]">
+                                    <th class="p-2.5">Categoria</th>
+                                    <th class="p-2.5">Descrição</th>
+                                    <th class="p-2.5 text-center">Qtd</th>
+                                    <th class="p-2.5 text-right">Preço Unit.</th>
+                                    <th class="p-2.5 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detTabelaItens" class="divide-y divide-slate-100 font-medium"></tbody>
+                        </table>
+                    </div>
+                    <div class="text-right font-black text-sm text-emerald-700 pt-1">
+                        Valor Geral: <span id="detValorGeral">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 4 & 5 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                        <h4 class="font-bold text-slate-900 uppercase tracking-wide text-blue-900 border-b pb-1"><i class="fa-solid fa-cogs mr-1"></i> 4. Condições Técnicas</h4>
+                        <div class="space-y-1">
+                            <div><strong class="text-slate-500">Produto:</strong> <span id="detProd">-</span></div>
+                            <div><strong class="text-slate-500">Material:</strong> <span id="detMat">-</span></div>
+                            <div><strong class="text-slate-500">Velocidade:</strong> <span id="detVel">-</span></div>
+                            <div><strong class="text-slate-500">Ambiente:</strong> <span id="detAmb">-</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                        <h4 class="font-bold text-slate-900 uppercase tracking-wide text-blue-900 border-b pb-1"><i class="fa-solid fa-user-gear mr-1"></i> 5. Escopo de Instalação</h4>
+                        <div class="space-y-1">
+                            <div><strong class="text-slate-500">Treinamento:</strong> <span id="detTrein">-</span></div>
+                            <div><strong class="text-slate-500">Suporte:</strong> <span id="detSup">-</span></div>
+                            <div><strong class="text-slate-500">Energia:</strong> <span id="detEnerg">-</span></div>
+                            <div><strong class="text-slate-500">Dias Estimados:</strong> <span id="detDias">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 6 -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                    <h4 class="font-bold text-slate-900 uppercase tracking-wide text-blue-900 border-b pb-1"><i class="fa-solid fa-comment-dots mr-1"></i> 6. Observações Gerais</h4>
+                    <p id="detObs" class="text-slate-600 italic">-</p>
+                </div>
+
+            </div>
+
+            <div class="bg-slate-100 p-4 flex justify-end gap-2 border-t">
+                <button onclick="fecharModalDetalhes()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition">Fechar</button>
+                <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center gap-2"><i class="fa-solid fa-print"></i> Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+    <div id="modalAcaoConfirmacao" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 space-y-4">
+            <h4 class="text-base font-bold text-slate-900"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> Excluir Solicitação</h4>
+            <p class="text-xs text-slate-600">Deseja realmente apagar esta solicitação do banco de dados?</p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalAcao()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
+                <button id="modalAcaoBtnSim" onclick="" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
+        const solicitacoesCol = collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes');
+
+        window.listaSolicitacoes = [];
+        window.isUserAdmin = false;
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                loginScreen.classList.add('hidden');
+                window.currentUser = user;
+                const cleanEmail = (user.email || '').toLowerCase().trim();
+                window.isUserAdmin = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                
+                const badge = document.getElementById('user-role-badge');
+                if(badge) {
+                    badge.innerText = window.isUserAdmin ? 'Admin / Financeiro' : 'Equipe / Vendedor';
+                    badge.className = window.isUserAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-950 text-blue-300 border-blue-800';
+                }
+
+                onSnapshot(solicitacoesCol, (snap) => {
+                    window.listaSolicitacoes = [];
+                    snap.forEach(d => window.listaSolicitacoes.push(d.data()));
+                    if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
+                }, (err) => console.error(err));
+            } else {
+                loginScreen.classList.remove('hidden');
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        window.deletarSolicitacaoNuvem = async (numeroSol) => {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', numeroSol));
+            } catch(e) { console.error(e); }
+        };
+    </script>
+
+    <script>
+        window.mostrarNotificacao = function(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        };
+
+        window.getFilteredSolicitacoes = function() {
+            const fCliente = (document.getElementById('filtroCliente')?.value || '').toLowerCase();
+            const fNumero = (document.getElementById('filtroNumero')?.value || '').toLowerCase();
+            const fVendedor = (document.getElementById('filtroVendedor')?.value || '').toLowerCase();
+            const fDe = document.getElementById('filtroDataDe')?.value || '';
+            const fAte = document.getElementById('filtroDataAte')?.value || '';
+
+            return window.listaSolicitacoes.filter(item => {
+                const clienteNome = (item.cliente?.razao_social || '').toLowerCase();
+                const numeroSol = (item.numero_solicitacao || '').toLowerCase();
+                const pedidoNum = (item.comercial?.pedido || '').toLowerCase();
+                const vendedorNome = (item.comercial?.vendedor || '').toLowerCase();
+                const dataRegStr = item.data_registro ? new Date(item.data_registro).toISOString().split('T')[0] : '';
+
+                if (fCliente && !clienteNome.includes(fCliente)) return false;
+                if (fNumero && !numeroSol.includes(fNumero) && !pedidoNum.includes(fNumero)) return false;
+                if (fVendedor && !vendedorNome.includes(fVendedor)) return false;
+                if (fDe && dataRegStr && dataRegStr < fDe) return false;
+                if (fAte && dataRegStr && dataRegStr > fAte) return false;
+                return true;
+            });
+        };
+
+        window.renderizarTabela = function() {
+            const tbody = document.getElementById('tabelaSolicitacoes');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const filtered = window.getFilteredSolicitacoes();
+            let totalValSum = 0;
+            const vendedoresSet = new Set();
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Nenhuma solicitação encontrada.</td></tr>`;
+            } else {
+                filtered.forEach(item => {
+                    const numSol = item.numero_solicitacao || 'SOL-0000';
+                    const dataFmt = item.data_registro ? new Date(item.data_registro).toLocaleDateString('pt-BR') : '-';
+                    const razao = item.cliente?.razao_social || 'Cliente não informado';
+                    const pedido = item.comercial?.pedido || '-';
+                    const vendedor = item.comercial?.vendedor || '-';
+                    const valorGeralStr = item.totais?.valor_geral || 'R$ 0,00';
+                    
+                    const numValClean = parseFloat(valorGeralStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+                    totalValSum += numValClean;
+                    if(vendedor !== '-') vendedoresSet.add(vendedor);
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-200">
+                            <td class="p-3 font-bold text-emerald-900">${numSol}</td>
+                            <td class="p-3 text-slate-600">${dataFmt}</td>
+                            <td class="p-3 font-bold text-slate-900">${razao}</td>
+                            <td class="p-3 font-semibold text-blue-900">${pedido}</td>
+                            <td class="p-3 text-slate-700">${vendedor}</td>
+                            <td class="p-3 text-right font-black text-emerald-700">${valorGeralStr}</td>
+                            <td class="p-3 text-center space-x-1 no-print">
+                                <button onclick="abrirDetalhes('${numSol}')" title="Visualizar Completo" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition"><i class="fa-solid fa-eye"></i></button>
+                                <button onclick="pedirExclusao('${numSol}')" title="Excluir" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('kpiTotalSolicitacoes').innerText = filtered.length;
+            document.getElementById('kpiValorGeral').innerText = totalValSum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpiVendedores').innerText = vendedoresSet.size;
+        };
+
+        window.abrirDetalhes = function(numSol) {
+            const item = window.listaSolicitacoes.find(i => i.numero_solicitacao === numSol);
+            if (!item) return;
+
+            document.getElementById('modalNumSol').innerText = item.numero_solicitacao || 'SOL';
+            document.getElementById('modalRazaoSocial').innerText = item.cliente?.razao_social || '-';
+            
+            document.getElementById('detCnpj').innerText = item.cliente?.cnpj || '-';
+            document.getElementById('detCidade').innerText = item.cliente?.cidade || '-';
+            document.getElementById('detContato').innerText = item.cliente?.contato || '-';
+
+            document.getElementById('detPedido').innerText = item.comercial?.pedido || '-';
+            document.getElementById('detProposta').innerText = item.comercial?.proposta || '-';
+            document.getElementById('detVendedor').innerText = item.comercial?.vendedor || '-';
+            document.getElementById('detModalidade').innerText = item.comercial?.modalidade || '-';
+
+            const tbodyItens = document.getElementById('detTabelaItens');
+            tbodyItens.innerHTML = '';
+            if (item.itens && item.itens.length > 0) {
+                item.itens.forEach(it => {
+                    const subtotal = (it.qtd || 0) * (it.preco_unit || 0);
+                    tbodyItens.innerHTML += `
+                        <tr class="border-b border-slate-100 text-[11px]">
+                            <td class="p-2.5 font-semibold text-slate-800">${it.categoria}</td>
+                            <td class="p-2.5 text-slate-600">${it.descricao}</td>
+                            <td class="p-2.5 text-center font-bold">${it.qtd}</td>
+                            <td class="p-2.5 text-right">${(it.preco_unit || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                            <td class="p-2.5 text-right font-bold text-blue-900">${subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbodyItens.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-400">Nenhum item registrado.</td></tr>`;
+            }
+
+            document.getElementById('detValorGeral').innerText = item.totais?.valor_geral || 'R$ 0,00';
+
+            document.getElementById('detProd').innerText = item.condicoes_tecnicas?.produto || '-';
+            document.getElementById('detMat').innerText = item.condicoes_tecnicas?.material || '-';
+            document.getElementById('detVel').innerText = item.condicoes_tecnicas?.velocidade || '-';
+            document.getElementById('detAmb').innerText = item.condicoes_tecnicas?.ambiente || '-';
+
+            document.getElementById('detTrein').innerText = item.escopo_instalacao?.treinamento || '-';
+            document.getElementById('detSup').innerText = item.escopo_instalacao?.suporte || '-';
+            document.getElementById('detEnerg').innerText = item.escopo_instalacao?.energia || '-';
+            document.getElementById('detDias').innerText = item.escopo_instalacao?.dias || '-';
+
+            document.getElementById('detObs').innerText = item.observacoes || 'Nenhuma observação informada.';
+
+            document.getElementById('modalDetalhes').classList.remove('hidden');
+        };
+
+        window.fecharModalDetalhes = function() {
+            document.getElementById('modalDetalhes').classList.add('hidden');
+        };
+
+        window.pedirExclusao = function(numSol) {
+            document.getElementById('modalAcaoBtnSim').onclick = () => {
+                fecharModalAcao();
+                window.listaSolicitacoes = window.listaSolicitacoes.filter(i => i.numero_solicitacao !== numSol);
+                if (typeof window.deletarSolicitacaoNuvem === 'function') {
+                    window.deletarSolicitacaoNuvem(numSol);
+                }
+                window.renderizarTabela();
+                window.mostrarNotificacao('Solicitação excluída com sucesso!');
+            };
+            document.getElementById('modalAcaoConfirmacao').classList.remove('hidden');
+        };
+
+        window.fecharModalAcao = function() {
+            document.getElementById('modalAcaoConfirmacao').classList.add('hidden');
+        };
+
+        window.exportarExcelSolicitacoes = async function() {
+            if (typeof ExcelJS === 'undefined') { window.mostrarNotificacao('Carregando Excel...', true); return; }
+            const filtered = window.getFilteredSolicitacoes();
+            if (filtered.length === 0) { window.mostrarNotificacao('Nenhum dado para exportar.', true); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Solicitações CIJ');
+
+            ws.columns = [
+                { header: 'Nº Solicitação', key: 'num', width: 16 },
+                { header: 'Data', key: 'data', width: 14 },
+                { header: 'Cliente', key: 'cliente', width: 28 },
+                { header: 'CNPJ', key: 'cnpj', width: 18 },
+                { header: 'Pedido', key: 'pedido', width: 16 },
+                { header: 'Vendedor', key: 'vendedor', width: 20 },
+                { header: 'Valor Total', key: 'valor', width: 18 }
+            ];
+
+            const headerRow = ws.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '047857' } };
+
+            let sumTot = 0;
+            filtered.forEach(item => {
+                const valStr = item.totais?.valor_geral || '0';
+                const valNum = parseFloat(valStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+                sumTot += valNum;
+
+                ws.addRow({
+                    num: item.numero_solicitacao,
+                    data: item.data_registro ? new Date(item.data_registro).toLocaleDateString('pt-BR') : '',
+                    cliente: item.cliente?.razao_social || '',
+                    cnpj: item.cliente?.cnpj || '',
+                    pedido: item.comercial?.pedido || '',
+                    vendedor: item.comercial?.vendedor || '',
+                    valor: valNum
+                });
+            });
+
+            const tRow = ws.addRow({ num: 'TOTAL GERAL', valor: sumTot });
+            tRow.font = { bold: true };
+            tRow.getCell('valor').numFmt = '"R$ "#,##0.00';
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Solicitacoes_CIJ_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            window.mostrarNotificacao('Planilha exportada com sucesso!');
+        };
+    </script>
+</body>
+</html>
