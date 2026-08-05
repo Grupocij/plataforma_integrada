@@ -55,57 +55,107 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
             <section id="sec-upload-tabela" class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit hidden">
                 <div class="flex items-center gap-2 border-b border-slate-200 pb-3 mb-5">
                     <i class="fa-solid fa-cloud-arrow-up text-amber-600 text-lg"></i><h3 class="text-base font-bold text-slate-900">Novo Documento</h3>
                 </div>
                 <form id="form-upload-tabela" class="space-y-4" onsubmit="salvarNovaTabelaPrecos(event)">
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Título / Nome *</label><input type="text" id="tab_nome" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-amber-600"></div>
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoria *</label><select id="tab_categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-amber-600"><option value="Equipamentos CIJ / TIJ / Laser">Equipamentos CIJ / TIJ / Laser</option><option value="Insumos e Fluidos">Insumos e Fluidos</option><option value="Peças e Acessórios">Peças e Acessórios</option><option value="Manuais e Guias">Manuais e Guias</option><option value="Geral / Consolidada">Geral / Consolidada</option></select></div>
-                    <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Arquivo *</label><input type="file" id="tab_arquivo" required accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg" class="w-full text-xs text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:bg-amber-100 file:text-amber-800 cursor-pointer"><p class="text-[10px] text-slate-400 mt-1">Armazenamento local apenas no Preview.</p></div>
-                    <button type="submit" id="btn-upload-tab" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl text-xs shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> Publicar Documento</button>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Título / Nome *</label>
+                        <input type="text" id="tab_nome" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoria *</label>
+                        <select id="tab_categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-amber-600">
+                            <option value="Equipamentos CIJ / TIJ / Laser">Equipamentos CIJ / TIJ / Laser</option>
+                            <option value="Insumos e Fluidos">Insumos e Fluidos</option>
+                            <option value="Peças e Acessórios">Peças e Acessórios</option>
+                            <option value="Manuais e Guias">Manuais e Guias</option>
+                            <option value="Geral / Consolidada">Geral / Consolidada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Arquivo *</label>
+                        <input type="file" id="tab_arquivo" required accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg" class="w-full text-xs text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:bg-amber-100 file:text-amber-800 cursor-pointer">
+                        <p class="text-[10px] text-slate-400 mt-1">O sistema fará o upload para o Firebase Storage.</p>
+                    </div>
+                    <button type="submit" id="btn-upload-tab" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl text-xs shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Publicar Documento
+                    </button>
                 </form>
             </section>
 
             <section id="sec-list-tabelas" class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5"><div class="flex items-center gap-2"><i class="fa-solid fa-file-pdf text-amber-600 text-lg"></i><h3 class="text-base font-bold text-slate-900">Arquivos Disponíveis</h3></div><span id="tab-count-badge" class="text-xs px-2.5 py-1 bg-amber-100 text-amber-900 font-extrabold rounded-full border border-amber-300">0</span></div>
-                <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table class="w-full text-left text-xs whitespace-nowrap">
-                        <thead class="bg-slate-900 text-white font-bold border-b border-slate-800"><tr><th class="p-3">NOME DO DOCUMENTO</th><th class="p-3">CATEGORIA</th><th class="p-3">DATA</th><th class="p-3 text-center">DOWNLOAD</th><th id="col-excluir-header" class="p-3 text-center hidden">EXCLUIR</th></tr></thead>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-amber-600 text-lg"></i>
+                        <h3 class="text-base font-bold text-slate-900">Arquivos Disponíveis</h3>
+                    </div>
+                    <span id="tab-count-badge" class="text-xs px-2.5 py-1 bg-amber-100 text-amber-900 font-extrabold rounded-full border border-amber-300">0</span>
+                </div>
+                
+                <div class="overflow-x-auto border border-slate-200 rounded-xl custom-scrollbar">
+                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[700px]">
+                        <thead class="bg-slate-900 text-white font-bold border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">NOME DO DOCUMENTO</th>
+                                <th class="p-3">CATEGORIA</th>
+                                <th class="p-3">DATA</th>
+                                <th class="p-3 text-center">AÇÕES (VER / BAIXAR)</th>
+                                <th id="col-excluir-header" class="p-3 text-center hidden">EXCLUIR</th>
+                            </tr>
+                        </thead>
                         <tbody id="tabelas-table-body" class="divide-y divide-slate-100 font-medium"></tbody>
                     </table>
                 </div>
-                <div id="empty-state-tabelas" class="hidden p-8 text-center text-slate-400"><i class="fa-solid fa-folder-open text-3xl mb-2 opacity-50"></i><p class="text-sm">Nenhum documento.</p></div>
+                
+                <div id="empty-state-tabelas" class="hidden p-8 text-center text-slate-400">
+                    <i class="fa-solid fa-folder-open text-3xl mb-2 opacity-50"></i>
+                    <p class="text-sm">Nenhum documento.</p>
+                </div>
             </section>
         </div>
     </main>
 
-    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i><span id="toast-message" class="text-xs font-semibold">Sucesso!</span></div>
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
         const EMAILS_VENDEDORES = ['comercial.rs@grupocij.com', 'comercial.sc@grupocij.com', 'comercial02.sc@grupocij.com'];
 
         try {
-            const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
+            const firebaseConfig = { 
+                apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", 
+                authDomain: "plataforma-cij.firebaseapp.com", 
+                projectId: "plataforma-cij", 
+                storageBucket: "plataforma-cij.firebasestorage.app", 
+                messagingSenderId: "949985395100", 
+                appId: "1:949985395100:web:cf881e0c91c63175228859" 
+            };
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
+            const storage = getStorage(app);
             const appId = 'plataforma-cij';
 
             onAuthStateChanged(auth, (user) => {
                 if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                    // window.location.href = 'index.html'; // No Github, descomente essa linha
+                    // window.location.href = 'index.html'; 
                 } else if(user) {
                     const email = user.email.toLowerCase().trim();
                     let isAdmin = EMAILS_ADMIN_FINANCEIRO.includes(email) || email.includes('admin') || email.includes('financeiro');
                     let isVendedor = EMAILS_VENDEDORES.includes(email) || email.includes('vendedor') || email.includes('vendas');
 
-                    if (!isAdmin && !isVendedor) { alert("Acesso Negado: Módulo Restrito."); /* window.location.href = 'index.html'; */ }
+                    if (!isAdmin && !isVendedor) { alert("Acesso Negado: Módulo Restrito."); }
 
                     window.isUserAdmin = isAdmin;
                     const badge = document.getElementById('user-role-badge');
@@ -118,14 +168,29 @@
                 }
             });
 
+            // Conexão com Firestore
             const tabelasRef = collection(db, 'artifacts', appId, 'public', 'data', 'tabelas_precos');
             const q = query(tabelasRef, orderBy('timestamp', 'desc'));
-            onSnapshot(q, (snapshot) => { const docs = []; snapshot.forEach(d => docs.push(d.data())); window.listaTabelas = docs; if(typeof window.renderizarTabelasPrecos === 'function') window.renderizarTabelasPrecos(); });
+            onSnapshot(q, (snapshot) => { 
+                const docs = []; 
+                snapshot.forEach(d => docs.push(d.data())); 
+                window.listaTabelas = docs; 
+                if(typeof window.renderizarTabelasPrecos === 'function') window.renderizarTabelasPrecos(); 
+            });
+
+            // Função global de Upload pro Storage
+            window.fazerUploadFirebaseStorage = async function(file) {
+                const storageRef = ref(storage, 'documentos_oficiais/' + Date.now() + '_' + file.name);
+                await uploadBytesResumable(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+                return downloadURL;
+            };
 
             window.dbSalvarTabela = async function(obj) { await setDoc(doc(tabelasRef, obj.id), obj); };
             window.dbExcluirTabela = async function(id) { await deleteDoc(doc(tabelasRef, id)); };
 
         } catch(e) {
+            console.error("Erro na inicialização do Firebase:", e);
             try { window.listaTabelas = JSON.parse(localStorage.getItem('cij_local_tabelas') || '[]'); } catch(err){ window.listaTabelas = []; }
             window.isUserAdmin = true; setTimeout(() => aplicarLayoutDePermissao(true), 100);
         }
@@ -136,8 +201,15 @@
             const formSection = document.getElementById('sec-upload-tabela');
             const listSection = document.getElementById('sec-list-tabelas');
             const headerExcluir = document.getElementById('col-excluir-header');
-            if (isAdmin) { formSection.classList.remove('hidden'); listSection.className = "lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200"; headerExcluir.classList.remove('hidden'); } 
-            else { formSection.classList.add('hidden'); listSection.className = "lg:col-span-12 bg-white p-6 rounded-2xl shadow-sm border border-slate-200"; headerExcluir.classList.add('hidden'); }
+            if (isAdmin) { 
+                formSection.classList.remove('hidden'); 
+                listSection.className = "lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200"; 
+                headerExcluir.classList.remove('hidden'); 
+            } else { 
+                formSection.classList.add('hidden'); 
+                listSection.className = "lg:col-span-12 bg-white p-6 rounded-2xl shadow-sm border border-slate-200"; 
+                headerExcluir.classList.add('hidden'); 
+            }
             window.renderizarTabelasPrecos();
         }
 
@@ -145,24 +217,78 @@
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerText = msg;
             document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
-            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 3500);
+            toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 5000);
         };
 
         window.salvarNovaTabelaPrecos = async function(e) {
-            e.preventDefault(); if (!window.isUserAdmin) return;
-            const btn = document.getElementById('btn-upload-tab'); const textoOriginal = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...'; btn.disabled = true;
-
+            e.preventDefault(); 
+            if (!window.isUserAdmin) return;
+            
             const arquivoInput = document.getElementById('tab_arquivo');
-            const nomeArquivoReal = arquivoInput.files[0] ? arquivoInput.files[0].name : "documento_sem_nome.pdf";
-            const novoDoc = { id: Date.now().toString(), nome: document.getElementById('tab_nome').value.trim(), categoria: document.getElementById('tab_categoria').value, nome_arquivo: nomeArquivoReal, url_arquivo: "#", data: new Date().toISOString().split('T')[0], timestamp: new Date().getTime() };
+            const file = arquivoInput.files[0];
+            
+            if (!file) {
+                window.mostrarNotificacao('Por favor, selecione um arquivo.', true);
+                return;
+            }
 
-            window.listaTabelas = window.listaTabelas || []; window.listaTabelas.unshift(novoDoc);
-            localStorage.setItem('cij_local_tabelas', JSON.stringify(window.listaTabelas));
+            const btn = document.getElementById('btn-upload-tab'); 
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando Arquivo...'; 
+            btn.disabled = true;
 
-            try { if(typeof window.dbSalvarTabela === 'function') await window.dbSalvarTabela(novoDoc); window.mostrarNotificacao('Documento publicado com sucesso!'); document.getElementById('form-upload-tabela').reset(); } 
-            catch(error) { window.mostrarNotificacao('Erro.', true); } 
-            finally { btn.innerHTML = textoOriginal; btn.disabled = false; window.renderizarTabelasPrecos(); }
+            let downloadURL = "#";
+            let uploadRealSucesso = false;
+
+            try {
+                // Tenta fazer o upload real se o Firebase Storage estiver ativo
+                if (typeof window.fazerUploadFirebaseStorage === 'function') {
+                    try {
+                        downloadURL = await window.fazerUploadFirebaseStorage(file);
+                        uploadRealSucesso = true;
+                    } catch (storageErr) {
+                        console.warn("Storage Error:", storageErr);
+                        alert("AVISO DE TESTE: O Firebase Storage recusou o upload do arquivo real (provavelmente falta configuração de Regras no Console do Firebase).\n\nMas não se preocupe! O sistema vai salvar o registro em 'Modo de Teste' para que você possa verificar o funcionamento da tabela.");
+                        downloadURL = "#erro_storage";
+                    }
+                }
+
+                const novoDoc = { 
+                    id: Date.now().toString(), 
+                    nome: document.getElementById('tab_nome').value.trim(), 
+                    categoria: document.getElementById('tab_categoria').value, 
+                    nome_arquivo: file.name, 
+                    url_arquivo: downloadURL, 
+                    data: new Date().toISOString().split('T')[0], 
+                    timestamp: new Date().getTime() 
+                };
+
+                // Salva Localmente para Fallback
+                window.listaTabelas = window.listaTabelas || []; 
+                window.listaTabelas.unshift(novoDoc);
+                localStorage.setItem('cij_local_tabelas', JSON.stringify(window.listaTabelas));
+
+                // Salva no Banco do Firebase (Firestore)
+                if(typeof window.dbSalvarTabela === 'function') {
+                    await window.dbSalvarTabela(novoDoc); 
+                }
+                
+                if (uploadRealSucesso) {
+                    window.mostrarNotificacao('Documento enviado e publicado com sucesso!'); 
+                } else {
+                    window.mostrarNotificacao('Registro criado (Modo de Teste - Sem Arquivo Real).'); 
+                }
+                
+                document.getElementById('form-upload-tabela').reset(); 
+                
+            } catch(error) { 
+                console.error("Erro no upload:", error);
+                window.mostrarNotificacao('Erro geral ao processar. Verifique sua conexão.', true); 
+            } finally { 
+                btn.innerHTML = textoOriginal; 
+                btn.disabled = false; 
+                window.renderizarTabelasPrecos(); 
+            }
         };
 
         window.excluirTabelaPrecos = async function(id) {
@@ -170,24 +296,65 @@
             if(confirm("Deseja apagar este documento oficial?")) {
                 window.listaTabelas = window.listaTabelas.filter(x => x.id !== id);
                 localStorage.setItem('cij_local_tabelas', JSON.stringify(window.listaTabelas));
-                try { if(typeof window.dbExcluirTabela === 'function') await window.dbExcluirTabela(id); window.mostrarNotificacao('Excluído.'); } catch(e) {}
+                try { if(typeof window.dbExcluirTabela === 'function') await window.dbExcluirTabela(id); window.mostrarNotificacao('Documento excluído.'); } catch(e) {}
                 window.renderizarTabelasPrecos();
             }
         };
 
         window.renderizarTabelasPrecos = function() {
-            const tbody = document.getElementById('tabelas-table-body'); const empty = document.getElementById('empty-state-tabelas');
-            if(!tbody) return; window.listaTabelas = window.listaTabelas || []; tbody.innerHTML = '';
+            const tbody = document.getElementById('tabelas-table-body'); 
+            const empty = document.getElementById('empty-state-tabelas');
+            if(!tbody) return; 
+            
+            window.listaTabelas = window.listaTabelas || []; 
+            tbody.innerHTML = '';
             document.getElementById('tab-count-badge').innerText = `${window.listaTabelas.length} documento(s)`;
-            if (window.listaTabelas.length === 0) { empty.classList.remove('hidden'); } else {
+            
+            if (window.listaTabelas.length === 0) { 
+                empty.classList.remove('hidden'); 
+            } else {
                 empty.classList.add('hidden');
                 window.listaTabelas.forEach(item => {
-                    const c = item.categoria==='Equipamentos CIJ / TIJ / Laser'?'bg-purple-100 text-purple-700':item.categoria==='Insumos e Fluidos'?'bg-emerald-100 text-emerald-700':item.categoria==='Peças e Acessórios'?'bg-amber-100 text-amber-700':'bg-blue-100 text-blue-700';
-                    const ex = window.isUserAdmin ? `<td class="p-3 text-center"><button onclick="excluirTabelaPrecos('${item.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition"><i class="fa-solid fa-trash"></i></button></td>` : '';
-                    tbody.innerHTML += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-3"><span class="block font-bold text-slate-800">${item.nome}</span><span class="text-[10px] text-slate-400"><i class="fa-solid fa-paperclip"></i> ${item.nome_arquivo}</span></td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded-md font-bold ${c}">${item.categoria}</span></td><td class="p-3 text-slate-600 font-medium">${item.data.split('-').reverse().join('/')}</td><td class="p-3 text-center"><a href="${item.url_arquivo}" target="_blank" onclick="alert('Funcionalidade de download pendente de Storage.')" class="px-3 py-1.5 bg-sky-100 text-sky-700 font-bold text-[11px] rounded-lg mx-auto w-fit"><i class="fa-solid fa-download"></i> Baixar</a></td>${ex}</tr>`;
+                    const c = item.categoria === 'Equipamentos CIJ / TIJ / Laser' ? 'bg-purple-100 text-purple-700' :
+                              item.categoria === 'Insumos e Fluidos' ? 'bg-emerald-100 text-emerald-700' :
+                              item.categoria === 'Peças e Acessórios' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700';
+                    
+                    const ex = window.isUserAdmin ? `<td class="p-3 text-center"><button onclick="excluirTabelaPrecos('${item.id}')" title="Excluir Documento" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition"><i class="fa-solid fa-trash"></i></button></td>` : '';
+                    
+                    const isUrlValida = item.url_arquivo && item.url_arquivo !== '#' && !item.url_arquivo.includes('erro_storage');
+                    
+                    let actions = '';
+                    if (isUrlValida) {
+                        actions = `
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="${item.url_arquivo}" target="_blank" title="Visualizar Documento no Navegador" class="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold text-[11px] rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-eye"></i> Visualizar
+                                </a>
+                                <a href="${item.url_arquivo}" download target="_blank" title="Fazer Download do Arquivo" class="px-3 py-1.5 bg-sky-100 hover:bg-sky-200 text-sky-700 font-bold text-[11px] rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-download"></i> Baixar
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        actions = `<div class="flex justify-center"><span class="text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> Arquivo em Teste</span></div>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                            <td class="p-3">
+                                <span class="block font-bold text-slate-800">${item.nome}</span>
+                                <span class="text-[10px] text-slate-500 mt-0.5 inline-block"><i class="fa-solid fa-paperclip mr-0.5"></i> ${item.nome_arquivo}</span>
+                            </td>
+                            <td class="p-3"><span class="text-[10px] px-2 py-1 rounded-md font-bold ${c}">${item.categoria}</span></td>
+                            <td class="p-3 text-slate-600 font-medium">${item.data.split('-').reverse().join('/')}</td>
+                            <td class="p-3 text-center">${actions}</td>
+                            ${ex}
+                        </tr>
+                    `;
                 });
             }
         };
+
         window.addEventListener('DOMContentLoaded', () => setTimeout(window.renderizarTabelasPrecos, 300));
     </script>
 </body>
