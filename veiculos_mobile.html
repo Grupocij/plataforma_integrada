@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Veículos e Manutenção - Portal Grupo CIJ</title>
+    <!-- STREAMING_CHUNK:Loading Tailwind CSS and Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .alert-pulse { animation: pulse-slow 1.5s infinite; }
+    </style>
+</head>
+<body class="min-h-screen pb-20 flex flex-col">
+
+    <!-- STREAMING_CHUNK:Rendering Login Screen -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
+            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3.5 py-3 border rounded-xl text-sm">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3.5 py-3 border rounded-xl text-sm">
+                <button type="submit" class="w-full py-3.5 bg-[#002d72] text-white font-bold rounded-xl text-sm">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- STREAMING_CHUNK:Rendering Mobile-Optimized Header -->
+    <header class="bg-[#0f172a] text-white px-4 py-3 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-300 bg-teal-950 px-2 py-0.5 rounded border border-teal-800 shrink-0">Frota CIJ</span>
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600 truncate">Verificando...</span>
+            </div>
+            <nav class="flex gap-3 items-center shrink-0">
+                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1"><i class="fa-solid fa-arrow-left"></i> Hub</a>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-3 sm:p-6 space-y-5 flex-1 w-full">
+        
+        <!-- STREAMING_CHUNK:Rendering Fleet Status and Oil Change Alert Panel -->
+        <div class="space-y-2.5">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-car text-teal-600"></i> Status da Frota & Troca de Óleo (10.000 km)
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="frota-status-cards">
+                <!-- Injetado dinamicamente via JS -->
+            </div>
+        </div>
+
+        <!-- STREAMING_CHUNK:Rendering Withdrawal / Return Action Tabs -->
+        <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-sm space-y-4">
+            <div class="flex border-b border-slate-200 pb-3 gap-2">
+                <button onclick="mudarAbaVeiculo('retirada')" id="tab-retirada" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-teal-600 text-white shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-key"></i> 1. Retirar Veículo (Saída)
+                </button>
+                <button onclick="mudarAbaVeiculo('devolucao')" id="tab-devolucao" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-flag-checkered"></i> 2. Devolver Veículo (Chegada) <span id="badge-pendentes" class="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full hidden">0</span>
+                </button>
+            </div>
+
+            <!-- FORMULÁRIO DE RETIRADA -->
+            <form id="formRetirada" onsubmit="salvarRetirada(event)" class="space-y-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Veículo *</label>
+                        <select id="ret_veiculo" required onchange="onRetVeiculoChange()" class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-sm font-semibold outline-none focus:border-teal-600">
+                            <option value="Gol">Volkswagen Gol</option>
+                            <option value="Polo">Volkswagen Polo</option>
+                            <option value="Polo Track">Volkswagen Polo Track</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Data da Retirada *</label>
+                        <input type="date" id="ret_data" required class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-sm font-medium outline-none focus:border-teal-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Condutor / Usuário *</label>
+                        <input type="text" id="ret_usuario" required placeholder="Nome do motorista" class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-sm font-medium outline-none focus:border-teal-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">KM de Saída (Atual) *</label>
+                        <input type="number" min="0" id="ret_km_saida" required placeholder="Ex: 45000" class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-sm font-bold outline-none focus:border-teal-600">
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Destino / Observações de Saída</label>
+                        <input type="text" id="ret_obs" placeholder="Ex: Viagem para filial Blumenau..." class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-sm font-medium outline-none focus:border-teal-600">
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 px-8 rounded-xl transition shadow-md text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-car-side"></i> Confirmar Retirada do Veículo
+                    </button>
+                </div>
+            </form>
+
+            <!-- LISTA DE VEÍCULOS EM USO PARA DEVOLUÇÃO -->
+            <div id="formDevolucao" class="space-y-3 hidden">
+                <p class="text-xs text-slate-500">Selecione abaixo o veículo que está sendo devolvido para registrar o KM de chegada:</p>
+                <div id="lista-veiculos-em-uso" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- STREAMING_CHUNK:Rendering History and Filters -->
+        <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-teal-600"></i> Histórico Completo de Utilização
+                </h3>
+                <button onclick="exportarExcelVeiculos()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Veículo</label>
+                    <select id="filtroVeiculo" onchange="renderizarTabela()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                        <option value="">Todos os Veículos</option>
+                        <option value="Gol">Gol</option>
+                        <option value="Polo">Polo</option>
+                        <option value="Polo Track">Polo Track</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Usuário</label>
+                    <input type="text" id="filtroUsuario" placeholder="Nome..." oninput="renderizarTabela()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                    <input type="date" id="filtroDataDe" onchange="renderizarTabela()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                    <input type="date" id="filtroDataAte" onchange="renderizarTabela()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                </div>
+            </div>
+
+            <!-- VISUALIZAÇÃO EM CARDS MOBILE E TABELA DESKTOP -->
+            <div id="containerHistoricoMobile" class="space-y-3 sm:hidden"></div>
+
+            <div class="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[900px] text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th class="p-3">Veículo</th>
+                            <th class="p-3">Retirada</th>
+                            <th class="p-3">Devolução</th>
+                            <th class="p-3">Condutor</th>
+                            <th class="p-3 text-right">KM Saída</th>
+                            <th class="p-3 text-right">KM Chegada</th>
+                            <th class="p-3 text-right">KM Rodados</th>
+                            <th class="p-3 text-center">Status</th>
+                            <th class="p-3 text-center no-print">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaUso" class="divide-y divide-slate-200 font-medium bg-white"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE DEVOLUÇÃO (QUANDO CLICA EM DEVOLVER) -->
+    <div id="modalDevolucao" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 space-y-4">
+            <h4 class="text-base font-bold text-slate-900"><i class="fa-solid fa-flag-checkered text-teal-600 mr-2"></i> Devolução de Veículo</h4>
+            <p class="text-xs text-slate-600">Veículo: <strong id="devVeiculoNome" class="text-teal-900">Gol</strong> | Retirado por: <strong id="devMotoristaNome">João</strong> (KM Saída: <span id="devKmSaida">0</span>)</p>
+            
+            <form id="formDevolucaoModal" onsubmit="confirmarDevolucao(event)" class="space-y-3 pt-2">
+                <input type="hidden" id="devTripId">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Data da Devolução *</label>
+                    <input type="date" id="dev_data" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">KM de Chegada (Atual) *</label>
+                    <input type="number" min="0" id="dev_km_chegada" required placeholder="Ex: 45150" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Observações / Avarias (Opcional)</label>
+                    <input type="text" id="dev_obs" placeholder="Ex: Tudo OK, necessário calibrar pneus..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="fecharModalDevolucao()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs">Confirmar Devolução</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESET DE ÓLEO (MANUTENÇÃO) -->
+    <div id="modalResetOleo" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 space-y-4">
+            <h4 class="text-base font-bold text-slate-900"><i class="fa-solid fa-oil-can text-teal-600 mr-2"></i> Registrar Troca de Óleo</h4>
+            <p class="text-xs text-slate-600">Deseja reiniciar o contador de manutenção para o veículo <strong id="oleoVeiculoNome">Gol</strong>? O marcador de óleo será zerado a partir do KM atual.</p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalOleo()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
+                <button id="btnConfirmarOleo" onclick="" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition">Sim, Registrar Troca</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <!-- STREAMING_CHUNK:Firebase Initialization and Real-time Sync -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
+
+        const usoCol = collection(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso');
+        const manutencaoCol = collection(db, 'artifacts', appId, 'public', 'data', 'veiculos_manutencao');
+
+        window.listaUso = [];
+        window.statusFrota = {
+            'Gol': { ultimoKm: 0, ultimaTrocaOleoKm: 0, emUso: false, motoristaAtual: '', tripId: null },
+            'Polo': { ultimoKm: 0, ultimaTrocaOleoKm: 0, emUso: false, motoristaAtual: '', tripId: null },
+            'Polo Track': { ultimoKm: 0, ultimaTrocaOleoKm: 0, emUso: false, motoristaAtual: '', tripId: null }
+        };
+        window.isUserAdmin = false;
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                loginScreen.classList.add('hidden');
+                window.currentUser = user;
+                const cleanEmail = (user.email || '').toLowerCase().trim();
+                window.isUserAdmin = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                
+                const badge = document.getElementById('user-role-badge');
+                if(badge) {
+                    badge.innerText = window.isUserAdmin ? 'Admin' : 'Motorista';
+                    badge.className = window.isUserAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800 truncate' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-teal-950 text-teal-300 border-teal-800 truncate';
+                }
+
+                const userField = document.getElementById('ret_usuario');
+                if (userField && !userField.value && user.email) {
+                    userField.value = user.email.split('@')[0].toUpperCase();
+                }
+
+                onSnapshot(usoCol, (snap) => {
+                    window.listaUso = [];
+                    snap.forEach(d => window.listaUso.push(d.data()));
+                    calcularStatusFrota();
+                    if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
+                    if(typeof window.renderizarDevolucoesPendentes === 'function') window.renderizarDevolucoesPendentes();
+                }, (err) => console.error(err));
+
+                onSnapshot(manutencaoCol, (snap) => {
+                    snap.forEach(d => {
+                        const dat = d.data();
+                        if (dat.veiculo && window.statusFrota[dat.veiculo]) {
+                            window.statusFrota[dat.veiculo].ultimaTrocaOleoKm = dat.ultimaTrocaOleoKm || 0;
+                        }
+                    });
+                    calcularStatusFrota();
+                    if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
+                }, (err) => console.error(err));
+
+            } else {
+                loginScreen.classList.remove('hidden');
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        window.salvarUsoNuvem = async (item) => {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso', item.id), item);
+            } catch(e) { console.error(e); }
+        };
+
+        window.deletarUsoNuvem = async (id) => {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso', id));
+            } catch(e) { console.error(e); }
+        };
+
+        window.salvarManutencaoNuvem = async (veiculo, ultimaTrocaOleoKm) => {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'veiculos_manutencao', veiculo), {
+                    veiculo: veiculo,
+                    ultimaTrocaOleoKm: ultimaTrocaOleoKm,
+                    atualizadoEm: new Date().toISOString()
+                });
+            } catch(e) { console.error(e); }
+        };
+    </script>
+
+    <!-- STREAMING_CHUNK:App Logic and Interface Handlers -->
+    <script>
+        window.mostrarNotificacao = function(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        };
+
+        window.mudarAbaVeiculo = function(aba) {
+            const tabRet = document.getElementById('tab-retirada');
+            const tabDev = document.getElementById('tab-devolucao');
+            const formRet = document.getElementById('formRetirada');
+            const formDev = document.getElementById('formDevolucao');
+
+            if (aba === 'retirada') {
+                tabRet.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-teal-600 text-white shadow-sm flex items-center justify-center gap-2";
+                tabDev.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center gap-2";
+                formRet.classList.remove('hidden');
+                formDev.classList.add('hidden');
+            } else {
+                tabDev.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-teal-600 text-white shadow-sm flex items-center justify-center gap-2";
+                tabRet.className = "flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center gap-2";
+                formDev.classList.remove('hidden');
+                formRet.classList.add('hidden');
+                renderizarDevolucoesPendentes();
+            }
+        };
+
+        function calcularStatusFrota() {
+            Object.keys(window.statusFrota).forEach(v => {
+                window.statusFrota[v].ultimoKm = 0;
+                window.statusFrota[v].emUso = false;
+                window.statusFrota[v].motoristaAtual = '';
+                window.statusFrota[v].tripId = null;
+            });
+
+            window.listaUso.forEach(item => {
+                const veiculo = item.veiculo;
+                const kmSaida = parseFloat(item.km_saida) || 0;
+                const kmChegada = parseFloat(item.km_chegada) || 0;
+                
+                if (window.statusFrota[veiculo]) {
+                    // O maior KM conhecido entre saídas e chegadas
+                    if (kmSaida > window.statusFrota[veiculo].ultimoKm) window.statusFrota[veiculo].ultimoKm = kmSaida;
+                    if (kmChegada > window.statusFrota[veiculo].ultimoKm) window.statusFrota[veiculo].ultimoKm = kmChegada;
+
+                    // Se a viagem está ativa (sem KM de chegada)
+                    if (item.status === 'ativo' || (!item.km_chegada && item.km_chegada !== 0)) {
+                        window.statusFrota[veiculo].emUso = true;
+                        window.statusFrota[veiculo].motoristaAtual = item.usuario;
+                        window.statusFrota[veiculo].tripId = item.id;
+                    }
+                }
+            });
+
+            renderizarCardsFrota();
+            atualizarKmSaidaSugerido();
+        }
+
+        function atualizarKmSaidaSugerido() {
+            const veiculoSelect = document.getElementById('ret_veiculo');
+            const kmSaidaInput = document.getElementById('ret_km_saida');
+            if (!veiculoSelect || !kmSaidaInput) return;
+            
+            const veiculo = veiculoSelect.value;
+            const st = window.statusFrota[veiculo];
+            if (st && st.ultimoKm > 0) {
+                kmSaidaInput.value = st.ultimoKm;
+            }
+        }
+
+        window.onRetVeiculoChange = function() {
+            atualizarKmSaidaSugerido();
+        };
+
+        function renderizarCardsFrota() {
+            const container = document.getElementById('frota-status-cards');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const veiculos = ['Gol', 'Polo', 'Polo Track'];
+            let emUsoCount = 0;
+
+            veiculos.forEach(v => {
+                const st = window.statusFrota[v];
+                const kmAtual = st.ultimoKm || 0;
+                const ultimaTroca = st.ultimaTrocaOleoKm || 0;
+                const kmDesdeTroca = kmAtual - ultimaTroca;
+                const kmFaltantes = 10000 - kmDesdeTroca;
+                
+                if (st.emUso) emUsoCount++;
+
+                let badgeOleoClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+                let statusOleoTexto = `Óleo OK (${kmDesdeTroca.toLocaleString('pt-BR')} km)`;
+                let iconeOleo = "fa-circle-check text-emerald-600";
+                let alertaOleo = false;
+
+                if (kmDesdeTroca >= 10000) {
+                    badgeOleoClass = "bg-red-100 text-red-900 border-red-400 alert-pulse font-extrabold";
+                    statusOleoTexto = `🚨 Troca Vencida! (+${(kmDesdeTroca - 10000).toLocaleString('pt-BR')} km)`;
+                    iconeOleo = "fa-triangle-exclamation text-red-600 animate-bounce";
+                    alertaOleo = true;
+                } else if (kmDesdeTroca >= 9000) {
+                    badgeOleoClass = "bg-amber-100 text-amber-900 border-amber-400 alert-pulse font-bold";
+                    statusOleoTexto = `⚠️ Próxima (Faltam ${kmFaltantes.toLocaleString('pt-BR')} km)`;
+                    iconeOleo = "fa-triangle-exclamation text-amber-600";
+                    alertaOleo = true;
+                }
+
+                const statusUsoBadge = st.emUso 
+                    ? `<span class="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase"><i class="fa-solid fa-user-clock mr-1"></i> Em Uso por ${st.motoristaAtual}</span>`
+                    : `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase"><i class="fa-solid fa-check mr-1"></i> Disponível</span>`;
+
+                const btnResetAdmin = window.isUserAdmin ? `
+                    <button onclick="abrirModalOleo('${v}')" class="mt-2.5 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-oil-can"></i> Registrar Troca de Óleo
+                    </button>
+                ` : '';
+
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl border ${alertaOleo ? 'border-red-300 shadow-md ring-2 ring-red-100' : 'border-slate-200 shadow-sm'} flex flex-col justify-between space-y-2.5">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-car-side text-teal-600"></i> ${v}
+                                </h4>
+                                <span class="text-xs font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg">${kmAtual.toLocaleString('pt-BR')} km</span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between">
+                                ${statusUsoBadge}
+                            </div>
+                            <div class="mt-2">
+                                <span class="block px-2 py-1 rounded-xl text-[11px] border ${badgeOleoClass} text-center flex items-center justify-center gap-1">
+                                    <i class="fa-solid ${iconeOleo}"></i> ${statusOleoTexto}
+                                </span>
+                            </div>
+                        </div>
+                        ${btnResetAdmin}
+                    </div>
+                `;
+            });
+
+            const badgePend = document.getElementById('badge-pendentes');
+            if (badgePend) {
+                if (emUsoCount > 0) {
+                    badgePend.innerText = emUsoCount;
+                    badgePend.classList.remove('hidden');
+                } else {
+                    badgePend.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderizarDevolucoesPendentes() {
+            const container = document.getElementById('lista-veiculos-em-uso');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const emUsoItens = window.listaUso.filter(i => i.status === 'ativo' || (!i.km_chegada && i.km_chegada !== 0));
+
+            if (emUsoItens.length === 0) {
+                container.innerHTML = `<div class="col-span-3 p-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">Nenhum veículo em uso no momento. Todos estão na base.</div>`;
+                return;
+            }
+
+            emUsoItens.forEach(item => {
+                container.innerHTML += `
+                    <div class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-amber-900 uppercase bg-amber-200/60 px-2.5 py-0.5 rounded">${item.veiculo}</span>
+                                <span class="text-[11px] text-slate-500">${item.data ? item.data.split('-').reverse().join('/') : ''}</span>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-900 mt-2"><i class="fa-solid fa-user mr-1 text-amber-700"></i> ${item.usuario}</h4>
+                            <p class="text-xs text-slate-600 mt-1">KM Retirada: <strong class="font-mono">${parseFloat(item.km_saida || 0).toLocaleString('pt-BR')} km</strong></p>
+                            <p class="text-[11px] text-slate-500 italic mt-0.5">Destino: ${item.obs || 'Não informado'}</p>
+                        </div>
+                        <button onclick="abrirModalDevolucao('${item.id}')" class="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-flag-checkered"></i> Devolver Este Veículo
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        window.salvarRetirada = function(e) {
+            e.preventDefault();
+            const veiculo = document.getElementById('ret_veiculo').value;
+            const data = document.getElementById('ret_data').value;
+            const usuario = document.getElementById('ret_usuario').value.trim();
+            const kmSaida = parseFloat(document.getElementById('ret_km_saida').value) || 0;
+            const obs = document.getElementById('ret_obs').value.trim();
+
+            // Verificar se o veículo já está em uso
+            const st = window.statusFrota[veiculo];
+            if (st && st.emUso) {
+                window.mostrarNotificacao(`O veículo ${veiculo} já está em uso por ${st.motoristaAtual}!`, true);
+                return;
+            }
+
+            const itemData = {
+                id: Date.now().toString(),
+                veiculo, data, usuario, km_saida: kmSaida, km_chegada: null, data_devolucao: null, obs, status: 'ativo'
+            };
+
+            if (typeof window.salvarUsoNuvem === 'function') {
+                window.salvarUsoNuvem(itemData);
+            }
+
+            window.mostrarNotificacao(`Retirada do ${veiculo} registrada com sucesso!`);
+            document.getElementById('ret_obs').value = '';
+            mudarAbaVeiculo('devolucao');
+        };
+
+        window.abrirModalDevolucao = function(tripId) {
+            const item = window.listaUso.find(i => i.id === tripId);
+            if (!item) return;
+
+            document.getElementById('devTripId').value = tripId;
+            document.getElementById('devVeiculoNome').innerText = item.veiculo;
+            document.getElementById('devMotoristaNome').innerText = item.usuario;
+            document.getElementById('devKmSaida').innerText = parseFloat(item.km_saida || 0).toLocaleString('pt-BR');
+            document.getElementById('dev_data').valueAsDate = new Date();
+            document.getElementById('dev_km_chegada').value = '';
+            document.getElementById('dev_obs').value = '';
+
+            document.getElementById('modalDevolucao').classList.remove('hidden');
+        };
+
+        window.fecharModalDevolucao = function() {
+            document.getElementById('modalDevolucao').classList.add('hidden');
+        };
+
+        window.confirmarDevolucao = function(e) {
+            e.preventDefault();
+            const tripId = document.getElementById('devTripId').value;
+            const dataDev = document.getElementById('dev_data').value;
+            const kmChegada = parseFloat(document.getElementById('dev_km_chegada').value) || 0;
+            const obsDev = document.getElementById('dev_obs').value.trim();
+
+            const item = window.listaUso.find(i => i.id === tripId);
+            if (!item) return;
+
+            const kmSaida = parseFloat(item.km_saida) || 0;
+            if (kmChegada < kmSaida) {
+                window.mostrarNotificacao('O KM de chegada não pode ser menor que o KM de saída!', true);
+                return;
+            }
+
+            const updatedItem = {
+                ...item,
+                data_devolucao: dataDev,
+                km_chegada: kmChegada,
+                obs: obsDev ? `${item.obs || ''} | Devolução: ${obsDev}` : item.obs,
+                status: 'concluido'
+            };
+
+            if (typeof window.salvarUsoNuvem === 'function') {
+                window.salvarUsoNuvem(updatedItem);
+            }
+
+            fecharModalDevolucao();
+            window.mostrarNotificacao('Veículo devolvido e registrado com sucesso!');
+            mudarAbaVeiculo('retirada');
+        };
+
+        window.getFilteredUso = function() {
+            const fVeiculo = document.getElementById('filtroVeiculo')?.value || '';
+            const fUsuario = (document.getElementById('filtroUsuario')?.value || '').toLowerCase();
+            const fDe = document.getElementById('filtroDataDe')?.value || '';
+            const fAte = document.getElementById('filtroDataAte')?.value || '';
+
+            return window.listaUso.filter(item => {
+                if (fVeiculo && item.veiculo !== fVeiculo) return false;
+                if (fUsuario && !(item.usuario || '').toLowerCase().includes(fUsuario)) return false;
+                const dtRef = item.data_devolucao || item.data || '';
+                if (fDe && dtRef && dtRef < fDe) return false;
+                if (fAte && dtRef && dtRef > fAte) return false;
+                return true;
+            });
+        };
+
+        window.renderizarTabela = function() {
+            const tbody = document.getElementById('tabelaUso');
+            const mobileContainer = document.getElementById('containerHistoricoMobile');
+            if (!tbody || !mobileContainer) return;
+
+            tbody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+
+            const filtered = window.getFilteredUso();
+            filtered.sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+
+            if (filtered.length === 0) {
+                const vazioHtml = `<div class="p-6 text-center text-slate-400 text-xs">Nenhum registro de utilização encontrado.</div>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Nenhum registro de utilização encontrado.</td></tr>`;
+                mobileContainer.innerHTML = vazioHtml;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const kmSaida = parseFloat(item.km_saida) || 0;
+                const temChegada = item.km_chegada !== null && item.km_chegada !== undefined && item.km_chegada !== '';
+                const kmChegada = temChegada ? parseFloat(item.km_chegada) : 0;
+                const kmRodados = temChegada ? Math.max(0, kmChegada - kmSaida) : '-';
+                const dataRet = item.data ? item.data.split('-').reverse().join('/') : '-';
+                const dataDev = item.data_devolucao ? item.data_devolucao.split('-').reverse().join('/') : 'Em uso...';
+
+                const statusBadge = temChegada 
+                    ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">Concluído</span>`
+                    : `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[10px] alert-pulse">Em Uso</span>`;
+
+                // Tabela (Desktop)
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-200">
+                        <td class="p-3 font-bold text-slate-900">${item.veiculo}</td>
+                        <td class="p-3 text-slate-600">${dataRet}</td>
+                        <td class="p-3 text-slate-600">${dataDev}</td>
+                        <td class="p-3 font-semibold text-teal-900">${item.usuario}</td>
+                        <td class="p-3 text-right font-mono">${kmSaida.toLocaleString('pt-BR')} km</td>
+                        <td class="p-3 text-right font-mono">${temChegada ? kmChegada.toLocaleString('pt-BR') + ' km' : '-'}</td>
+                        <td class="p-3 text-right font-black text-emerald-700">${typeof kmRodados === 'number' ? kmRodados.toLocaleString('pt-BR') + ' km' : '-'}</td>
+                        <td class="p-3 text-center">${statusBadge}</td>
+                        <td class="p-3 text-center space-x-1 no-print">
+                            <button onclick="pedirExclusaoUso('${item.id}')" title="Excluir" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+
+                // Cards (Mobile)
+                mobileContainer.innerHTML += `
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <span class="font-extrabold text-slate-900 text-xs bg-teal-50 text-teal-800 px-2.5 py-1 rounded-lg">${item.veiculo}</span>
+                            <div>${statusBadge}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                            <div><span class="text-slate-400 block text-[10px]">CONDUTOR</span><strong class="text-slate-800">${item.usuario}</strong></div>
+                            <div><span class="text-slate-400 block text-[10px]">RODAGEM</span><strong class="text-emerald-700">${typeof kmRodados === 'number' ? kmRodados.toLocaleString('pt-BR') + ' km' : 'Pendente'}</strong></div>
+                            <div><span class="text-slate-400 block text-[10px]">RETIRADA</span><span class="text-slate-700 font-medium">${dataRet} (${kmSaida.toLocaleString('pt-BR')} km)</span></div>
+                            <div><span class="text-slate-400 block text-[10px]">DEVOLUÇÃO</span><span class="text-slate-700 font-medium">${dataDev} ${temChegada ? '(' + kmChegada.toLocaleString('pt-BR') + ' km)' : ''}</span></div>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 no-print">
+                            <button onclick="pedirExclusaoUso('${item.id}')" class="px-3 py-1.5 bg-red-50 text-red-700 font-bold rounded-lg text-xs"><i class="fa-solid fa-trash-can mr-1"></i> Excluir</button>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.pedirExclusaoUso = function(id) {
+            pedirConfirmacaoAcao('Excluir Registro', 'Deseja realmente apagar este registro?', () => {
+                if (typeof window.deletarUsoNuvem === 'function') {
+                    window.deletarUsoNuvem(id);
+                }
+                window.mostrarNotificacao('Registro excluído com sucesso!');
+            });
+        };
+
+        window.abrirModalOleo = function(veiculo) {
+            const st = window.statusFrota[veiculo];
+            const kmAtual = st ? st.ultimoKm : 0;
+            
+            document.getElementById('oleoVeiculoNome').innerText = veiculo;
+            document.getElementById('btnConfirmarOleo').onclick = () => {
+                fecharModalOleo();
+                if (typeof window.salvarManutencaoNuvem === 'function') {
+                    window.salvarManutencaoNuvem(veiculo, kmAtual);
+                }
+                window.mostrarNotificacao(`Troca de óleo registrada para o ${veiculo} no KM ${kmAtual.toLocaleString('pt-BR')}!`);
+            };
+            document.getElementById('modalResetOleo').classList.remove('hidden');
+        };
+
+        window.fecharModalOleo = function() {
+            document.getElementById('modalResetOleo').classList.add('hidden');
+        };
+
+        window.pedirConfirmacaoAcao = function(titulo, texto, callback) {
+            document.getElementById('modalAcaoTitulo').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> ${titulo}`;
+            document.getElementById('modalAcaoTexto').innerText = texto;
+            document.getElementById('modalAcaoBtnSim').onclick = () => {
+                fecharModalAcao();
+                callback();
+            };
+            document.getElementById('modalAcaoConfirmacao').classList.remove('hidden');
+        };
+
+        window.fecharModalAcao = function() {
+            document.getElementById('modalAcaoConfirmacao').classList.add('hidden');
+        };
+
+        window.exportarExcelVeiculos = async function() {
+            if (typeof ExcelJS === 'undefined') { window.mostrarNotificacao('Carregando Excel...', true); return; }
+            const filtered = window.getFilteredUso();
+            if (filtered.length === 0) { window.mostrarNotificacao('Nenhum dado para exportar.', true); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Controle de Veículos');
+
+            ws.columns = [
+                { header: 'Veículo', key: 'veiculo', width: 16 },
+                { header: 'Retirada', key: 'data', width: 14 },
+                { header: 'Devolução', key: 'data_devolucao', width: 14 },
+                { header: 'Condutor', key: 'usuario', width: 22 },
+                { header: 'KM Saída', key: 'km_saida', width: 16 },
+                { header: 'KM Chegada', key: 'km_chegada', width: 16 },
+                { header: 'KM Rodados', key: 'km_rodados', width: 16 },
+                { header: 'Observações', key: 'obs', width: 30 }
+            ];
+
+            const headerRow = ws.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F766E' } };
+
+            let totalKmSum = 0;
+            filtered.forEach(item => {
+                const s = parseFloat(item.km_saida) || 0;
+                const c = parseFloat(item.km_chegada) || 0;
+                const r = item.km_chegada ? Math.max(0, c - s) : 0;
+                if (item.km_chegada) totalKmSum += r;
+
+                ws.addRow({
+                    veiculo: item.veiculo,
+                    data: item.data ? item.data.split('-').reverse().join('/') : '',
+                    data_devolucao: item.data_devolucao ? item.data_devolucao.split('-').reverse().join('/') : 'Em uso',
+                    usuario: item.usuario,
+                    km_saida: s,
+                    km_chegada: item.km_chegada ? c : 'Pendente',
+                    km_rodados: item.km_rodados ? r : '-',
+                    obs: item.obs || ''
+                });
+            });
+
+            const tRow = ws.addRow({ veiculo: 'TOTAL KM', km_rodados: totalKmSum });
+            tRow.font = { bold: true };
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Controle_Veiculos_CIJ_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            window.mostrarNotificacao('Planilha exportada com sucesso!');
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const dtRet = document.getElementById('ret_data');
+            const dtDev = document.getElementById('dev_data');
+            if (dtRet) dtRet.valueAsDate = new Date();
+            if (dtDev) dtDev.valueAsDate = new Date();
+        });
+    </script>
+</body>
+</html>
