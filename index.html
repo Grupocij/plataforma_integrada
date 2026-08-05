@@ -150,6 +150,16 @@
                     <a href="despesas.html" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
+                <!-- CARD: VEÍCULOS MOBILE (Acesso para todos) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car"></i></div><span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Frota & Uso</span></div>
+                        <h3 class="text-base font-bold text-slate-900">Veículos Mobile</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro prático de retirada e devolução de veículos (Gol, Polo, Polo Track) para motoristas.</p>
+                    </div>
+                    <a href="veiculos.html" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
                 <!-- CARD: DOCUMENTOS OFICIAIS -->
                 <div id="card-tabelas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
@@ -180,14 +190,24 @@
                     <a href="estoque.html" class="mt-6 w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
                 
-                <!-- CARD: DASHBOARD GERENCIAL -->
+                <!-- CARD: DASHBOARD GERENCIAL (Apenas Admin/Financeiro) -->
                 <div id="card-dashboard" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div><span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Comercial & Gestão</span></div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div><span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Gestão Global (Admin)</span></div>
                         <h3 class="text-base font-bold text-slate-900">Dashboard Gerencial</h3>
                         <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gráficos e indicadores de performance baseados nas vendas e estoques.</p>
                     </div>
                     <a href="dashboard-equip.html" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- CARD: VEÍCULOS GERENCIAL (Apenas Admin/Financeiro) -->
+                <div id="card-veiculos-gerencial" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-800 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car-tunnel"></i></div><span class="text-[11px] font-bold text-teal-900 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Gestão Global (Admin)</span></div>
+                        <h3 class="text-base font-bold text-slate-900">Veículos Gerencial</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão completa, auditoria de quilometragem e controle de manutenção de óleo da frota.</p>
+                    </div>
+                    <a href="veiculos.html" class="mt-6 w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
                 <!-- CARD: COMISSÕES - CONSUMÍVEIS (Apenas Admin/Financeiro) -->
@@ -405,7 +425,14 @@
             document.getElementById('card-tabelas')?.classList.toggle('hidden', !pComercial);
             document.getElementById('card-comissoes-azul')?.classList.toggle('hidden', !pComercial);
             document.getElementById('card-estoque')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-dashboard')?.classList.toggle('hidden', !pComercial);
+            
+            // Dashboard Gerencial restrito apenas a Admin/Financeiro
+            document.getElementById('card-dashboard')?.classList.toggle('hidden', !isAdmin);
+            
+            // Veículos Gerencial restrito apenas a Admin/Financeiro
+            document.getElementById('card-veiculos-gerencial')?.classList.toggle('hidden', !isAdmin);
+            
+            // Veículos Mobile visível para todos
             
             document.getElementById('card-comissoes-consumiveis')?.classList.toggle('hidden', !isAdmin);
             document.getElementById('card-vendas')?.classList.toggle('hidden', !isAdmin);
