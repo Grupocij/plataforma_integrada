@@ -106,11 +106,11 @@
 
                     <!-- NÚMERO DO RELATÓRIO ATUAL -->
                     <div class="bg-sky-950/50 p-3 rounded-xl border border-sky-500/30 flex justify-between items-center">
-                        <div class="flex-1">
+                        <div>
                             <label class="block text-[10px] font-bold text-sky-300 uppercase">Nº do Relatório Atual *</label>
-                            <input type="text" id="num_relatorio" value="REL-1001" class="bg-transparent font-black text-white text-base focus:outline-none w-full" readonly>
+                            <input type="text" id="num_relatorio" value="Carregando..." class="bg-transparent font-black text-white text-sm focus:outline-none w-full" readonly>
                         </div>
-                        <button type="button" onclick="novoRelatorioSequencial()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition shadow-sm flex items-center gap-1.5 ml-2">
+                        <button type="button" onclick="novoRelatorioSequencial()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition shadow-sm flex items-center gap-1">
                             <i class="fa-solid fa-check-double"></i> Finalizar Relatório
                         </button>
                     </div>
@@ -222,6 +222,9 @@
                     <div class="pt-2 flex flex-col sm:flex-row gap-3">
                         <button type="submit" id="btn-save" class="flex-1 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold py-2.5 rounded-xl transition shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 text-xs">
                             <i class="fa-solid fa-plus-circle"></i> <span id="btn-save-text">Adicionar Despesa ao Relatório Atual</span>
+                        </button>
+                        <button type="button" onclick="novoRelatorioSequencial()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 text-xs">
+                            <i class="fa-solid fa-check-double"></i> Finalizar Relatório
                         </button>
                     </div>
                 </form>
@@ -362,6 +365,8 @@
         }
         initAuth();
 
+        let initialLoadDone = false;
+
         onAuthStateChanged(auth, (user) => {
             const loginScreen = document.getElementById('login-screen');
             if(user) {
@@ -380,8 +385,21 @@
                     window.expenses = [];
                     snap.forEach(d => window.expenses.push(d.data()));
                     if(typeof window.renderExpenses === 'function') window.renderExpenses();
-                    if(typeof window.inicializarNumeroRelatorio === 'function' && !window.relatorioManualSelecionado) {
-                        window.inicializarNumeroRelatorio();
+                    
+                    // Inicialização que roda apenas uma vez para definir o próximo número de relatório livre
+                    if (!initialLoadDone && window.expenses.length > 0) {
+                        let maxRel = 1000;
+                        window.expenses.forEach(item => {
+                            const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
+                            if (!isNaN(num) && num > maxRel) maxRel = num;
+                        });
+                        const inputRel = document.getElementById('num_relatorio');
+                        if(inputRel) inputRel.value = `REL-${maxRel + 1}`; // Abre já pronto no próximo número
+                        initialLoadDone = true;
+                    } else if (!initialLoadDone && window.expenses.length === 0) {
+                        const inputRel = document.getElementById('num_relatorio');
+                        if(inputRel) inputRel.value = `REL-1001`;
+                        initialLoadDone = true;
                     }
                 }, (error) => {
                     console.error("Erro no Firestore onSnapshot:", error);
@@ -401,8 +419,7 @@
 
     <script>
         let relatoriosExpandidos = new Set();
-        let initializedNum = false;
-        window.relatorioManualSelecionado = false;
+        let hasUnfinalizedExpenses = false; // Controle de bloqueio de saída
 
         function formatSentenceCase(text) {
             if (!text) return '';
@@ -417,49 +434,37 @@
             document.getElementById('data_pagamento').value = today;
 
             document.getElementById('expense-form').addEventListener('submit', handleFormSubmit);
-            inicializarNumeroRelatorio();
             renderExpenses();
         });
 
-        function obterProximoNumeroRelatorio() {
-            let maxRel = 1000;
-            if (window.expenses && window.expenses.length > 0) {
-                window.expenses.forEach(item => {
-                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                    if (!isNaN(num) && num > maxRel) maxRel = num;
-                });
+        // Evento que bloqueia o fechamento da aba se houver relatório aberto
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnfinalizedExpenses) {
+                e.preventDefault();
+                e.returnValue = ''; // Exige o alerta nativo do navegador
             }
-            return `REL-${maxRel + 1}`;
-        }
-
-        function inicializarNumeroRelatorio() {
-            if (window.relatorioManualSelecionado) return;
-            // Verifica se já existe um relatório ativo não finalizado ou pega o próximo sequencial único
-            let maxRel = 1000;
-            if (window.expenses && window.expenses.length > 0) {
-                window.expenses.forEach(item => {
-                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                    if (!isNaN(num) && num > maxRel) maxRel = num;
-                });
-                document.getElementById('num_relatorio').value = `REL-${maxRel}`;
-            } else {
-                document.getElementById('num_relatorio').value = 'REL-1001';
-            }
-            initializedNum = true;
-        }
+        });
 
         function novoRelatorioSequencial() {
             window.relatorioManualSelecionado = false;
-            const proximo = obterProximoNumeroRelatorio();
-            document.getElementById('num_relatorio').value = proximo;
-            initializedNum = true;
-            showToast(`Relatório finalizado. Novo relatório ${proximo} iniciado para novos lançamentos.`);
+            let maxRel = 1000;
+            if (window.expenses && window.expenses.length > 0) {
+                window.expenses.forEach(item => {
+                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
+                    if (!isNaN(num) && num > maxRel) maxRel = num;
+                });
+            }
+            const prox = `REL-${maxRel + 1}`;
+            document.getElementById('num_relatorio').value = prox;
+            hasUnfinalizedExpenses = false; // Libera o bloqueio de saída, pois ele finalizou
+            showToast(`Relatório finalizado com sucesso! Novo relatório ${prox} iniciado.`);
         }
 
         function reabrirRelatorio(numRel) {
             window.relatorioManualSelecionado = true;
             document.getElementById('num_relatorio').value = numRel;
-            showToast(`Relatório ${numRel} reaberto. Novas despesas serão incluídas nele.`);
+            // Ao reabrir, não ativamos o bloqueio imediatamente. O bloqueio só ativa se ele ADD nova despesa
+            showToast(`Relatório ${numRel} reaberto para inserção de novas despesas.`);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -481,13 +486,8 @@
         function handleFormSubmit(e) {
             e.preventDefault();
 
-            // Pega estritamente o número exibido no campo do formulário
+            // Pega exatamente o número que estiver no input da tela
             let num_relatorio = document.getElementById('num_relatorio').value;
-            if (!num_relatorio) {
-                inicializarNumeroRelatorio();
-                num_relatorio = document.getElementById('num_relatorio').value;
-            }
-
             const idInput = document.getElementById('expense-id').value;
             const tecnico = document.getElementById('tecnico').value;
             const cliente = formatSentenceCase(document.getElementById('cliente').value);
@@ -503,6 +503,9 @@
 
             const autorEmail = window.currentUser ? window.currentUser.email : '';
 
+            // Ativa o bloqueio de saída assim que insere/edita uma despesa e avisa o sistema que o relatório está "sujo/pendente"
+            hasUnfinalizedExpenses = true;
+
             if (idInput) {
                 const index = window.expenses.findIndex(item => item.id === idInput);
                 if (index !== -1) {
@@ -510,19 +513,19 @@
                         id: idInput, num_relatorio, tecnico, cliente, cidade, descricao, valor, 
                         data_pagamento, categoria, categoria_outros, pagamento, cartao, observacoes, autor: window.expenses[index].autor || autorEmail
                     };
-                    showToast('Despesa atualizada com sucesso!');
+                    showToast(`Despesa do ${num_relatorio} atualizada com sucesso! Não esqueça de FINALIZAR.`);
                     if (typeof window.salvarDespesaNuvem === 'function') window.salvarDespesaNuvem(window.expenses[index]);
                 }
             } else {
                 const newExpense = {
                     id: Date.now().toString(),
-                    num_relatorio, // Usa o num_relatorio extraído do input, sem recalcular
+                    num_relatorio,
                     tecnico, cliente, cidade, descricao, valor,
                     data_pagamento, categoria, categoria_outros, pagamento, cartao, observacoes,
                     autor: autorEmail
                 };
                 window.expenses.unshift(newExpense);
-                showToast('Despesa adicionada ao relatório ' + num_relatorio + '!');
+                showToast(`Despesa adicionada ao relatório ${num_relatorio}! Lembre-se de FINALIZAR.`);
                 if (typeof window.salvarDespesaNuvem === 'function') window.salvarDespesaNuvem(newExpense);
             }
 
@@ -581,7 +584,13 @@
 
             updateSummary(filtered);
 
-            const chaves = Object.keys(grupos);
+            // Ordenação dos relatórios decrescente para que o mais atual fique no topo
+            const chaves = Object.keys(grupos).sort((a,b) => {
+                const nA = parseInt(a.replace(/\D/g, '')) || 0;
+                const nB = parseInt(b.replace(/\D/g, '')) || 0;
+                return nB - nA;
+            });
+
             if (chaves.length === 0) {
                 emptyState.classList.remove('hidden');
             } else {
@@ -687,13 +696,15 @@
         }
 
         function excluirRelatorioCompleto(num) {
-            const itensExcluir = window.expenses.filter(i => i.num_relatorio === num);
-            window.expenses = window.expenses.filter(i => i.num_relatorio !== num);
-            if (typeof window.excluirDespesaNuvem === 'function') {
-                itensExcluir.forEach(it => window.excluirDespesaNuvem(it.id));
+            if(confirm(`Deseja realmente excluir todo o relatório ${num}?`)) {
+                const itensExcluir = window.expenses.filter(i => i.num_relatorio === num);
+                window.expenses = window.expenses.filter(i => i.num_relatorio !== num);
+                if (typeof window.excluirDespesaNuvem === 'function') {
+                    itensExcluir.forEach(it => window.excluirDespesaNuvem(it.id));
+                }
+                renderExpenses();
+                showToast(`Relatório ${num} excluído!`);
             }
-            renderExpenses();
-            showToast(`Relatório ${num} excluído!`);
         }
 
         function updateSummary(filteredList) {
