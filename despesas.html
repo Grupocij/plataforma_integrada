@@ -108,9 +108,9 @@
                     <div class="bg-sky-950/50 p-3 rounded-xl border border-sky-500/30 flex justify-between items-center">
                         <div>
                             <label class="block text-[10px] font-bold text-sky-300 uppercase">Nº do Relatório Atual *</label>
-                            <input type="text" id="num_relatorio" value="Carregando..." class="bg-transparent font-black text-white text-sm focus:outline-none w-full" readonly>
+                            <input type="text" id="num_relatorio" value="Rascunho" class="bg-transparent font-black text-amber-400 text-sm focus:outline-none w-full" readonly>
                         </div>
-                        <button type="button" onclick="novoRelatorioSequencial()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition shadow-sm flex items-center gap-1">
+                        <button type="button" onclick="finalizarRelatorio()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition shadow-sm flex items-center gap-1">
                             <i class="fa-solid fa-check-double"></i> Finalizar Relatório
                         </button>
                     </div>
@@ -223,7 +223,7 @@
                         <button type="submit" id="btn-save" class="flex-1 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold py-2.5 rounded-xl transition shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 text-xs">
                             <i class="fa-solid fa-plus-circle"></i> <span id="btn-save-text">Adicionar Despesa ao Relatório Atual</span>
                         </button>
-                        <button type="button" onclick="novoRelatorioSequencial()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 text-xs">
+                        <button type="button" onclick="finalizarRelatorio()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 text-xs">
                             <i class="fa-solid fa-check-double"></i> Finalizar Relatório
                         </button>
                     </div>
@@ -419,7 +419,8 @@
 
     <script>
         let relatoriosExpandidos = new Set();
-        let hasUnfinalizedExpenses = false; // Controle de bloqueio de saída
+        let initializedNum = false;
+        window.relatorioManualSelecionado = false;
 
         function formatSentenceCase(text) {
             if (!text) return '';
@@ -434,36 +435,62 @@
             document.getElementById('data_pagamento').value = today;
 
             document.getElementById('expense-form').addEventListener('submit', handleFormSubmit);
+            inicializarNumeroRelatorio();
             renderExpenses();
         });
 
-        // Evento que bloqueia o fechamento da aba se houver relatório aberto
         window.addEventListener('beforeunload', function (e) {
-            if (hasUnfinalizedExpenses) {
+            const autorEmail = window.currentUser ? window.currentUser.email : '';
+            const temRascunho = window.expenses.some(i => i.num_relatorio === 'Rascunho' && i.autor === autorEmail);
+            if (temRascunho) {
                 e.preventDefault();
-                e.returnValue = ''; // Exige o alerta nativo do navegador
+                e.returnValue = '';
             }
         });
 
-        function novoRelatorioSequencial() {
-            window.relatorioManualSelecionado = false;
-            let maxRel = 1000;
-            if (window.expenses && window.expenses.length > 0) {
-                window.expenses.forEach(item => {
-                    const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                    if (!isNaN(num) && num > maxRel) maxRel = num;
-                });
+        function inicializarNumeroRelatorio() {
+            if (window.relatorioManualSelecionado) return;
+            document.getElementById('num_relatorio').value = 'Rascunho';
+            document.getElementById('num_relatorio').className = "bg-transparent font-black text-amber-400 text-sm focus:outline-none w-full";
+        }
+
+        function finalizarRelatorio() {
+            if (window.relatorioManualSelecionado) {
+                window.relatorioManualSelecionado = false;
+                inicializarNumeroRelatorio();
+                showToast('Inserção no relatório concluída.');
+                renderExpenses();
+                return;
             }
-            const prox = `REL-${maxRel + 1}`;
-            document.getElementById('num_relatorio').value = prox;
-            hasUnfinalizedExpenses = false; // Libera o bloqueio de saída, pois ele finalizou
-            showToast(`Relatório finalizado com sucesso! Novo relatório ${prox} iniciado.`);
+
+            const autorEmail = window.currentUser ? window.currentUser.email : '';
+            const pendentes = window.expenses.filter(i => i.num_relatorio === 'Rascunho' && i.autor === autorEmail);
+
+            if (pendentes.length === 0) {
+                showToast('Nenhuma despesa pendente para finalizar.', true);
+                return;
+            }
+
+            const nums = window.expenses.map(i => i.num_relatorio).filter(Boolean).map(n => parseInt(n.replace(/\D/g, ''))).filter(n => !isNaN(n));
+            const maxRel = nums.length > 0 ? Math.max(...nums) : 1000;
+            const novoNumero = `REL-${maxRel + 1}`;
+
+            pendentes.forEach(item => {
+                item.num_relatorio = novoNumero;
+                if (typeof window.salvarDespesaNuvem === 'function') {
+                    window.salvarDespesaNuvem(item);
+                }
+            });
+
+            document.getElementById('num_relatorio').value = 'Rascunho';
+            showToast(`Relatório finalizado com sucesso! Número gerado: ${novoNumero}`);
+            renderExpenses();
         }
 
         function reabrirRelatorio(numRel) {
             window.relatorioManualSelecionado = true;
             document.getElementById('num_relatorio').value = numRel;
-            // Ao reabrir, não ativamos o bloqueio imediatamente. O bloqueio só ativa se ele ADD nova despesa
+            document.getElementById('num_relatorio').className = "bg-transparent font-black text-sky-400 text-sm focus:outline-none w-full";
             showToast(`Relatório ${numRel} reaberto para inserção de novas despesas.`);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -486,9 +513,9 @@
         function handleFormSubmit(e) {
             e.preventDefault();
 
-            // Pega exatamente o número que estiver no input da tela
             let num_relatorio = document.getElementById('num_relatorio').value;
             const idInput = document.getElementById('expense-id').value;
+
             const tecnico = document.getElementById('tecnico').value;
             const cliente = formatSentenceCase(document.getElementById('cliente').value);
             const cidade = formatSentenceCase(document.getElementById('cidade').value);
@@ -584,8 +611,9 @@
 
             updateSummary(filtered);
 
-            // Ordenação dos relatórios decrescente para que o mais atual fique no topo
             const chaves = Object.keys(grupos).sort((a,b) => {
+                if (a === 'Rascunho') return -1;
+                if (b === 'Rascunho') return 1;
                 const nA = parseInt(a.replace(/\D/g, '')) || 0;
                 const nB = parseInt(b.replace(/\D/g, '')) || 0;
                 return nB - nA;
@@ -605,9 +633,19 @@
                     const dataPartes = g.data_min ? g.data_min.split('-') : [];
                     const dataFormatada = dataPartes.length === 3 ? `${dataPartes[2]}/${dataPartes[1]}/${dataPartes[0]}` : g.data_min;
 
+                    let badgeRel = g.num_relatorio === 'Rascunho' 
+                        ? `<span class="inline-block px-2.5 py-0.5 text-xs font-extrabold bg-amber-950 text-amber-300 border border-amber-500/30 rounded mb-1 animate-pulse">RASCUNHO (Pendente)</span>`
+                        : `<span class="inline-block px-2.5 py-0.5 text-xs font-extrabold bg-sky-950 text-sky-300 border border-sky-500/30 rounded mb-1">${g.num_relatorio}</span>`;
+
+                    let btnContinuar = g.num_relatorio === 'Rascunho' ? '' : `
+                        <button onclick="reabrirRelatorio('${g.num_relatorio}')" title="Continuar inserindo despesas neste relatório" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg transition shadow-sm">
+                            <i class="fa-solid fa-folder-open mr-1"></i> Continuar
+                        </button>
+                    `;
+
                     tr.innerHTML = `
                         <td class="p-3.5">
-                            <span class="inline-block px-2.5 py-0.5 text-xs font-extrabold bg-sky-950 text-sky-300 border border-sky-500/30 rounded mb-1">${g.num_relatorio}</span>
+                            ${badgeRel}
                             <div class="font-semibold text-white">${escapeHtml(g.tecnico)}</div>
                         </td>
                         <td class="p-3.5">
@@ -621,9 +659,7 @@
                         </td>
                         <td class="p-3.5 text-center whitespace-nowrap no-print">
                             <div class="flex items-center justify-center gap-1.5">
-                                <button onclick="reabrirRelatorio('${g.num_relatorio}')" title="Continuar inserindo despesas neste relatório" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg transition shadow-sm">
-                                    <i class="fa-solid fa-folder-open mr-1"></i> Continuar
-                                </button>
+                                ${btnContinuar}
                                 <button onclick="toggleExpandirRelatorio('${g.num_relatorio}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold rounded-lg transition border border-slate-700">
                                     <i class="fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} mr-1"></i> Detalhes
                                 </button>
@@ -812,8 +848,9 @@
             const item = window.expenses.find(i => i.id === id);
             if (item) {
                 document.getElementById('expense-id').value = item.id;
-                document.getElementById('num_relatorio').value = item.num_relatorio || 'REL-1001';
-                window.relatorioManualSelecionado = true;
+                document.getElementById('num_relatorio').value = item.num_relatorio || 'Rascunho';
+                window.relatorioManualSelecionado = (item.num_relatorio !== 'Rascunho');
+                document.getElementById('num_relatorio').className = window.relatorioManualSelecionado ? "bg-transparent font-black text-sky-400 text-sm focus:outline-none w-full" : "bg-transparent font-black text-amber-400 text-sm focus:outline-none w-full";
                 document.getElementById('tecnico').value = item.tecnico;
                 document.getElementById('cliente').value = item.cliente;
                 document.getElementById('cidade').value = item.cidade;
