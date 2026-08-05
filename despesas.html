@@ -386,19 +386,9 @@
                     snap.forEach(d => window.expenses.push(d.data()));
                     if(typeof window.renderExpenses === 'function') window.renderExpenses();
                     
-                    // Inicialização que roda apenas uma vez para definir o próximo número de relatório livre
-                    if (!initialLoadDone && window.expenses.length > 0) {
-                        let maxRel = 1000;
-                        window.expenses.forEach(item => {
-                            const num = parseInt((item.num_relatorio || '').replace(/\D/g, ''));
-                            if (!isNaN(num) && num > maxRel) maxRel = num;
-                        });
-                        const inputRel = document.getElementById('num_relatorio');
-                        if(inputRel) inputRel.value = `REL-${maxRel + 1}`; // Abre já pronto no próximo número
-                        initialLoadDone = true;
-                    } else if (!initialLoadDone && window.expenses.length === 0) {
-                        const inputRel = document.getElementById('num_relatorio');
-                        if(inputRel) inputRel.value = `REL-1001`;
+                    // Garante que o relatório fique como Rascunho na abertura inicial
+                    if (!initialLoadDone) {
+                        if (typeof window.inicializarNumeroRelatorio === 'function') window.inicializarNumeroRelatorio();
                         initialLoadDone = true;
                     }
                 }, (error) => {
