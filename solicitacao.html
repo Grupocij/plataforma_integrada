@@ -56,24 +56,29 @@
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <form id="formVendaInstalacao" class="space-y-6" onsubmit="event.preventDefault();">
             
             <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="section-header px-6 py-4 text-white flex items-center justify-between">
                     <div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-building text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">1. Dados do Cliente</h2></div></div>
                 </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Razão Social / Cliente *</label><input type="text" id="cli_razao" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nome Fantasia</label><input type="text" id="cli_fantasia" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">CNPJ / CPF *</label><input type="text" id="cli_cnpj" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
+                    
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Inscrição Estadual</label><input type="text" id="cli_ie" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">CEP</label><input type="text" id="cli_cep" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Endereço Completo de Instalação</label><input type="text" id="cli_endereco" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
+                    
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cidade / UF</label><input type="text" id="cli_cidade" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Contato Responsável</label><input type="text" id="cli_contato_nome" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telefone / WhatsApp</label><input type="text" id="cli_contato_fone" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail de Contato</label><input type="email" id="cli_contato_email" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
+                    
+                    <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail para envio de NFe</label><input type="email" id="cli_email_nfe" placeholder="email@cliente.com.br" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
+                    <div class="lg:col-span-2"><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Transportadora</label><input type="text" id="cli_transportadora" placeholder="Nome da Transportadora" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:border-blue-600 bg-slate-50/50 transition"></div>
                 </div>
             </section>
 
@@ -86,12 +91,35 @@
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nº Proposta</label><input type="text" id="ven_num_proposta" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nº Pedido *</label><input type="text" id="ven_num_pedido" required class="w-full rounded-xl border border-slate-300 p-2.5 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600"></div>
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Data Solicitação</label><input type="date" id="ven_data_solicitacao" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600"></div>
+                    
                     <div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">Vendedor</label><input type="text" id="ven_vendedor" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600"></div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Modalidade</label>
                         <select id="ven_modalidade" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600">
                             <option>Venda Direta</option><option>Locação</option><option>Comodato</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tipo de Frete</label>
+                        <select id="ven_frete" class="w-full rounded-xl border border-slate-300 p-2.5 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600">
+                            <option value="">Selecione...</option>
+                            <option>CIF (Por conta do Remetente)</option>
+                            <option>FOB (Por conta do Destinatário)</option>
+                            <option>Técnico CIJ</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1 border border-slate-200 rounded-xl p-3 bg-slate-50">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-2">Condição de Pagamento</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="col-span-1">
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Entrada</label>
+                                <input type="text" id="ven_cond_entrada" placeholder="Ex: 30%" class="w-full rounded border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-600">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Saldo</label>
+                                <input type="text" id="ven_cond_saldo" placeholder="Ex: 30/60/90 dias" class="w-full rounded border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-600">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -104,14 +132,15 @@
                     <div class="overflow-x-auto border border-slate-200 rounded-xl mb-4">
                         <table class="w-full text-left border-collapse" id="tabelaVendaEquipamentos">
                             <thead>
-                                <tr class="bg-slate-900 text-white text-xs font-bold uppercase tracking-wider">
-                                    <th class="py-3 px-2 text-center w-10">#</th>
-                                    <th class="py-3 px-3 w-1/4">Categoria</th>
-                                    <th class="py-3 px-3 w-1/3">Descrição do Item</th>
-                                    <th class="py-3 px-2 text-center w-20">Qtd</th>
-                                    <th class="py-3 px-3 text-right w-28">Preço Unit.</th>
-                                    <th class="py-3 px-3 text-right w-32">Preço Total</th>
-                                    <th class="py-3 px-2 text-center no-print w-12">Ação</th>
+                                <tr class="bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                                    <th class="py-3 px-2 text-center w-8">#</th>
+                                    <th class="py-3 px-2 w-48">Categoria</th>
+                                    <th class="py-3 px-2 w-auto">Descrição do Item</th>
+                                    <th class="py-3 px-2 text-center w-16">Qtd</th>
+                                    <th class="py-3 px-2 text-right w-32 whitespace-nowrap">Preço Unit.</th>
+                                    <th class="py-3 px-2 text-right w-28 whitespace-nowrap text-amber-300">Desconto (R$)</th>
+                                    <th class="py-3 px-2 text-right w-36 whitespace-nowrap">Preço Total</th>
+                                    <th class="py-3 px-2 text-center no-print w-10">Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="corpoTabelaVenda" class="divide-y divide-slate-200 text-xs">
@@ -122,7 +151,7 @@
                     <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
                         <button type="button" onclick="adicionarLinhaVenda()" class="bg-blue-600 hover:bg-blue-700 transition text-white text-xs font-bold px-4 py-2.5 rounded-xl no-print shadow-sm"><i class="fa-solid fa-plus"></i> Adicionar Item</button>
                         <div class="text-xs font-semibold text-slate-700 bg-white px-4 py-2 rounded-lg border shadow-sm">
-                            Total: <strong id="totalItensVenda" class="text-blue-900 ml-1">0</strong> | Valor: <strong id="valorTotalGeral" class="text-emerald-600 font-black ml-1">R$ 0,00</strong>
+                            Total Itens: <strong id="totalItensVenda" class="text-blue-900 ml-1">0</strong> | Valor Final: <strong id="valorTotalGeral" class="text-emerald-600 font-black ml-1 text-sm">R$ 0,00</strong>
                         </div>
                     </div>
                 </div>
@@ -189,7 +218,7 @@
                     <div class="flex items-center gap-3"><span class="bg-blue-500/30 text-blue-200 p-2 rounded-lg border border-blue-400/20"><i class="fa-solid fa-comment-dots text-lg"></i></span><div><h2 class="text-base md:text-lg font-bold">6. Observações Gerais</h2></div></div>
                 </div>
                 <div class="p-6">
-                    <textarea id="obs_gerais" rows="4" class="w-full rounded-xl border border-slate-300 p-3 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600" placeholder="Anotações extras, condições especiais de pagamento, local de faturamento, necessidades de entrega..."></textarea>
+                    <textarea id="obs_gerais" rows="4" class="w-full rounded-xl border border-slate-300 p-3 text-xs outline-none bg-slate-50/50 transition focus:border-blue-600" placeholder="Anotações extras, local de faturamento, necessidades de entrega, faturamento para outra empresa..."></textarea>
                 </div>
             </section>
 
@@ -209,7 +238,6 @@
         <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
     </div>
 
-    <!-- SCRIPT DO FIREBASE 100% LIMPO (SEM MODO TESTE) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -223,7 +251,7 @@
 
         onAuthStateChanged(auth, (user) => {
             if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                // window.location.href = 'index.html'; // Descomente para forçar login no Github
+                // window.location.href = 'index.html';
             } else if(user) {
                 if(typeof window.definirPerfilUsuario === 'function') window.definirPerfilUsuario(user.email);
                 const campoVendedor = document.getElementById('ven_vendedor');
@@ -361,22 +389,25 @@
             });
 
             tr.innerHTML = `
-                <td class="py-2 px-2 text-center font-bold text-slate-400">${contadorLinhas}</td>
-                <td class="py-2 px-3">
+                <td class="py-2 px-1 text-center font-bold text-slate-400">${contadorLinhas}</td>
+                <td class="py-2 px-1">
                     <select onchange="atualizarModelos(this)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-500 item-categoria">${categoriasOptions}</select>
                 </td>
-                <td class="py-2 px-3">
+                <td class="py-2 px-1">
                     <select onchange="verificarOutroModelo(this)" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-500 item-descricao-select"><option value="" disabled selected>Aguardando categoria...</option></select>
                     <input type="text" placeholder="Digite a descrição..." class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-500 item-descricao-input hidden">
                 </td>
-                <td class="py-2 px-2">
+                <td class="py-2 px-1">
                     <input type="number" value="1" min="1" oninput="calcularTotalVenda()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-center outline-none focus:border-blue-500 font-bold item-qtd">
                 </td>
-                <td class="py-2 px-3">
+                <td class="py-2 px-1">
                     <input type="number" step="0.01" value="0.00" oninput="calcularTotalVenda()" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-right outline-none focus:border-blue-500 item-preco">
                 </td>
-                <td class="py-2 px-3 text-right font-bold text-blue-700 item-total">R$ 0,00</td>
-                <td class="py-2 px-2 text-center no-print">
+                <td class="py-2 px-1">
+                    <input type="number" step="0.01" value="0.00" oninput="calcularTotalVenda()" class="w-full p-2.5 bg-white border border-amber-300 text-amber-900 rounded-xl text-xs text-right outline-none focus:border-amber-500 item-desconto placeholder-amber-200" placeholder="0.00">
+                </td>
+                <td class="py-2 px-2 text-right font-bold text-blue-700 item-total whitespace-nowrap">R$ 0,00</td>
+                <td class="py-2 px-1 text-center no-print">
                     <button type="button" onclick="removerLinhaVenda('${tr.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
                 </td>`;
             
@@ -398,7 +429,10 @@
             document.querySelectorAll('#corpoTabelaVenda tr').forEach(linha => {
                 const qtd = parseFloat(linha.querySelector('.item-qtd').value) || 0; 
                 const preco = parseFloat(linha.querySelector('.item-preco').value) || 0;
-                const subtotal = qtd * preco; 
+                const desconto = parseFloat(linha.querySelector('.item-desconto').value) || 0;
+                
+                // Calculo: (Preço Unitário * Qtd) - Desconto
+                const subtotal = (qtd * preco) - desconto; 
                 
                 linha.querySelector('.item-total').innerText = subtotal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
                 totalGeral += subtotal; 
@@ -442,7 +476,11 @@
                 
                 if(desc !== "" && cat !== "") {
                     itensLista.push({ 
-                        categoria: cat, descricao: desc, qtd: parseFloat(linha.querySelector('.item-qtd').value) || 0, preco_unit: parseFloat(linha.querySelector('.item-preco').value) || 0 
+                        categoria: cat, 
+                        descricao: desc, 
+                        qtd: parseFloat(linha.querySelector('.item-qtd').value) || 0, 
+                        preco_unit: parseFloat(linha.querySelector('.item-preco').value) || 0,
+                        desconto: parseFloat(linha.querySelector('.item-desconto').value) || 0
                     });
                 }
             });
@@ -450,10 +488,27 @@
             const solicitacaoJSON = { 
                 data_registro: new Date().toISOString(), 
                 cliente: { 
-                    razao_social: document.getElementById('cli_razao').value, cnpj: document.getElementById('cli_cnpj').value, cidade: document.getElementById('cli_cidade').value, contato: document.getElementById('cli_contato_nome').value
+                    razao_social: document.getElementById('cli_razao').value, 
+                    fantasia: document.getElementById('cli_fantasia').value,
+                    cnpj: document.getElementById('cli_cnpj').value, 
+                    ie: document.getElementById('cli_ie').value,
+                    cep: document.getElementById('cli_cep').value,
+                    endereco: document.getElementById('cli_endereco').value,
+                    cidade: document.getElementById('cli_cidade').value, 
+                    contato: document.getElementById('cli_contato_nome').value,
+                    telefone: document.getElementById('cli_contato_fone').value,
+                    email: document.getElementById('cli_contato_email').value,
+                    email_nfe: document.getElementById('cli_email_nfe').value,
+                    transportadora: document.getElementById('cli_transportadora').value
                 }, 
                 comercial: { 
-                    pedido: document.getElementById('ven_num_pedido').value, proposta: document.getElementById('ven_num_proposta').value, vendedor: document.getElementById('ven_vendedor').value, modalidade: document.getElementById('ven_modalidade').value
+                    pedido: document.getElementById('ven_num_pedido').value, 
+                    proposta: document.getElementById('ven_num_proposta').value, 
+                    vendedor: document.getElementById('ven_vendedor').value, 
+                    modalidade: document.getElementById('ven_modalidade').value,
+                    frete: document.getElementById('ven_frete').value,
+                    cond_entrada: document.getElementById('ven_cond_entrada').value,
+                    cond_saldo: document.getElementById('ven_cond_saldo').value
                 }, 
                 itens: itensLista, 
                 condicoes_tecnicas: {
@@ -487,17 +542,27 @@
                     ["Razão Social:", document.getElementById('cli_razao').value],
                     ["Nome Fantasia:", document.getElementById('cli_fantasia').value],
                     ["CNPJ/CPF:", document.getElementById('cli_cnpj').value],
+                    ["Insc. Estadual:", document.getElementById('cli_ie').value],
+                    ["CEP:", document.getElementById('cli_cep').value],
+                    ["Endereço:", document.getElementById('cli_endereco').value],
                     ["Cidade/UF:", document.getElementById('cli_cidade').value],
                     ["Contato:", document.getElementById('cli_contato_nome').value],
                     ["Telefone:", document.getElementById('cli_contato_fone').value],
+                    ["E-mail:", document.getElementById('cli_contato_email').value],
+                    ["E-mail NFe:", document.getElementById('cli_email_nfe').value],
+                    ["Transportadora:", document.getElementById('cli_transportadora').value],
                     [""],
                     ["2. DADOS COMERCIAIS"],
                     ["Nº Pedido:", document.getElementById('ven_num_pedido').value],
+                    ["Nº Proposta:", document.getElementById('ven_num_proposta').value],
                     ["Vendedor:", document.getElementById('ven_vendedor').value],
                     ["Modalidade:", document.getElementById('ven_modalidade').value],
+                    ["Tipo de Frete:", document.getElementById('ven_frete').value],
+                    ["Pagamento (Entrada):", document.getElementById('ven_cond_entrada').value],
+                    ["Pagamento (Saldo):", document.getElementById('ven_cond_saldo').value],
                     [""],
                     ["3. ITENS DA VENDA"],
-                    ["CATEGORIA", "DESCRIÇÃO", "QTD", "PREÇO UNIT.", "TOTAL"]
+                    ["CATEGORIA", "DESCRIÇÃO", "QTD", "PREÇO UNIT.", "DESCONTO", "TOTAL"]
                 ];
 
                 document.querySelectorAll('#corpoTabelaVenda tr').forEach(linha => {
@@ -507,13 +572,15 @@
                     const desc = (sel === 'Outro (Digitar)' || sel === '') ? inp : sel;
                     const qtd = parseFloat(linha.querySelector('.item-qtd').value) || 0;
                     const preco = parseFloat(linha.querySelector('.item-preco').value) || 0;
+                    const desconto = parseFloat(linha.querySelector('.item-desconto').value) || 0;
+                    const subtotal = (qtd * preco) - desconto;
                     
                     if(desc !== "" && cat !== "") {
-                        dados.push([cat, desc, qtd, preco, (qtd*preco)]);
+                        dados.push([cat, desc, qtd, preco, desconto, subtotal]);
                     }
                 });
 
-                dados.push(["", "", "", "TOTAL GERAL:", document.getElementById('valorTotalGeral').innerText]);
+                dados.push(["", "", "", "", "TOTAL GERAL:", document.getElementById('valorTotalGeral').innerText]);
                 dados.push([""]);
                 
                 dados.push(["4. CONDIÇÕES TÉCNICAS"]);
@@ -540,7 +607,7 @@
                 const wb = XLSX.utils.book_new(); 
                 const ws = XLSX.utils.aoa_to_sheet(dados); 
                 
-                ws['!cols'] = [{wch: 25}, {wch: 40}, {wch: 10}, {wch: 15}, {wch: 15}];
+                ws['!cols'] = [{wch: 25}, {wch: 40}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 15}];
                 
                 XLSX.utils.book_append_sheet(wb, ws, "Solicitacao_CIJ"); 
                 
