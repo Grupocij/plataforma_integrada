@@ -57,9 +57,9 @@
                 <p class="text-xs font-medium text-slate-500 mt-1">Itens cadastrados</p>
             </div>
             <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Disponíveis</p>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Disponíveis / Estoque</p>
                 <h3 id="kpiDisponivelEstoque" class="text-2xl font-black text-emerald-950 mt-1">0</h3>
-                <p class="text-xs font-medium text-emerald-500 mt-1">Prontos para envio</p>
+                <p class="text-xs font-medium text-emerald-500 mt-1">Prontos para negócio</p>
             </div>
             <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Reservados</p>
@@ -104,28 +104,43 @@
                         <input type="text" id="est_serial" required placeholder="Ex: SN-998231" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-cyan-600">
                     </div>
                     <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Condição *</label>
+                        <select id="est_condicao" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-cyan-600">
+                            <option value="Novo">Novo</option>
+                            <option value="Semi-Novo">Semi-Novo</option>
+                            <option value="Usado">Usado</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Status *</label>
-                        <select id="est_status" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-cyan-600">
-                            <option value="Disponível">Disponível</option>
+                        <select id="est_status" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-cyan-600">
+                            <option value="Disponível para venda">Disponível para venda</option>
+                            <option value="Estoque">Estoque</option>
                             <option value="Reservado">Reservado</option>
+                            <option value="Demonstração">Demonstração</option>
+                            <option value="Locação">Locação</option>
+                            <option value="Empréstimo">Empréstimo</option>
+                            <option value="Em Manutenção">Em Manutenção</option>
+                            <option value="Em Trânsito">Em Trânsito</option>
                             <option value="Vendido">Vendido</option>
-                            <option value="Manutenção">Manutenção</option>
+                            <option value="Baixado">Baixado</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Localização / Filial *</label>
-                        <select id="est_local" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-cyan-600">
-                            <option value="Matriz (Joinville/SC)">Matriz (Joinville/SC)</option>
-                            <option value="Filial RS">Filial RS</option>
-                            <option value="Em Trânsito / Técnico">Em Trânsito / Técnico</option>
-                            <option value="Cliente (Comodato)">Cliente (Comodato)</option>
+                        <select id="est_local" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-cyan-600">
+                            <option value="Estoque Joinville">Estoque Joinville</option>
+                            <option value="Estoque RS">Estoque RS</option>
+                            <option value="Laboratório">Laboratório</option>
+                            <option value="Cliente">Cliente</option>
+                            <option value="Fabricante/Fornecedor">Fabricante/Fornecedor</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Data de Entrada *</label>
                         <input type="date" id="est_data" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-cyan-600">
                     </div>
-                    <div class="lg:col-span-3">
+                    <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-slate-700 mb-1">Observações</label>
                         <input type="text" id="est_obs" placeholder="Ex: Equipamento revisado, firmware atualizado..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-cyan-600">
                     </div>
@@ -161,10 +176,16 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
                     <select id="filter_status" onchange="renderTableEstoque()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold outline-none focus:border-cyan-600">
                         <option value="">Todos</option>
-                        <option value="Disponível">Disponível</option>
+                        <option value="Disponível para venda">Disponível para venda</option>
+                        <option value="Estoque">Estoque</option>
                         <option value="Reservado">Reservado</option>
+                        <option value="Demonstração">Demonstração</option>
+                        <option value="Locação">Locação</option>
+                        <option value="Empréstimo">Empréstimo</option>
+                        <option value="Em Manutenção">Em Manutenção</option>
+                        <option value="Em Trânsito">Em Trânsito</option>
                         <option value="Vendido">Vendido</option>
-                        <option value="Manutenção">Manutenção</option>
+                        <option value="Baixado">Baixado</option>
                     </select>
                 </div>
                 <div>
@@ -179,6 +200,7 @@
                         <tr class="bg-slate-900 text-white font-bold">
                             <th class="p-3">Modelo</th>
                             <th class="p-3">Nº de Série</th>
+                            <th class="p-3 text-center">Condição</th>
                             <th class="p-3 text-center">Status</th>
                             <th class="p-3">Localização</th>
                             <th class="p-3">Data Entrada</th>
@@ -318,16 +340,16 @@
             tbody.innerHTML = '';
 
             let totalCount = window.listaEstoque.length;
-            let disponivelCount = window.listaEstoque.filter(i => i.status === 'Disponível').length;
+            let disponivelCount = window.listaEstoque.filter(i => i.status === 'Disponível para venda' || i.status === 'Estoque').length;
             let reservadoCount = window.listaEstoque.filter(i => i.status === 'Reservado').length;
             let vendidoCount = window.listaEstoque.filter(i => i.status === 'Vendido').length;
 
             if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 font-medium">Nenhum equipamento encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 font-medium">Nenhum equipamento encontrado.</td></tr>`;
             } else {
                 filtered.forEach((item) => {
                     const dateFormatted = item.data ? item.data.split('-').reverse().join('/') : '-';
-                    const statusClass = item.status === 'Disponível' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                    const statusClass = (item.status === 'Disponível para venda' || item.status === 'Estoque') ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                                         item.status === 'Reservado' ? 'bg-amber-100 text-amber-800 border-amber-300' :
                                         item.status === 'Vendido' ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-slate-100 text-slate-800 border-slate-300';
 
@@ -340,6 +362,7 @@
                         <tr class="hover:bg-slate-50 transition border-b border-slate-200">
                             <td class="p-3 font-bold text-slate-900">${item.modelo}</td>
                             <td class="p-3 font-bold text-cyan-900 font-mono">${item.serial}</td>
+                            <td class="p-3 text-center text-slate-700">${item.condicao || '-'}</td>
                             <td class="p-3 text-center">${statusBadge}</td>
                             <td class="p-3 text-slate-700">${item.local}</td>
                             <td class="p-3 text-slate-600">${dateFormatted}</td>
@@ -369,7 +392,6 @@
             const statusVal = safeGetVal('est_status');
             const currentUserEmail = window.currentUser ? window.currentUser.email : 'Usuário';
 
-            // Find existing item if editing to preserve reservation info if it was already reserved, or update it
             let existingItem = null;
             if (estoque_editingIndex !== null) {
                 existingItem = window.listaEstoque.find(i => i.id === estoque_editingIndex);
@@ -377,7 +399,6 @@
 
             let reservadoPor = '';
             if (statusVal === 'Reservado') {
-                // If it was already reserved and keeping same status, or changing to reserved now
                 if (existingItem && existingItem.status === 'Reservado' && existingItem.reservadoPor) {
                     reservadoPor = existingItem.reservadoPor;
                 } else {
@@ -389,6 +410,7 @@
                 id: estoque_editingIndex !== null ? estoque_editingIndex : Date.now().toString(),
                 modelo: modeloVal,
                 serial: safeGetVal('est_serial'),
+                condicao: safeGetVal('est_condicao'),
                 status: statusVal,
                 local: safeGetVal('est_local'),
                 data: safeGetVal('est_data'),
@@ -431,6 +453,7 @@
             }
 
             safeSetVal('est_serial', item.serial);
+            safeSetVal('est_condicao', item.condicao || 'Novo');
             safeSetVal('est_status', item.status);
             safeSetVal('est_local', item.local);
             safeSetVal('est_data', item.data);
@@ -480,6 +503,7 @@
             ws.columns = [
                 { header: 'Modelo', key: 'modelo', width: 20 },
                 { header: 'Nº de Série', key: 'serial', width: 20 },
+                { header: 'Condição', key: 'condicao', width: 15 },
                 { header: 'Status', key: 'status', width: 15 },
                 { header: 'Reservado Por', key: 'reservadoPor', width: 25 },
                 { header: 'Localização', key: 'local', width: 25 },
@@ -495,6 +519,7 @@
                 ws.addRow({
                     modelo: i.modelo,
                     serial: i.serial,
+                    condicao: i.condicao || '-',
                     status: i.status,
                     reservadoPor: i.reservadoPor || '',
                     local: i.local,
