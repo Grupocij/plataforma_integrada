@@ -98,148 +98,325 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
-        <!-- MÓDULO INÍCIO (HUB) -->
-        <div id="view-inicio" class="space-y-8">
-            <div class="bg-gradient-to-r from-[#1b2559] via-[#111827] to-[#0f172a] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
-                <div class="relative z-10 max-w-2xl">
-                    <span class="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700/50">Leadjet CIJ Systems</span>
-                    <h2 class="text-3xl font-extrabold tracking-tight mt-3 text-white leading-tight">Gestão Comercial, Análise Financeira e Controle Operacional</h2>
-                    <p class="text-slate-300 text-sm mt-2 leading-relaxed">Selecione abaixo qual módulo deseja acessar. As permissões são aplicadas automaticamente conforme o seu nível de acesso.</p>
-                </div>
+        <!-- HEADER DA PÁGINA -->
+        <div class="bg-gradient-to-r from-[#1b2559] via-[#111827] to-[#0f172a] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 mb-8">
+            <div class="relative z-10 max-w-2xl">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700/50">Leadjet CIJ Systems</span>
+                <h2 class="text-3xl font-extrabold tracking-tight mt-3 text-white leading-tight">Gestão Comercial, Análise Financeira e Controle Operacional</h2>
+                <p class="text-slate-300 text-sm mt-2 leading-relaxed">Selecione abaixo qual módulo deseja acessar. As seções são exibidas automaticamente de acordo com o seu perfil de acesso.</p>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-cards-inicio">
-                
-                <!-- CARD: SOLICITAÇÃO -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-signature"></i></div><span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">Operacional</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Solicitação CIJ</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Especificação técnica de impressoras, insumos, acessórios e escopo de instalação.</p>
-                    </div>
-                    <a href="solicitacao.html" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-
-                <!-- CARD: LISTA DE SOLICITAÇÕES -->
+        <!-- ================= BANNER: ÁREA TÉCNICA ================= -->
+        <div id="banner-tecnica" class="hidden mb-12">
+            <div class="flex items-center gap-3 border-b-2 border-slate-200 pb-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-slate-800 text-slate-100 flex items-center justify-center text-lg"><i class="fa-solid fa-wrench"></i></div>
+                <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Área Técnica & Operacional</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Lista de Solicitações -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-list-check"></i></div><span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Operacional & Gestão</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-list-check"></i></div>
+                            <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Operacional & Gestão</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Lista de Solicitações</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta, visualização completa, impressão e exportação de todas as solicitações criadas.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta e visualização das solicitações de instalação.</p>
                     </div>
                     <a href="solicitacoes-lista.html" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: SIMULADOR -->
+                <!-- Simulador Financeiro -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-calculator"></i></div><span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">Operacional</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-calculator"></i></div>
+                            <span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">Operacional</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Simulador Financeiro</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Projeção completa de consumo de tinta, solvente, matriz e estimativa de custos.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Projeção de consumo de tinta e solvente.</p>
                     </div>
                     <a href="simulador.html" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: DESPESAS -->
+                <!-- Controle de Despesas -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div><span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Operacional</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div>
+                            <span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Operacional</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Controle de Despesas</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Lançamento e relatório de compras de viagens, combustível, hotel e refeições.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Lançamento de gastos com viagens e alimentação.</p>
                     </div>
                     <a href="despesas.html" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: VEÍCULOS MOBILE (Acesso para todos) -->
+                <!-- Veículos Mobile -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car"></i></div><span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Frota & Uso</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car"></i></div>
+                            <span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Frota & Uso</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Veículos Mobile</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro prático de retirada e devolução de veículos (Gol, Polo, Polo Track) para motoristas.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro prático de retirada e devolução de veículos.</p>
+                    </div>
+                    <a href="veiculos_mobile.html" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= BANNER: VENDAS ================= -->
+        <div id="banner-vendas" class="hidden mb-12">
+            <div class="flex items-center gap-3 border-b-2 border-blue-200 pb-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-handshake"></i></div>
+                <h2 class="text-xl font-black text-blue-900 uppercase tracking-tight">Área de Vendas & Comercial</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Solicitação CIJ -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-signature"></i></div>
+                            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">Operacional</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Solicitação CIJ</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Especificação técnica e escopo de instalação.</p>
+                    </div>
+                    <a href="solicitacao.html" class="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Lista de Solicitações -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-list-check"></i></div>
+                            <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Operacional & Gestão</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Lista de Solicitações</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta e andamento das solicitações criadas.</p>
+                    </div>
+                    <a href="solicitacoes-lista.html" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Simulador Financeiro -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-calculator"></i></div>
+                            <span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">Operacional</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Simulador Financeiro</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Projeção e cálculos de consumo para clientes.</p>
+                    </div>
+                    <a href="simulador.html" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Controle de Despesas -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div>
+                            <span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Operacional</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Controle de Despesas</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Lançamentos comerciais e solicitação de reembolso.</p>
+                    </div>
+                    <a href="despesas.html" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Veículos Mobile -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car"></i></div>
+                            <span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Frota & Uso</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Veículos Mobile</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro de retirada da frota comercial.</p>
                     </div>
                     <a href="veiculos_mobile.html" class="mt-6 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: DOCUMENTOS OFICIAIS -->
-                <div id="card-tabelas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- Documentos Oficiais -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-pdf"></i></div><span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Comercial & Gestão</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-pdf"></i></div>
+                            <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Comercial & Gestão</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Documentos Oficiais</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta, visualização e download de arquivos e documentos de equipamentos.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta e download de manuais e arquivos.</p>
                     </div>
                     <a href="tabelas.html" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: COMISSÕES AZUL -->
-                <div id="card-comissoes-azul" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-indigo-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- Comissões Azul -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-indigo-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div><span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-300">Comercial & Gestão</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div>
+                            <span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-300">Comercial & Gestão</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Comissões Azul</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão inteligente de vendas, regras de liberação e liquidação de comissões.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão e acompanhamento de comissões de vendas.</p>
                     </div>
                     <a href="comissoes-azul.html" class="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
-                
-                <!-- CARD: ESTOQUE EQUIPAMENTOS -->
-                <div id="card-estoque" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-cyan-200 hover:shadow-md transition flex flex-col justify-between">
+
+                <!-- Estoque Equipamentos -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-cyan-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div><span class="text-[11px] font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-300">Comercial & Gestão</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Estoque de Equipamentos</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle e listagem de equipamentos disponíveis, categorias e estados.</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            <span class="text-[11px] font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-300">Comercial & Gestão</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Estoque Equipamentos</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta de máquinas disponíveis para negócio.</p>
                     </div>
                     <a href="estoque.html" class="mt-6 w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
-                
-                <!-- CARD: DASHBOARD GERENCIAL (Apenas Admin/Financeiro) -->
-                <div id="card-dashboard" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
+            </div>
+        </div>
+
+        <!-- ================= BANNER: ADMINISTRATIVO ================= -->
+        <div id="banner-admin" class="hidden mb-12">
+            <div class="flex items-center gap-3 border-b-2 border-purple-200 pb-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2 class="text-xl font-black text-purple-900 uppercase tracking-tight">Administrativo & Operações</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Estoque Equipamentos -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-cyan-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div><span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Gestão Global (Admin)</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Dashboard Gerencial</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gráficos e indicadores de performance baseados nas vendas e estoques.</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            <span class="text-[11px] font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-300">Gestão Global</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Estoque Equipamentos</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão de entradas, saídas e reservas.</p>
                     </div>
-                    <a href="dashboard-equip.html" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="estoque.html" class="mt-6 w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: VEÍCULOS GERENCIAL (Apenas Admin/Financeiro) -->
-                <div id="card-veiculos-gerencial" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- Veículos Gerencial -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-teal-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-teal-100 text-teal-800 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car-tunnel"></i></div><span class="text-[11px] font-bold text-teal-900 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Gestão Global (Admin)</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-800 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-car-tunnel"></i></div>
+                            <span class="text-[11px] font-bold text-teal-900 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-300">Gestão Global</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Veículos Gerencial</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão completa, auditoria de quilometragem e controle de manutenção de óleo da frota.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Auditoria de KM e controle de manutenção da frota.</p>
                     </div>
                     <a href="veiculos.html" class="mt-6 w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: COMISSÕES - CONSUMÍVEIS (Apenas Admin/Financeiro) -->
-                <div id="card-comissoes-consumiveis" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- Vendas Registradas -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-rose-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-invoice-dollar"></i></div><span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Gestão Global (Admin)</span></div>
-                        <h3 class="text-base font-bold text-slate-900">Comissões - Consumíveis</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle e renovação de comissões de consumíveis com validade de 12 meses.</p>
-                    </div>
-                    <a href="comissoes-consumiveis.html" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-
-                <!-- CARD: VENDAS REGISTRADAS (Apenas Admin) -->
-                <div id="card-vendas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-rose-200 hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-cart-shopping"></i></div><span class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-300">Gestão Global (Admin)</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-cart-shopping"></i></div>
+                            <span class="text-[11px] font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-300">Gestão Global</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Vendas (Saídas)</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro oficial de saída de máquinas, datas e faturamento gerado.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Registro oficial de saída de máquinas e faturamento.</p>
                     </div>
                     <a href="vendas.html" class="mt-6 w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
-                <!-- CARD: PAINEL ADMINISTRATIVO GERAL (Apenas Admin) -->
-                <div id="card-admin" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-purple-200 hover:shadow-md transition flex flex-col justify-between">
+                <!-- Painel Administrativo -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-200 hover:shadow-md transition flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-shield-halved"></i></div><span class="text-[11px] font-bold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-300">Gestão Global (Admin)</span></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-shield-halved"></i></div>
+                            <span class="text-[11px] font-bold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-300">Gestão Global</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-900">Painel Administrativo</h3>
-                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle de comissões de consumíveis e ferramentas da diretoria.</p>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle de comissões e ferramentas da diretoria.</p>
                     </div>
                     <a href="admin.html" class="mt-6 w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
 
+                <!-- Gerenciar Usuários -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-800 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-slate-800 text-slate-100 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-users-gear"></i></div>
+                            <span class="text-[11px] font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-300">Sistema</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Gerenciar Usuários</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle de acessos, senhas e perfis do sistema.</p>
+                    </div>
+                    <a href="usuarios.html" class="mt-6 w-full py-2.5 bg-slate-900 hover:bg-black text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Configurar Acessos <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= BANNER: FINANCEIRO ================= -->
+        <div id="banner-financeiro" class="hidden mb-12">
+            <div class="flex items-center gap-3 border-b-2 border-emerald-200 pb-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-sack-dollar"></i></div>
+                <h2 class="text-xl font-black text-emerald-900 uppercase tracking-tight">Gestão Financeira & Resultados</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <!-- Controle de Despesas -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-receipt"></i></div>
+                            <span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Financeiro</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Controle de Despesas</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestão e aprovação de reembolsos e custos operacionais.</p>
+                    </div>
+                    <a href="despesas.html" class="mt-6 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Comissões Azul -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-indigo-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-line"></i></div>
+                            <span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-300">Financeiro</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Comissões Azul</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Liquidação e aprovação de pagamentos de vendas.</p>
+                    </div>
+                    <a href="comissoes-azul.html" class="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Dashboard Gerencial -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-chart-pie"></i></div>
+                            <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">Gestão Global</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Dashboard Gerencial</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Indicadores de performance, faturamento e lucros.</p>
+                    </div>
+                    <a href="dashboard-equip.html" class="mt-6 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <!-- Comissões Consumíveis -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                            <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300">Gestão Global</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Comissões Consumíveis</h3>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Controle de contratos, faturamento mensal e renovações.</p>
+                    </div>
+                    <a href="comissoes-consumiveis.html" class="mt-6 w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">Acessar Módulo <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
         </div>
 
@@ -250,7 +427,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
@@ -266,8 +443,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'plataforma-cij';
-
-        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
 
         function triggerNewDataAlert(sourceName) {
             const alertBanner = document.getElementById('new-data-alert');
@@ -288,15 +463,36 @@
             sessionStorage.removeItem('cij_alert_active');
         };
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             const loginScreen = document.getElementById('login-screen');
             if(user) {
                 const cleanEmail = (user.email || '').toLowerCase().trim();
-                const isAdmin = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                
+                // Fallbacks mestres para garantir acesso aos proprietários
+                const masterAdmins = ['adm@grupocij.com', 'marcos@grupocij.com'];
+                let isAdmin = masterAdmins.includes(cleanEmail);
+                let userRole = isAdmin ? 'Admin' : '';
+
+                // Busca a permissão dinamicamente no Firebase (Banco de Usuários)
+                try {
+                    const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes'));
+                    const usuarios = [];
+                    snap.forEach(d => usuarios.push(d.data()));
+                    const dbUser = usuarios.find(u => u.email.toLowerCase() === cleanEmail);
+                    
+                    if (dbUser) {
+                        userRole = dbUser.perfil;
+                        if(userRole === 'Admin') isAdmin = true;
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar permissões:", e);
+                }
 
                 if(loginScreen) loginScreen.classList.add('hidden');
                 window.currentUser = user;
-                if(typeof window.verificarPermissoesUsuario === 'function') window.verificarPermissoesUsuario(user.email);
+                
+                // Dispara a função que mostra/esconde os banners baseada no perfil
+                if(typeof window.verificarPermissoesUsuario === 'function') window.verificarPermissoesUsuario(userRole, cleanEmail);
 
                 if (isAdmin && sessionStorage.getItem('cij_alert_active') === 'true') {
                     const alertBanner = document.getElementById('new-data-alert');
@@ -307,6 +503,7 @@
                     sessionStorage.setItem('cij_last_seen_time', Date.now().toString());
                 }
 
+                // Alertas apenas para Admin
                 if (isAdmin) {
                     const monitorarColecao = (colName, labelName) => {
                         let isFirstSnapshot = true;
@@ -396,16 +593,13 @@
             setTimeout(() => toast.classList.add('hidden'), 3500);
         };
 
-        window.EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
-        window.EMAILS_TECNICOS = ['tecnico.cij3@gmail.com', 'tecnico.cij1@gmail.com', 'engenharia@grupocij.com', 'estoque@grupocij.com'];
-        window.EMAILS_VENDEDORES = ['comercial.rs@grupocij.com', 'comercial.sc@grupocij.com', 'comercial02.sc@grupocij.com'];
-
-        window.verificarPermissoesUsuario = function(email) {
-            const clean = (email||'').toLowerCase().trim();
-            const isAdmin = window.EMAILS_ADMIN_FINANCEIRO.includes(clean) || clean.includes('admin') || clean.includes('financeiro');
-            const isTecnico = window.EMAILS_TECNICOS.includes(clean) || clean.includes('tecnico');
-            const isVendedor = window.EMAILS_VENDEDORES.includes(clean) || clean.includes('vendedor') || clean.includes('vendas');
+        window.verificarPermissoesUsuario = function(perfil, email) {
+            // As permissões vêm do banco de dados (perfil), com fallback de segurança para os proprietários
+            const isAdmin = perfil === 'Admin' || email === 'adm@grupocij.com' || email === 'marcos@grupocij.com';
+            const isTecnico = perfil === 'Técnico';
+            const isVendedor = perfil === 'Vendedor';
             
+            // Atualiza a TAG visual do usuário no cabeçalho
             const badge = document.getElementById('user-role-badge');
             if(badge) {
                 badge.className = "text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1";
@@ -415,28 +609,23 @@
                 } else if(isTecnico) {
                     badge.innerText = 'Técnico';
                     badge.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
-                } else {
+                } else if(isVendedor) {
                     badge.innerText = 'Vendedor';
                     badge.classList.add('bg-blue-950', 'text-blue-300', 'border-blue-800');
+                } else {
+                    badge.innerText = 'Acesso Restrito';
+                    badge.classList.add('bg-red-950', 'text-red-300', 'border-red-800');
                 }
             }
             
-            const pComercial = (isAdmin || isVendedor); 
-            document.getElementById('card-tabelas')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-comissoes-azul')?.classList.toggle('hidden', !pComercial);
-            document.getElementById('card-estoque')?.classList.toggle('hidden', !pComercial);
-            
-            // Dashboard Gerencial restrito apenas a Admin/Financeiro
-            document.getElementById('card-dashboard')?.classList.toggle('hidden', !isAdmin);
-            
-            // Veículos Gerencial restrito apenas a Admin/Financeiro
-            document.getElementById('card-veiculos-gerencial')?.classList.toggle('hidden', !isAdmin);
-            
-            // Veículos Mobile visível para todos
-            
-            document.getElementById('card-comissoes-consumiveis')?.classList.toggle('hidden', !isAdmin);
-            document.getElementById('card-vendas')?.classList.toggle('hidden', !isAdmin);
-            document.getElementById('card-admin')?.classList.toggle('hidden', !isAdmin);
+            // LÓGICA DE EXIBIÇÃO DOS BANNERS (Atende perfeitamente ao seu pedido)
+            // Técnicos = Banner Técnica
+            // Vendedores = Banner Vendas
+            // Admin = Todos os Banners
+            document.getElementById('banner-tecnica')?.classList.toggle('hidden', !(isAdmin || isTecnico));
+            document.getElementById('banner-vendas')?.classList.toggle('hidden', !(isAdmin || isVendedor));
+            document.getElementById('banner-admin')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('banner-financeiro')?.classList.toggle('hidden', !isAdmin);
         };
     </script>
 </body>
