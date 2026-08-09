@@ -1,13 +1,12 @@
 // Nome do cache. Sempre que atualizarmos o sistema no futuro, podemos mudar para v2, v3, etc.
-const CACHE_NAME = 'cij-cache-v1';
+const CACHE_NAME = 'cij-cache-v2'; // Mudei para v2 para forçar o celular a atualizar
 
 // Lista de arquivos que o celular vai baixar e guardar quando tiver internet
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/usuarios.html',
-    '/estoque.html'
-    // Nas próximas etapas, adicionaremos os outros módulos aqui (como veiculos_mobile.html, etc.)
+    './',
+    './index.html',
+    './usuarios.html',
+    './estoque.html'
 ];
 
 // Evento de instalação: É chamado na primeira vez que o técnico acessa o site
