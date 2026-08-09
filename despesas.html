@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Despesas por Relatório - Portal Grupo CIJ</title>
+    
+    <!-- CONECTANDO O MANIFEST (PWA) PARA FUNCIONAMENTO OFFLINE -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#020617"> <!-- slate-950 -->
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0ea5e9/ffffff.png?text=CIJ+Despesas">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -326,10 +332,20 @@
         <span id="toast-message" class="text-sm font-medium">Ação realizada com sucesso!</span>
     </div>
 
+    <!-- SCRIPT DO PWA (OFFLINE) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erro PWA:', err));
+            });
+        }
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // IMPORTAÇÕES NOVAS PARA CACHE OFFLINE
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'plataforma-cij';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -343,7 +359,12 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        
+        // NOVO JEITO DE INICIAR O BANCO DE DADOS (COM CACHE OFFLINE ATIVADO)
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+        });
+        
         const despesasCol = collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo');
 
         window.expenses = [];
