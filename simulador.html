@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador Financeiro - Portal Grupo CIJ</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0f172a/ffffff.png?text=CIJ">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -114,9 +118,19 @@
         
     </main>
 
+    <!-- SCRIPT DO PWA (OFFLINE) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erro PWA:', err));
+            });
+        }
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Simulador não grava no banco de dados, então não precisa do import persistentLocalCache do Firestore
 
         try {
             const firebaseConfig = { apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw", authDomain: "plataforma-cij.firebaseapp.com", projectId: "plataforma-cij", storageBucket: "plataforma-cij.firebasestorage.app", messagingSenderId: "949985395100", appId: "1:949985395100:web:cf881e0c91c63175228859" };
@@ -125,12 +139,14 @@
 
             onAuthStateChanged(auth, (user) => {
                 if (!user && window.location.hostname !== "localhost" && window.location.hostname !== "") {
-                    // window.location.href = 'index.html'; // Redireciona para o login
+                    // window.location.href = 'index.html'; // Redireciona para o login (descomentar se quiser bloqueio estrito)
                 } else if (user) {
                     if(typeof window.definirPerfilUsuario === 'function') window.definirPerfilUsuario(user.email);
                 }
             });
-        } catch(e) {}
+        } catch(e) {
+            console.error("Erro ao inicializar Firebase (possível acesso offline sem cache prévio da Auth)", e);
+        }
     </script>
 
     <script>
