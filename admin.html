@@ -10,11 +10,12 @@
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="https://placehold.co/192x192/0f172a/ffffff.png?text=CIJ">
     
+    <!-- Tailwind CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- EXCEL JS PARA EXPORTAÇÃO -->
+    <!-- ExcelJS & FileSaver para Exportação -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
@@ -28,15 +29,8 @@
         .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
         
         /* Efeito Mega Menu */
-        .mega-menu {
-            transition: all 0.2s ease-in-out;
-            transform-origin: top;
-        }
-        .group:hover .mega-menu {
-            opacity: 1;
-            visibility: visible;
-            transform: scale(1);
-        }
+        .mega-menu { transition: all 0.2s ease-in-out; transform-origin: top; }
+        .group:hover .mega-menu { opacity: 1; visibility: visible; transform: scale(1); }
 
         @keyframes blink-animation {
             0% { opacity: 1; background-color: #f59e0b; }
@@ -44,19 +38,24 @@
             100% { opacity: 1; background-color: #f59e0b; }
         }
         .blinking-alert { animation: blink-animation 1s infinite; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50">
 
-    <!-- ALERTA GLOBAL PARA ADMIN -->
-    <div id="new-data-alert" class="hidden fixed top-0 inset-x-0 z-[9999] text-slate-950 px-4 py-3 font-extrabold text-xs flex items-center justify-between shadow-2xl blinking-alert border-b-2 border-amber-300">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-bell text-base animate-bounce"></i>
-            <span id="alert-text">ATENÇÃO: Nova informação cadastrada no sistema por um usuário!</span>
+    <!-- MODAL DE ALERTA GLOBAL -->
+    <div id="new-data-alert-modal" class="hidden fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div id="new-data-alert-content" class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full border border-amber-200 text-center transform scale-95 transition-transform duration-300">
+            <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-5 shadow-inner shadow-amber-500/20 animate-bounce">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 mb-2 tracking-tight">Novidades no Sistema!</h3>
+            <p id="alert-text" class="text-sm text-slate-600 mb-6 leading-relaxed">Nova informação cadastrada.</p>
+            <button onclick="acknowledgeNewData()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl transition shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check-double"></i> Estou Ciente, Fechar
+            </button>
         </div>
-        <button onclick="acknowledgeNewData()" class="px-3 py-1 bg-slate-950 text-white rounded-lg text-xs font-bold shadow hover:bg-slate-900 transition">
-            OK / Ciente
-        </button>
     </div>
 
     <!-- TELA DE LOGIN / BLOQUEIO -->
@@ -69,7 +68,7 @@
                     <path d="M50 30 L65 45 L50 60 L35 45 Z" fill="#64B5F6"/>
                 </svg>
                 <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">PORTAL GRUPO CIJ</h1>
-                <p id="login-message" class="text-xs font-semibold text-slate-500">Acesso ao Painel Administrativo...</p>
+                <p id="login-message" class="text-xs font-semibold text-slate-500">Acesso Restrito - Autenticando...</p>
             </div>
             <form id="auth-form" class="space-y-4 text-left" onsubmit="handleLogin(event)">
                 <div>
@@ -89,7 +88,7 @@
 
     <!-- CABEÇALHO SUPERIOR FIXO Z-9990 -->
     <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-[9990] h-16 shrink-0 w-full">
-        <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
             <div class="flex items-center justify-between h-full gap-4">
                 
                 <!-- LOGO -->
@@ -102,8 +101,8 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">PORTAL CIJ</span>
-                            <span id="user-role-badge-top" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Autenticando...</span>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-300 bg-purple-950 px-2 py-0.5 rounded border border-purple-800">Painel Gerencial</span>
+                            <span id="user-role-badge-top" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
                         </div>
                     </div>
                 </div>
@@ -111,11 +110,8 @@
                 <!-- MENU SUPERIOR DESKTOP (MEGA DROPDOWNS) -->
                 <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center h-full">
                     
-                    <!-- MENU SUPERIOR: TÉCNICA -->
                     <div id="top-nav-tecnica" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800">
-                            <i class="fa-solid fa-wrench text-teal-400"></i> Técnica <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i>
-                        </button>
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-wrench text-teal-400"></i> Técnica <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
                         <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
                             <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Módulos Operacionais</span></div>
                             <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
@@ -127,11 +123,8 @@
                         </div>
                     </div>
 
-                    <!-- MENU SUPERIOR: VENDAS -->
                     <div id="top-nav-vendas" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800">
-                            <i class="fa-solid fa-handshake text-blue-400"></i> Comercial <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i>
-                        </button>
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
                         <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[38rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
                             <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Área de Vendas & Comercial</span></div>
                             <div class="p-2 grid grid-cols-3 gap-1 text-slate-800">
@@ -147,11 +140,8 @@
                         </div>
                     </div>
 
-                    <!-- MENU SUPERIOR: ADMIN / GESTÃO -->
                     <div id="top-nav-admin" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800">
-                            <i class="fa-solid fa-shield-halved text-purple-400"></i> Admin <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i>
-                        </button>
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-shield-halved text-purple-400"></i> Admin <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
                         <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[32rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
                             <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrativo & Operações</span></div>
                             <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
@@ -164,11 +154,8 @@
                         </div>
                     </div>
 
-                    <!-- MENU SUPERIOR: FINANCEIRO -->
                     <div id="top-nav-financeiro" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800">
-                            <i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i>
-                        </button>
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
                         <div class="mega-menu absolute top-14 right-0 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
                             <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Gestão Financeira & Resultados</span></div>
                             <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
@@ -255,10 +242,9 @@
             </div>
         </div>
 
-        <!-- ÁREA CENTRAL (MÓDULO ADMIN) -->
-        <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6">
+        <!-- ÁREA CENTRAL DE CONTEÚDO (MÓDULO ADMIN) -->
+        <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)]">
             
-            <!-- TÍTULO DO MÓDULO -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3"><i class="fa-solid fa-shield-halved text-purple-600"></i> Painel Administrativo Global</h2>
                 <p class="text-sm text-slate-500 mt-1">Gestão de indicadores, relatórios e aprovações do sistema.</p>
@@ -579,7 +565,7 @@
                     window.verificarPermissoesUsuario(isAdmin, isTecnico, isVendedor, nomeUsuario);
                 }
 
-                // Iniciar listeners de dados
+                // Iniciar listeners de dados em tempo real
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo'), (snap) => {
                     window.adminData.despesas = [];
                     snap.forEach(d => window.adminData.despesas.push(d.data()));
@@ -608,6 +594,8 @@
 
             } else {
                 loginScreen.classList.remove('hidden');
+                window.currentUser = null;
+                window.adminListenersAtivos = false;
             }
         });
 
