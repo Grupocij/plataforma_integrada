@@ -222,10 +222,12 @@
         <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
     </div>
 
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Importamos as funções de busca (query, where, getDocs) e também mantemos a estrutura offline
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
@@ -238,7 +240,12 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        
+        // Inicializa o banco de dados ativando o modo Offline
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+        });
+        
         const appId = 'plataforma-cij';
 
         const usoCol = collection(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso');
@@ -268,19 +275,32 @@
                     badge.className = window.isUserAdmin ? 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800 truncate' : 'text-[10px] font-bold px-2 py-0.5 rounded border bg-teal-950 text-teal-300 border-teal-800 truncate';
                 }
 
-                const userField = document.getElementById('ret_usuario');
+                // NOVA LÓGICA: Buscar o NOME REAL do usuário no banco de dados
+                const userField = document.getElementById('ret_usuario'); // Campo de condutor no mobile
                 if (userField && !userField.value && user.email) {
-                    userField.value = user.email.split('@')[0].toUpperCase();
+                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes'), where("email", "==", cleanEmail));
+                    
+                    getDocs(q).then((querySnapshot) => {
+                        if (!querySnapshot.empty) {
+                            userField.value = querySnapshot.docs[0].data().nome; // Puxa o nome bonito!
+                        } else {
+                            userField.value = cleanEmail.split('@')[0].toUpperCase(); // Plano B
+                        }
+                    }).catch(e => {
+                        userField.value = cleanEmail.split('@')[0].toUpperCase();
+                    });
                 }
 
+                // Escutar dados de uso
                 onSnapshot(usoCol, (snap) => {
                     window.listaUso = [];
                     snap.forEach(d => window.listaUso.push(d.data()));
-                    calcularStatusFrota();
+                    if(typeof window.calcularStatusFrota === 'function') window.calcularStatusFrota();
                     if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
                     if(typeof window.renderizarDevolucoesPendentes === 'function') window.renderizarDevolucoesPendentes();
                 }, (err) => console.error(err));
 
+                // Escutar dados de manutenção
                 onSnapshot(manutencaoCol, (snap) => {
                     snap.forEach(d => {
                         const dat = d.data();
@@ -288,7 +308,7 @@
                             window.statusFrota[dat.veiculo].ultimaTrocaOleoKm = dat.ultimaTrocaOleoKm || 0;
                         }
                     });
-                    calcularStatusFrota();
+                    if(typeof window.calcularStatusFrota === 'function') window.calcularStatusFrota();
                     if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
                 }, (err) => console.error(err));
 
