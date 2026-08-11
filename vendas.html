@@ -4,219 +4,453 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vendas (Saídas) - Portal Grupo CIJ</title>
-    <!-- Tailwind CSS -->
+    
+    <!-- Tailwind CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- ExcelJS e FileSaver para exportação -->
+    
+    <!-- ExcelJS & FileSaver para Exportação -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
+        .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+        
+        /* Efeito Mega Menu */
+        .mega-menu { transition: all 0.2s ease-in-out; transform-origin: top; }
+        .group:hover .mega-menu { opacity: 1; visibility: visible; transform: scale(1); }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+        }
     </style>
 </head>
-<body class="min-h-screen pb-12 flex flex-col">
+<body class="min-h-screen flex flex-col bg-slate-50 pb-12">
 
-    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 hidden">
+    <!-- TELA DE LOGIN / BLOQUEIO -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
-            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
-            <p id="login-message" class="text-xs text-slate-600">Autenticando sessão de Administrador...</p>
-            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
-                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 border rounded-xl text-xs">
-                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 border rounded-xl text-xs">
-                <button type="submit" class="w-full py-3 bg-[#002d72] text-white font-bold rounded-xl text-xs">Entrar</button>
+            <div class="flex flex-col items-center justify-center gap-2">
+                <svg class="w-16 h-16" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#002D72"/>
+                    <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#0077C8" fill-opacity="0.8"/>
+                    <path d="M50 30 L65 45 L50 60 L35 45 Z" fill="#64B5F6"/>
+                </svg>
+                <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">PORTAL GRUPO CIJ</h1>
+                <p id="login-message" class="text-xs font-semibold text-slate-500">Acesso Restrito: Autenticando sessão...</p>
+            </div>
+            <form id="auth-form" class="space-y-4 text-left" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail Corporativo</label>
+                    <input type="email" id="auth-email" required placeholder="seu.nome@grupocij.com.br" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-rose-600 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Senha</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-rose-600">
+                </div>
+                <button type="submit" class="w-full py-3 bg-[#002d72] hover:bg-blue-900 text-white font-extrabold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                </button>
             </form>
         </div>
     </div>
 
-    <header class="bg-[#0f172a] text-white p-4 sticky top-0 z-40 shadow-md">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-rose-300 bg-rose-950 px-2.5 py-0.5 rounded border border-rose-800">Vendas (Saídas)</span>
-                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+    <!-- CABEÇALHO SUPERIOR FIXO Z-9990 -->
+    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-[9990] h-16 shrink-0 w-full no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex items-center justify-between h-full gap-4">
+                
+                <!-- LOGO E BADGE -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 hidden sm:flex">
+                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
+                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-300 bg-rose-950 px-2 py-0.5 rounded border border-rose-800">VENDAS (SAÍDAS)</span>
+                            <span id="user-role-badge-top" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENU SUPERIOR DESKTOP -->
+                <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center h-full">
+                    <div id="top-nav-tecnica" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-wrench text-teal-400"></i> Técnica <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Módulos Operacionais</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Andamento de instalações</p></div></a>
+                                <a href="simulador.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calculator"></i></div><div><h4 class="text-xs font-bold text-slate-900">Simulador Financeiro</h4><p class="text-[10px] text-slate-500 mt-0.5">Projeção de consumos</p></div></a>
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Viagens e refeições</p></div></a>
+                                <a href="veiculos_mobile.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-car"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Mobile</h4><p class="text-[10px] text-slate-500 mt-0.5">Retirada de frota</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-vendas" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[38rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Área de Vendas & Comercial</span></div>
+                            <div class="p-2 grid grid-cols-3 gap-1 text-slate-800">
+                                <a href="solicitacao.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-signature"></i></div><div><h4 class="text-xs font-bold text-slate-900">Solicitação CIJ</h4><p class="text-[10px] text-slate-500 mt-0.5">Especificação técnica</p></div></a>
+                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista de Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Consulta e andamento</p></div></a>
+                                <a href="simulador.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calculator"></i></div><div><h4 class="text-xs font-bold text-slate-900">Simulador Financeiro</h4><p class="text-[10px] text-slate-500 mt-0.5">Projeção para clientes</p></div></a>
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle de Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Lançamentos e reembolso</p></div></a>
+                                <a href="veiculos_mobile.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-car"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Mobile</h4><p class="text-[10px] text-slate-500 mt-0.5">Retirada da frota</p></div></a>
+                                <a href="tabelas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf"></i></div><div><h4 class="text-xs font-bold text-slate-900">Documentos Oficiais</h4><p class="text-[10px] text-slate-500 mt-0.5">Manuais e arquivos</p></div></a>
+                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Acompanhamento vendas</p></div></a>
+                                <a href="estoque.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4 class="text-xs font-bold text-slate-900">Estoque Equipamentos</h4><p class="text-[10px] text-slate-500 mt-0.5">Consulta de máquinas</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-admin" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-shield-halved text-purple-400"></i> Admin <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[32rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrativo & Operações</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="estoque.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4 class="text-xs font-bold text-slate-900">Estoque Equipamentos</h4><p class="text-[10px] text-slate-500 mt-0.5">Gestão de entradas e saídas</p></div></a>
+                                <a href="veiculos.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center shrink-0"><i class="fa-solid fa-car-tunnel"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Gerencial</h4><p class="text-[10px] text-slate-500 mt-0.5">Auditoria da frota</p></div></a>
+                                <a href="vendas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-cart-shopping"></i></div><div><h4 class="text-xs font-bold text-slate-900">Vendas (Saídas)</h4><p class="text-[10px] text-slate-500 mt-0.5">Registro faturado</p></div></a>
+                                <a href="painel_administrativo.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-shield-halved"></i></div><div><h4 class="text-xs font-bold text-slate-900">Painel Diretoria</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de comissões</p></div></a>
+                                <a href="usuarios.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-100 flex items-center justify-center shrink-0"><i class="fa-solid fa-users-gear"></i></div><div><h4 class="text-xs font-bold text-slate-900">Gerenciar Usuários</h4><p class="text-[10px] text-slate-500 mt-0.5">Permissões e senhas</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-financeiro" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 right-0 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Gestão Financeira & Resultados</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle de Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de reembolsos</p></div></a>
+                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Liquidação de vendas</p></div></a>
+                                <a href="dashboard-equip.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-pie"></i></div><div><h4 class="text-xs font-bold text-slate-900">Dashboard Gerencial</h4><p class="text-[10px] text-slate-500 mt-0.5">Faturamento e lucros</p></div></a>
+                                <a href="comissoes-consumiveis.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div><div><h4 class="text-xs font-bold text-slate-900">Com. Consumíveis</h4><p class="text-[10px] text-slate-500 mt-0.5">Contratos e renovações</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                </nav>
+
+                <!-- BOTÕES DIREITA -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="index.html" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition items-center gap-1.5"><i class="fa-solid fa-house"></i> Home</a>
+                    <button onclick="fazerLogout()" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+                    <!-- BOTÃO HAMBURGUER (MOBILE) -->
+                    <button onclick="toggleMobileMenu()" class="lg:hidden text-slate-300 hover:text-white text-xl p-1 px-2 border border-slate-700 rounded-lg bg-slate-800">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+
             </div>
-            <nav class="flex gap-4 items-center">
-                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
-                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
-            </nav>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+    <div class="flex flex-1 relative w-full h-full">
         
-        <!-- KPIs -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-rose-600">Faturamento Total</p>
-                <h3 id="kpiTotalFaturamento" class="text-2xl font-black text-rose-950 mt-1">R$ 0,00</h3>
-                <p class="text-xs font-medium text-slate-500 mt-1">Vendas faturadas</p>
+        <!-- MENU LATERAL (OVERLAY APENAS MOBILE) -->
+        <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/60 z-[105] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm lg:hidden"></div>
+        <div id="mobile-sidebar" class="fixed inset-y-0 right-0 w-[280px] bg-[#0f172a] shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 border-l border-slate-700 flex flex-col lg:hidden">
+            <div class="p-5 flex justify-between items-center border-b border-slate-800 bg-[#0b1120]"><span class="font-bold text-white text-sm uppercase tracking-wider">Módulos do Sistema</span><button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white text-2xl"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                
+                <div id="mob-tecnica" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-tecnica')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700"><span class="flex items-center gap-2"><i class="fa-solid fa-wrench text-emerald-400"></i> Técnica</span><i id="sub-tecnica-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-tecnica" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="solicitacoes-lista.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-400"><i class="fa-solid fa-list-check text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Lista Solicitações</span></a>
+                        <a href="simulador.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-calculator text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Simulador Financeiro</span></a>
+                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle Despesas</span></a>
+                        <a href="veiculos_mobile.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-500"><i class="fa-solid fa-car text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Mobile</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-vendas" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-vendas')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial</span><i id="sub-vendas-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-vendas" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="solicitacao.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-blue-900/50 flex items-center justify-center shrink-0 border border-blue-800 text-blue-400"><i class="fa-solid fa-file-signature text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Solicitação CIJ</span></a>
+                        <a href="solicitacoes-lista.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-400"><i class="fa-solid fa-list-check text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Lista de Solicitações</span></a>
+                        <a href="simulador.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-calculator text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Simulador Financeiro</span></a>
+                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle de Despesas</span></a>
+                        <a href="veiculos_mobile.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-500"><i class="fa-solid fa-car text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Mobile</span></a>
+                        <a href="tabelas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-400"><i class="fa-solid fa-file-pdf text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Documentos Oficiais</span></a>
+                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
+                        <a href="estoque.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-cyan-900/50 flex items-center justify-center shrink-0 border border-cyan-800 text-cyan-400"><i class="fa-solid fa-boxes-stacked text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Estoque Equipamentos</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-admin" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-admin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-purple-400"></i> Administração</span><i id="sub-admin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-admin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="estoque.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-cyan-900/50 flex items-center justify-center shrink-0 border border-cyan-800 text-cyan-400"><i class="fa-solid fa-boxes-stacked text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Estoque Equipamentos</span></a>
+                        <a href="veiculos.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-car-tunnel text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Gerencial</span></a>
+                        <a href="vendas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-rose-900/50 flex items-center justify-center shrink-0 border border-rose-800 text-rose-400"><i class="fa-solid fa-cart-shopping text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Vendas (Saídas)</span></a>
+                        <a href="painel_administrativo.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-purple-900/50 flex items-center justify-center shrink-0 border border-purple-800 text-purple-400"><i class="fa-solid fa-shield-halved text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Painel Diretoria</span></a>
+                        <a href="usuarios.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center shrink-0 border border-slate-700 text-slate-200"><i class="fa-solid fa-users-gear text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Gerenciar Usuários</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-financeiro" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-fin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro</span><i id="sub-fin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-fin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle de Despesas</span></a>
+                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
+                        <a href="dashboard-equip.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-500"><i class="fa-solid fa-chart-pie text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Dashboard Gerencial</span></a>
+                        <a href="comissoes-consumiveis.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-400"><i class="fa-solid fa-file-invoice-dollar text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Com. Consumíveis</span></a>
+                    </div>
+                </div>
+
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Total de Vendas</p>
-                <h3 id="kpiTotalVendas" class="text-2xl font-black text-emerald-950 mt-1">0</h3>
-                <p class="text-xs font-medium text-emerald-500 mt-1">Registros de saídas</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Ticket Médio</p>
-                <h3 id="kpiTicketMedio" class="text-2xl font-black text-indigo-950 mt-1">R$ 0,00</h3>
-                <p class="text-xs font-medium text-indigo-600 mt-1">Por equipamento</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Equipamentos Entregues</p>
-                <h3 id="kpiEntregues" class="text-2xl font-black text-amber-900 mt-1">0</h3>
-                <p class="text-xs font-medium text-amber-600 mt-1">Concluídos</p>
+            <div class="p-4 border-t border-slate-800 bg-[#0b1120]">
+                <button onclick="fazerLogout()" class="w-full py-2.5 rounded-xl text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition flex items-center justify-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl border shadow-sm">
-            <div class="flex items-center justify-between mb-5 border-b border-slate-200 pb-3">
-                <h3 id="formTitleVenda" class="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-cart-shopping text-rose-600"></i> Registrar Venda / Saída de Equipamento
-                </h3>
-                <button type="button" id="btnCancelEditVenda" onclick="resetFormVenda()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
-                    Cancelar Edição
-                </button>
+        <!-- ÁREA CENTRAL (VENDAS / SAÍDAS) -->
+        <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)]">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3"><i class="fa-solid fa-cart-shopping text-rose-600"></i> Controle de Vendas (Saídas)</h2>
+                <p class="text-sm text-slate-500 mt-1">Registro oficial de faturamento e equipamentos entregues.</p>
             </div>
 
-            <form id="vendaForm" onsubmit="salvarVenda(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-rose-600">Faturamento Total</p>
+                    <h3 id="kpiTotalFaturamento" class="text-2xl font-black text-rose-950 mt-1">R$ 0,00</h3>
+                    <p class="text-[10px] font-medium text-slate-500 mt-1">Soma das vendas filtradas</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Total de Vendas</p>
+                    <h3 id="kpiTotalVendas" class="text-2xl font-black text-emerald-950 mt-1">0</h3>
+                    <p class="text-[10px] font-medium text-emerald-500 mt-1">Registros na base</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Ticket Médio</p>
+                    <h3 id="kpiTicketMedio" class="text-2xl font-black text-indigo-950 mt-1">R$ 0,00</h3>
+                    <p class="text-[10px] font-medium text-indigo-600 mt-1">Por equipamento vendido</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Equipamentos Entregues</p>
+                    <h3 id="kpiEntregues" class="text-2xl font-black text-amber-900 mt-1">0</h3>
+                    <p class="text-[10px] font-medium text-amber-600 mt-1">Status 'Faturado / Entregue'</p>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+                    <h3 id="formTitleVenda" class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-rose-600"></i> Registrar Venda / Saída de Equipamento
+                    </h3>
+                    <button type="button" id="btnCancelEditVenda" onclick="resetFormVenda()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
+                        Cancelar Edição
+                    </button>
+                </div>
+
+                <form id="vendaForm" onsubmit="salvarVenda(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
+                            <input type="text" id="v_cliente" required placeholder="Nome do Cliente / Empresa" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Modelo / Equipamento *</label>
+                            <select id="v_modelo" required onchange="verificarOutroModeloVendas(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-rose-600 transition">
+                                <option value="8820">8820 (CIJ)</option>
+                                <option value="8860">8860 (CIJ)</option>
+                                <option value="8910">8910 (CIJ)</option>
+                                <option value="T-110H">T-110H (TIJ)</option>
+                                <option value="UV 5W">UV 5W (Laser)</option>
+                                <option value="CO2 30W">CO2 30W (Laser)</option>
+                                <option value="FIBRA 30W">FIBRA 30W (Laser)</option>
+                                <option value="Outro">Outro (Digitar)</option>
+                            </select>
+                            <input type="text" id="v_modelo_outro" placeholder="Digite o modelo..." class="w-full mt-2 px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 hidden transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Nº de Série / Patrimônio *</label>
+                            <input type="text" id="v_serial" required placeholder="Ex: SN-998231" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Valor da Venda (R$) *</label>
+                            <input type="number" step="0.01" min="0" id="v_valor" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-rose-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Data da Saída *</label>
+                            <input type="date" id="v_data" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Vendedor / Responsável *</label>
+                            <input type="text" id="v_vendedor" required placeholder="Nome do vendedor" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Status da Entrega *</label>
+                            <select id="v_status" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-rose-600 transition">
+                                <option value="Faturado / Entregue">Faturado / Entregue</option>
+                                <option value="Em Trânsito">Em Trânsito</option>
+                                <option value="Aguardando Faturamento">Aguardando Faturamento</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Observações</label>
+                            <input type="text" id="v_obs" placeholder="Ex: NF-4091, Comodato..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 transition">
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-3">
+                        <button type="submit" id="btnSubmitVenda" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-save"></i> Salvar Venda
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- FILTROS E TABELA -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 mb-10">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-list text-rose-600"></i> Histórico de Vendas Registradas
+                    </h3>
+                    <button onclick="exportToExcelVendas()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i> Exportar
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
-                        <input type="text" id="v_cliente" required placeholder="Nome do Cliente / Empresa" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente</label>
+                        <input type="text" id="filter_v_cliente" oninput="renderTableVendas()" placeholder="Filtrar cliente..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Modelo / Equipamento *</label>
-                        <select id="v_modelo" required onchange="verificarOutroModeloVendas(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-rose-600">
-                            <option value="8820">8820 (CIJ)</option>
-                            <option value="8860">8860 (CIJ)</option>
-                            <option value="8910">8910 (CIJ)</option>
-                            <option value="T-110H">T-110H (TIJ)</option>
-                            <option value="UV 5W">UV 5W (Laser)</option>
-                            <option value="CO2 30W">CO2 30W (Laser)</option>
-                            <option value="FIBRA 30W">FIBRA 30W (Laser)</option>
-                            <option value="Outro">Outro (Digitar)</option>
-                        </select>
-                        <input type="text" id="v_modelo_outro" placeholder="Digite o modelo..." class="w-full mt-2 px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600 hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo</label>
+                        <input type="text" id="filter_v_modelo" oninput="renderTableVendas()" placeholder="Filtrar modelo..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nº de Série / Patrimônio *</label>
-                        <input type="text" id="v_serial" required placeholder="Ex: SN-998231" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº de Série</label>
+                        <input type="text" id="filter_v_serial" oninput="renderTableVendas()" placeholder="Filtrar serial..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Valor da Venda (R$) *</label>
-                        <input type="number" step="0.01" min="0" id="v_valor" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-rose-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Data da Saída *</label>
-                        <input type="date" id="v_data" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Vendedor / Responsável *</label>
-                        <input type="text" id="v_vendedor" required placeholder="Nome do vendedor" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Status da Entrega *</label>
-                        <select id="v_status" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-rose-600">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                        <select id="filter_v_status" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold outline-none focus:border-rose-600">
+                            <option value="">Todos</option>
                             <option value="Faturado / Entregue">Faturado / Entregue</option>
                             <option value="Em Trânsito">Em Trânsito</option>
                             <option value="Aguardando Faturamento">Aguardando Faturamento</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Observações</label>
-                        <input type="text" id="v_obs" placeholder="Ex: NF-4091, Comodato..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-rose-600">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                        <input type="date" id="filter_v_date_from" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                        <input type="date" id="filter_v_date_to" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-rose-600">
                     </div>
                 </div>
-                <div class="flex justify-end pt-3">
-                    <button type="submit" id="btnSubmitVenda" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2">
-                        <i class="fa-solid fa-save"></i> Salvar Venda
-                    </button>
-                </div>
-            </form>
-        </div>
 
-        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-filter text-rose-600"></i> Histórico de Vendas Registradas
-                </h3>
-                <button onclick="exportToExcelVendas()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-file-excel"></i> Exportar
-                </button>
+                <div class="overflow-x-auto rounded-t-xl border border-slate-200 border-b-0 custom-scrollbar">
+                    <table class="w-full text-left border-collapse min-w-[950px] text-xs">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold">
+                                <th class="p-3">Cliente</th>
+                                <th class="p-3">Modelo</th>
+                                <th class="p-3">Nº de Série</th>
+                                <th class="p-3 text-right">Valor (R$)</th>
+                                <th class="p-3">Data Saída</th>
+                                <th class="p-3">Vendedor</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3">Observações</th>
+                                <th class="p-3 text-center no-print">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyVendas" class="divide-y divide-slate-100 font-medium bg-white text-slate-700">
+                        </tbody>
+                        <tfoot id="tableFooterVendas" class="bg-slate-50 font-bold border-t border-slate-200 text-slate-900">
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- CONTROLES DE PAGINAÇÃO -->
+                <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-50 p-3 border border-slate-200 rounded-b-xl gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-500">Exibir:</span>
+                        <select id="selectRowsPerPage" onchange="changeRowsPerPage()" class="px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-rose-600 transition">
+                            <option value="10">10 linhas</option>
+                            <option value="25">25 linhas</option>
+                            <option value="50">50 linhas</option>
+                            <option value="all">Todas as linhas</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="btnPrevPage" onclick="changePage(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-300 hover:bg-slate-100 hover:text-rose-600 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-slate-600 transition text-slate-600 shadow-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span id="pageInfo" class="text-xs font-bold text-slate-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">Página 1 de 1</span>
+                        <button id="btnNextPage" onclick="changePage(1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-300 hover:bg-slate-100 hover:text-rose-600 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-slate-600 transition text-slate-600 shadow-sm"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
             </div>
+        </main>
+    </div>
 
-            <!-- FILTROS DE BUSCA (INCLUINDO PERÍODO/DATA) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente</label>
-                    <input type="text" id="filter_v_cliente" oninput="renderTableVendas()" placeholder="Filtrar cliente..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo</label>
-                    <input type="text" id="filter_v_modelo" oninput="renderTableVendas()" placeholder="Filtrar modelo..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº de Série</label>
-                    <input type="text" id="filter_v_serial" oninput="renderTableVendas()" placeholder="Filtrar serial..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-rose-600">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
-                    <select id="filter_v_status" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold outline-none focus:border-rose-600">
-                        <option value="">Todos</option>
-                        <option value="Faturado / Entregue">Faturado / Entregue</option>
-                        <option value="Em Trânsito">Em Trânsito</option>
-                        <option value="Aguardando Faturamento">Aguardando Faturamento</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
-                    <input type="date" id="filter_v_date_from" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-rose-600">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
-                    <input type="date" id="filter_v_date_to" onchange="renderTableVendas()" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-rose-600">
-                </div>
-            </div>
-
-            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[950px] text-xs">
-                    <thead>
-                        <tr class="bg-slate-900 text-white font-bold">
-                            <th class="p-3">Cliente</th>
-                            <th class="p-3">Modelo</th>
-                            <th class="p-3">Nº de Série</th>
-                            <th class="p-3 text-right">Valor (R$)</th>
-                            <th class="p-3">Data Saída</th>
-                            <th class="p-3">Vendedor</th>
-                            <th class="p-3 text-center">Status</th>
-                            <th class="p-3">Observações</th>
-                            <th class="p-3 text-center no-print">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBodyVendas" class="divide-y divide-slate-200 font-medium bg-white">
-                    </tbody>
-                    <tfoot id="tableFooterVendas" class="bg-slate-50/80 font-bold border-t border-slate-300 text-slate-900">
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-[9999] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
         <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
         <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
     </div>
 
+    <!-- SCRIPTS DE UI E MENUS -->
+    <script>
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if(sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        };
+
+        window.toggleMobSubmenu = function(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        };
+
+        window.mostrarNotificacao = (msg, isError = false) => {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3500);
+        };
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
@@ -233,18 +467,36 @@
         const appId = 'plataforma-cij';
         const vendasCol = collection(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas');
 
-        window.listaVendas = JSON.parse(localStorage.getItem('banco_vendas_registradas_cij') || '[]');
+        window.listaVendas = [];
         window.isUserAdminOrFinance = false;
-        window.currentUser = null;
 
-        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
-
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             const loginScreen = document.getElementById('login-screen');
             if(user) {
-                const cleanEmail = user.email.toLowerCase().trim();
+                const cleanEmail = (user.email || '').toLowerCase().trim();
+                let isAdmin = false;
+                const masterAdmins = ['adm@grupocij.com', 'marcos@grupocij.com', 'faturamento@grupocij.com'];
+                if(masterAdmins.includes(cleanEmail)) isAdmin = true;
+                
+                let isTecnico = false;
+                let isVendedor = false;
+                let nomeUsuario = cleanEmail.split('@')[0].toUpperCase();
+
+                try {
+                    const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes'));
+                    const usuarios = [];
+                    snap.forEach(d => usuarios.push(d.data()));
+                    const dbUser = usuarios.find(u => u.email.toLowerCase() === cleanEmail);
+                    if (dbUser) {
+                        nomeUsuario = dbUser.nome || nomeUsuario;
+                        if(dbUser.perfil === 'Admin' || dbUser.perfil === 'Financeiro' || dbUser.perfil === 'Administrador') isAdmin = true;
+                        if(dbUser.perfil === 'Técnico') isTecnico = true;
+                        if(dbUser.perfil === 'Vendedor') isVendedor = true;
+                    }
+                } catch (e) {}
+
                 window.currentUser = user;
-                window.isUserAdminOrFinance = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+                window.isUserAdminOrFinance = isAdmin || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
                 
                 if (!window.isUserAdminOrFinance) {
                     loginScreen.classList.remove('hidden');
@@ -255,16 +507,14 @@
                 }
 
                 loginScreen.classList.add('hidden');
-                const badge = document.getElementById('user-role-badge');
-                if(badge) {
-                    badge.innerText = 'Admin / Financeiro';
-                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800';
+                
+                if(typeof window.verificarPermissoesUsuario === 'function') {
+                    window.verificarPermissoesUsuario(isAdmin, isTecnico, isVendedor, nomeUsuario);
                 }
 
                 onSnapshot(vendasCol, (snap) => {
                     window.listaVendas = [];
                     snap.forEach(d => window.listaVendas.push(d.data()));
-                    localStorage.setItem('banco_vendas_registradas_cij', JSON.stringify(window.listaVendas));
                     window.renderTableVendas();
                 });
             } else {
@@ -274,11 +524,8 @@
 
         window.handleLogin = async (e) => {
             e.preventDefault();
-            try {
-                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
-            } catch (err) {
-                alert("Erro no login: " + err.message);
-            }
+            try { await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value); } 
+            catch (err) { alert("Erro no login: " + err.message); }
         };
 
         window.fazerLogout = () => signOut(auth);
@@ -289,23 +536,42 @@
         window.excluirVendaNuvem = async (id) => {
             try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas', id)); } catch(e){}
         };
+
+        // LÓGICA DE INTERFACE DOS MENUS (INJETADA)
+        window.verificarPermissoesUsuario = function(isAdmin, isTecnico, isVendedor, nomeUsuario) {
+            const badgeTop = document.getElementById('user-role-badge-top');
+            const txt = (isAdmin ? 'Admin / Financeiro' : (isTecnico ? 'Técnico' : (isVendedor ? 'Vendedor' : 'Acesso Restrito')));
+            if(badgeTop) badgeTop.innerText = txt + ' • ' + nomeUsuario;
+            
+            const showTecnica = isAdmin || isTecnico;
+            const showVendas = isAdmin || isVendedor;
+            const showAdmin = isAdmin;
+            const showFin = isAdmin;
+
+            document.getElementById('top-nav-tecnica')?.classList.toggle('hidden', !showTecnica);
+            document.getElementById('top-nav-vendas')?.classList.toggle('hidden', !showVendas);
+            document.getElementById('top-nav-admin')?.classList.toggle('hidden', !showAdmin);
+            document.getElementById('top-nav-financeiro')?.classList.toggle('hidden', !showFin);
+
+            document.getElementById('mob-tecnica')?.classList.toggle('hidden', !showTecnica);
+            document.getElementById('mob-vendas')?.classList.toggle('hidden', !showVendas);
+            document.getElementById('mob-admin')?.classList.toggle('hidden', !showAdmin);
+            document.getElementById('mob-financeiro')?.classList.toggle('hidden', !showFin);
+        };
     </script>
 
+    <!-- LÓGICA DO MÓDULO E PAGINAÇÃO -->
     <script>
         let venda_editingIndex = null;
+        
+        // VARIÁVEIS DE PAGINAÇÃO
+        window.currentPage = 1;
+        window.rowsPerPage = 10;
 
         window.safeGetVal = (id) => document.getElementById(id)?.value || '';
         window.safeSetVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
         window.safeSetText = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
         window.formatarMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
-        window.mostrarNotificacao = (msg, isError = false) => {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = msg;
-            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
-            t.classList.remove('hidden');
-            setTimeout(() => t.classList.add('hidden'), 3500);
-        };
 
         window.verificarOutroModeloVendas = function(selectEl) {
             const inputOutro = document.getElementById('v_modelo_outro');
@@ -328,7 +594,7 @@
             const dateFrom = safeGetVal('filter_v_date_from');
             const dateTo = safeGetVal('filter_v_date_to');
 
-            return window.listaVendas.filter(item => {
+            let filtradas = window.listaVendas.filter(item => {
                 if (cliente && !item.cliente.toLowerCase().includes(cliente)) return false;
                 if (modelo && !item.modelo.toLowerCase().includes(modelo)) return false;
                 if (serial && !item.serial.toLowerCase().includes(serial)) return false;
@@ -337,6 +603,22 @@
                 if (dateTo && item.data > dateTo) return false;
                 return true;
             });
+
+            // Ordenar da mais nova para a mais antiga
+            filtradas.sort((a, b) => new Date(b.data || 0) - new Date(a.data || 0));
+            return filtradas;
+        };
+
+        window.changeRowsPerPage = function() {
+            const val = document.getElementById('selectRowsPerPage').value;
+            window.rowsPerPage = val === 'all' ? 999999 : parseInt(val);
+            window.currentPage = 1;
+            window.renderTableVendas();
+        };
+
+        window.changePage = function(dir) {
+            window.currentPage += dir;
+            window.renderTableVendas();
         };
 
         window.renderTableVendas = function() {
@@ -349,14 +631,27 @@
             let totalVendasCount = filtered.length;
             let entreguesCount = 0;
 
-            if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-500 font-medium">Nenhuma venda registrada com os filtros selecionados.</td></tr>`;
-            } else {
-                filtered.forEach((item) => {
-                    const valor = parseFloat(item.valor) || 0;
-                    totalFaturamento += valor;
-                    if (item.status === 'Faturado / Entregue') entreguesCount++;
+            // Calcula KPIs com base em TODAS as linhas filtradas (não apenas na página atual)
+            filtered.forEach(item => {
+                const valor = parseFloat(item.valor) || 0;
+                totalFaturamento += valor;
+                if (item.status === 'Faturado / Entregue') entreguesCount++;
+            });
 
+            // Aplica Lógica de Paginação
+            const totalPages = Math.ceil(totalVendasCount / window.rowsPerPage);
+            if (window.currentPage > totalPages) window.currentPage = totalPages || 1;
+            if (window.currentPage < 1) window.currentPage = 1;
+
+            const startIndex = (window.currentPage - 1) * window.rowsPerPage;
+            const endIndex = startIndex + window.rowsPerPage;
+            const paginatedData = filtered.slice(startIndex, endIndex);
+
+            if(paginatedData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 font-medium">Nenhuma venda encontrada na base de dados.</td></tr>`;
+            } else {
+                paginatedData.forEach((item) => {
+                    const valor = parseFloat(item.valor) || 0;
                     const dateFormatted = item.data ? item.data.split('-').reverse().join('/') : '-';
                     const statusClass = item.status === 'Faturado / Entregue' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                                         item.status === 'Em Trânsito' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-blue-100 text-blue-800 border-blue-300';
@@ -364,7 +659,7 @@
                     let statusBadge = `<span class="px-2.5 py-1 rounded-md text-[10px] font-bold border ${statusClass}">${item.status}</span>`;
 
                     tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition border-b border-slate-200">
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
                             <td class="p-3 font-bold text-slate-900">${item.cliente}</td>
                             <td class="p-3 font-bold text-rose-900">${item.modelo}</td>
                             <td class="p-3 font-mono text-slate-700">${item.serial}</td>
@@ -388,17 +683,27 @@
             if(tfoot) {
                 tfoot.innerHTML = `
                     <tr>
-                        <td colspan="3" class="p-3 text-right uppercase tracking-wider text-xs">Totais do Filtro:</td>
-                        <td class="p-3 text-right font-black text-rose-900">${formatarMoeda(totalFaturamento)}</td>
-                        <td colspan="5" class="p-3 text-xs text-slate-500 font-medium">(${totalVendasCount} venda(s) registrada(s))</td>
+                        <td colspan="3" class="p-3 text-right uppercase tracking-wider text-[10px] text-slate-500">Totalizadores:</td>
+                        <td class="p-3 text-right font-black text-rose-900 text-sm">${formatarMoeda(totalFaturamento)}</td>
+                        <td colspan="5" class="p-3 text-[11px] text-slate-500 font-medium">(${totalVendasCount} venda(s) no total)</td>
                     </tr>
                 `;
             }
 
+            // Atualiza KPIs do topo
             safeSetText('kpiTotalFaturamento', formatarMoeda(totalFaturamento));
             safeSetText('kpiTotalVendas', totalVendasCount);
             safeSetText('kpiTicketMedio', formatarMoeda(ticketMedio));
             safeSetText('kpiEntregues', entreguesCount);
+
+            // Atualiza Interface da Paginação
+            const pageInfo = document.getElementById('pageInfo');
+            const btnPrev = document.getElementById('btnPrevPage');
+            const btnNext = document.getElementById('btnNextPage');
+            
+            if (pageInfo) pageInfo.innerText = `Página ${window.currentPage} de ${totalPages || 1}`;
+            if (btnPrev) btnPrev.disabled = window.currentPage === 1;
+            if (btnNext) btnNext.disabled = window.currentPage === totalPages || totalPages === 0;
         };
 
         window.salvarVenda = function(e) {
@@ -429,7 +734,6 @@
                 window.listaVendas.push(vendaData);
             }
 
-            localStorage.setItem('banco_vendas_registradas_cij', JSON.stringify(window.listaVendas));
             if (typeof window.salvarVendaNuvem === 'function') window.salvarVendaNuvem(vendaData);
 
             window.resetFormVenda();
@@ -489,7 +793,6 @@
             }
             if(confirm('Deseja remover este registro de venda?')) {
                 window.listaVendas = window.listaVendas.filter(i => i.id !== id);
-                localStorage.setItem('banco_vendas_registradas_cij', JSON.stringify(window.listaVendas));
                 if (typeof window.excluirVendaNuvem === 'function') window.excluirVendaNuvem(id);
                 window.renderTableVendas();
                 window.mostrarNotificacao('Registro removido.');
@@ -535,7 +838,7 @@
                 totalVal += i.valor;
             });
 
-            const tRow = ws.addRow({ cliente: 'TOTAL', valor: totalVal });
+            const tRow = ws.addRow({ cliente: 'TOTAL GERAL:', valor: totalVal });
             tRow.font = { bold: true };
             tRow.getCell('valor').numFmt = '"R$" #,##0.00';
 
@@ -545,7 +848,8 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('v_data').valueAsDate = new Date();
+            const dateInput = document.getElementById('v_data');
+            if(dateInput) dateInput.valueAsDate = new Date();
         });
     </script>
 </body>
