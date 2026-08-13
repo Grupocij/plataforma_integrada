@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Portal Grupo CIJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ExcelJS and FileSaver for exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .admin-header { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
+        @keyframes blink-animation {
+            0% { opacity: 1; background-color: #f59e0b; }
+            50% { opacity: 0.6; background-color: #d97706; }
+            100% { opacity: 1; background-color: #f59e0b; }
+        }
+        .blinking-alert {
+            animation: blink-animation 1s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12 flex flex-col">
+
+    <!-- ALERTA PISCANTE DE NOVA INFORMAÇÃO -->
+    <div id="new-data-alert" class="hidden fixed top-0 inset-x-0 z-50 text-slate-950 px-4 py-3 font-extrabold text-xs flex items-center justify-between shadow-2xl blinking-alert border-b-2 border-amber-300">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-bell text-base animate-bounce"></i>
+            <span id="alert-text">ATENÇÃO: Nova informação cadastrada no sistema por um usuário!</span>
+        </div>
+        <button onclick="acknowledgeNewData()" class="px-3 py-1 bg-slate-950 text-white rounded-lg text-xs font-bold shadow hover:bg-slate-900 transition">
+            OK / Ciente
+        </button>
+    </div>
+
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-purple-900/50 text-center space-y-6">
+            <h1 class="text-2xl font-black text-purple-400">PAINEL ADMINISTRATIVO</h1>
+            <p id="login-message" class="text-xs text-slate-400">Acesso restrito a Administradores e Financeiro...</p>
+            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl text-xs">
+                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-white rounded-xl text-xs">
+                <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <header class="admin-header text-white p-4 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-purple-300 bg-purple-950 px-2.5 py-0.5 rounded border border-purple-800">Painel Administrativo Global</span>
+                <span id="user-role-badge" class="text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+            </div>
+            <nav class="flex gap-4 items-center">
+                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
+                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+        
+        <!-- KPI METRICS SUMMARY -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-purple-600">Total Vendas</p>
+                <h3 id="kpiTotalVendas" class="text-xl font-black text-purple-950 mt-1">R$ 0,00</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Saídas registradas</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-sky-600">Total Despesas</p>
+                <h3 id="kpiTotalDespesas" class="text-xl font-black text-sky-950 mt-1">R$ 0,00</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Lançamentos de viagens</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">Comissões Azul</p>
+                <h3 id="kpiTotalComissoes" class="text-xl font-black text-indigo-950 mt-1">R$ 0,00</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Total comissionado</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-cyan-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-cyan-700">Equip. em Estoque</p>
+                <h3 id="kpiTotalEstoque" class="text-xl font-black text-cyan-950 mt-1">0</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Itens cadastrados</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Solicitações CIJ</p>
+                <h3 id="kpiTotalSolicitacoes" class="text-xl font-black text-emerald-950 mt-1">0</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Propostas e pedidos</p>
+            </div>
+        </div>
+
+        <!-- BARRA DE FILTROS POR DATA E ABAS -->
+        <div class="bg-white p-4 rounded-2xl border shadow-sm space-y-3">
+            <div class="flex flex-wrap gap-4 items-center justify-between border-b pb-3">
+                <div class="flex flex-wrap gap-2 items-center">
+                    <button onclick="mudarAba('despesas')" id="tab-btn-despesas" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-purple-600 text-white shadow-sm">Despesas por Relatório</button>
+                    <button onclick="mudarAba('vendas')" id="tab-btn-vendas" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">Vendas (Saídas)</button>
+                    <button onclick="mudarAba('comissoes')" id="tab-btn-comissoes" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">Comissões Azul</button>
+                    <button onclick="mudarAba('estoque')" id="tab-btn-estoque" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">Estoque</button>
+                    <button onclick="mudarAba('solicitacoes')" id="tab-btn-solicitacoes" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">Solicitações CIJ</button>
+                </div>
+                <button onclick="exportarDadosGlobaisExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Tudo (.xlsx)
+                </button>
+            </div>
+
+            <!-- FILTROS DE DATA -->
+            <div class="flex flex-wrap gap-3 items-center pt-1 text-xs">
+                <span class="font-bold text-slate-600"><i class="fa-solid fa-filter text-purple-600 mr-1"></i> Filtrar por Período:</span>
+                <div class="flex items-center gap-1.5">
+                    <label class="text-slate-500 font-semibold">De:</label>
+                    <input type="date" id="filter-date-from" onchange="renderAdminDashboard()" class="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-purple-600 font-medium">
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <label class="text-slate-500 font-semibold">Até:</label>
+                    <input type="date" id="filter-date-to" onchange="renderAdminDashboard()" class="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-purple-600 font-medium">
+                </div>
+                <button onclick="limparFiltrosData()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-4">
+            
+            <!-- TAB 1: DESPESAS -->
+            <div id="tab-content-despesas" class="space-y-4">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-purple-600"></i> Relatórios de Despesas Enviados
+                    </h3>
+                    <span id="count-despesas" class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">0 registros</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[850px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold">
+                                <th class="p-3">Relatório / Técnico</th>
+                                <th class="p-3">Cliente / Cidade</th>
+                                <th class="p-3">Qtd Itens</th>
+                                <th class="p-3">Data</th>
+                                <th class="p-3 text-right">Total (R$)</th>
+                                <th class="p-3">Autor (E-mail)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyDespesas" class="divide-y divide-slate-200 font-medium bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: VENDAS -->
+            <div id="tab-content-vendas" class="space-y-4 hidden">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-shopping text-purple-600"></i> Vendas e Saídas Registradas
+                    </h3>
+                    <span id="count-vendas" class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">0 registros</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[850px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold">
+                                <th class="p-3">Cliente</th>
+                                <th class="p-3">Modelo</th>
+                                <th class="p-3">Nº de Série</th>
+                                <th class="p-3 text-right">Valor (R$)</th>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Vendedor</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyVendas" class="divide-y divide-slate-200 font-medium bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: COMISSÕES AZUL COM PREVISÃO DE PAGAMENTO -->
+            <div id="tab-content-comissoes" class="space-y-4 hidden">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-purple-600"></i> Comissões Azul Cadastradas
+                    </h3>
+                    <span id="count-comissoes" class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">0 registros</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[950px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold">
+                                <th class="p-3">Vendedor</th>
+                                <th class="p-3">NF</th>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Cliente</th>
+                                <th class="p-3 text-right">Valor Venda</th>
+                                <th class="p-3 text-right">Comissão (R$)</th>
+                                <th class="p-3">Previsão de Pagamento</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyComissoes" class="divide-y divide-slate-200 font-medium bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4: ESTOQUE -->
+            <div id="tab-content-estoque" class="space-y-4 hidden">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-purple-600"></i> Equipamentos em Estoque
+                    </h3>
+                    <span id="count-estoque" class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">0 registros</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[850px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold">
+                                <th class="p-3">Modelo</th>
+                                <th class="p-3">Nº de Série</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3">Localização</th>
+                                <th class="p-3">Reservado Por</th>
+                                <th class="p-3">Data Entrada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyEstoque" class="divide-y divide-slate-200 font-medium bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 5: SOLICITAÇÕES -->
+            <div id="tab-content-solicitacoes" class="space-y-4 hidden">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-file-signature text-purple-600"></i> Solicitações CIJ Enviadas
+                    </h3>
+                    <span id="count-solicitacoes" class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">0 registros</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[850px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold">
+                                <th class="p-3">Nº Solicitação</th>
+                                <th class="p-3">Cliente</th>
+                                <th class="p-3">Pedido</th>
+                                <th class="p-3">Vendedor</th>
+                                <th class="p-3">Valor Total</th>
+                                <th class="p-3">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodySolicitacoes" class="divide-y divide-slate-200 font-medium bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'plataforma-cij';
+
+        const EMAILS_ADMIN_FINANCEIRO = ['adm@grupocij.com', 'faturamento@grupocij.com', 'marcos@grupocij.com', 'comercial@grupocij.com', 'suporte@grupocij.com'];
+
+        window.adminData = {
+            despesas: [],
+            vendas: [],
+            comissoes: [],
+            estoque: [],
+            solicitacoes: []
+        };
+
+        let initialLoadDone = {
+            despesas: false,
+            vendas: false,
+            comissoes: false,
+            estoque: false,
+            solicitacoes: false
+        };
+
+        function triggerNewDataAlert(sourceName) {
+            const alertBanner = document.getElementById('new-data-alert');
+            const alertText = document.getElementById('alert-text');
+            if(alertBanner && alertText) {
+                alertText.innerText = `ATENÇÃO: Nova informação cadastrada ou atualizada em [${sourceName}]!`;
+                alertBanner.classList.remove('hidden');
+            }
+        }
+
+        window.acknowledgeNewData = function() {
+            const alertBanner = document.getElementById('new-data-alert');
+            if(alertBanner) {
+                alertBanner.classList.add('hidden');
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                const cleanEmail = user.email.toLowerCase().trim();
+                const isAdmin = EMAILS_ADMIN_FINANCEIRO.includes(cleanEmail) || cleanEmail.includes('admin') || cleanEmail.includes('financeiro');
+
+                if (!isAdmin) {
+                    loginScreen.classList.remove('hidden');
+                    document.getElementById('login-message').innerHTML = '<span class="text-red-400 font-bold">Acesso Restrito: Apenas Administradores e Financeiro podem acessar este painel.</span>';
+                    document.getElementById('auth-form').classList.add('hidden');
+                    signOut(auth);
+                    return;
+                }
+
+                loginScreen.classList.add('hidden');
+                document.getElementById('user-role-badge').innerText = 'Admin / Financeiro';
+
+                // Real-time listeners for all 5 collections with change detection
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'despesas_relatorio_novo'), (snap) => {
+                    window.adminData.despesas = [];
+                    snap.forEach(d => window.adminData.despesas.push(d.data()));
+                    if (!initialLoadDone.despesas) {
+                        initialLoadDone.despesas = true;
+                    } else {
+                        triggerNewDataAlert('Despesas');
+                    }
+                    renderAdminDashboard();
+                });
+
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'vendas_registradas'), (snap) => {
+                    window.adminData.vendas = [];
+                    snap.forEach(d => window.adminData.vendas.push(d.data()));
+                    if (!initialLoadDone.vendas) {
+                        initialLoadDone.vendas = true;
+                    } else {
+                        triggerNewDataAlert('Vendas');
+                    }
+                    renderAdminDashboard();
+                });
+
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul'), (snap) => {
+                    window.adminData.comissoes = [];
+                    snap.forEach(d => window.adminData.comissoes.push(d.data()));
+                    if (!initialLoadDone.comissoes) {
+                        initialLoadDone.comissoes = true;
+                    } else {
+                        triggerNewDataAlert('Comissões Azul');
+                    }
+                    renderAdminDashboard();
+                });
+
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'estoque_equipamentos'), (snap) => {
+                    window.adminData.estoque = [];
+                    snap.forEach(d => window.adminData.estoque.push(d.data()));
+                    if (!initialLoadDone.estoque) {
+                        initialLoadDone.estoque = true;
+                    } else {
+                        triggerNewDataAlert('Estoque');
+                    }
+                    renderAdminDashboard();
+                });
+
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (snap) => {
+                    window.adminData.solicitacoes = [];
+                    snap.forEach(d => window.adminData.solicitacoes.push(d.data()));
+                    if (!initialLoadDone.solicitacoes) {
+                        initialLoadDone.solicitacoes = true;
+                    } else {
+                        triggerNewDataAlert('Solicitações CIJ');
+                    }
+                    renderAdminDashboard();
+                });
+
+            } else {
+                loginScreen.classList.remove('hidden');
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+    </script>
+
+    <script>
+        window.formatarMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        window.mudarAba = function(aba) {
+            ['despesas', 'vendas', 'comissoes', 'estoque', 'solicitacoes'].forEach(a => {
+                document.getElementById(`tab-content-${a}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${a}`).className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200";
+            });
+            document.getElementById(`tab-content-${aba}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${aba}`).className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-purple-600 text-white shadow-sm";
+        };
+
+        window.limparFiltrosData = function() {
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            renderAdminDashboard();
+        };
+
+        function getNextPaymentDateAdmin(saleDateStr) {
+            if (!saleDateStr) return '-';
+            const parts = saleDateStr.split('-');
+            if (parts.length !== 3) return '-';
+
+            let year = parseInt(parts[0], 10);
+            let month = parseInt(parts[1], 10) - 1;
+            let day = parseInt(parts[2], 10);
+
+            if (day < 15) { day = 15; } 
+            else if (day < 30) { day = 30; } 
+            else { day = 15; month++; if (month > 11) { month = 0; year++; } }
+
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            if (day > lastDay) day = lastDay;
+
+            return `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+        }
+
+        window.renderAdminDashboard = function() {
+            const dateFrom = document.getElementById('filter-date-from').value;
+            const dateTo = document.getElementById('filter-date-to').value;
+
+            // Filtrar dados por data se aplicável
+            const filtrarPorData = (itemDate) => {
+                if (!itemDate) return true;
+                if (dateFrom && itemDate < dateFrom) return false;
+                if (dateTo && itemDate > dateTo) return false;
+                return true;
+            };
+
+            const despesasFilt = window.adminData.despesas.filter(i => filtrarPorData(i.data_pagamento));
+            const vendasFilt = window.adminData.vendas.filter(i => filtrarPorData(i.data));
+            const comissoesFilt = window.adminData.comissoes.filter(i => filtrarPorData(i.date));
+            const estoqueFilt = window.adminData.estoque.filter(i => filtrarPorData(i.data));
+            const solicitacoesFilt = window.adminData.solicitacoes.filter(i => {
+                if (!i.data_registro) return true;
+                const dStr = new Date(i.data_registro).toISOString().slice(0, 10);
+                return filtrarPorData(dStr);
+            });
+
+            // KPIs
+            let totalVendasVal = vendasFilt.reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
+            
+            let despesasGrupos = {};
+            despesasFilt.forEach(item => {
+                const key = item.num_relatorio || 'REL-1001';
+                if (!despesasGrupos[key]) despesasGrupos[key] = 0;
+                despesasGrupos[key] += parseFloat(item.valor) || 0;
+            });
+            let totalDespesasVal = Object.values(despesasGrupos).reduce((a, b) => a + b, 0);
+
+            let totalComissoesVal = comissoesFilt.reduce((acc, i) => acc + (parseFloat(i.commissionValue) || 0), 0);
+            let totalEstoqueCount = estoqueFilt.length;
+            let totalSolicitacoesCount = solicitacoesFilt.length;
+
+            document.getElementById('kpiTotalVendas').innerText = window.formatarMoeda(totalVendasVal);
+            document.getElementById('kpiTotalDespesas').innerText = window.formatarMoeda(totalDespesasVal);
+            document.getElementById('kpiTotalComissoes').innerText = window.formatarMoeda(totalComissoesVal);
+            document.getElementById('kpiTotalEstoque').innerText = totalEstoqueCount;
+            document.getElementById('kpiTotalSolicitacoes').innerText = totalSolicitacoesCount;
+
+            // RENDER TAB 1: DESPESAS AGRUPADAS
+            const tbDespesas = document.getElementById('tableBodyDespesas');
+            tbDespesas.innerHTML = '';
+            document.getElementById('count-despesas').innerText = `${Object.keys(despesasGrupos).length} relatório(s)`;
+
+            let gruposObj = {};
+            despesasFilt.forEach(item => {
+                const key = item.num_relatorio || 'REL-1001';
+                if(!gruposObj[key]) {
+                    gruposObj[key] = { num: key, tecnico: item.tecnico, cliente: item.cliente, cidade: item.cidade, data: item.data_pagamento, total: 0, count: 0, autor: item.autor || '-' };
+                }
+                gruposObj[key].total += parseFloat(item.valor) || 0;
+                gruposObj[key].count++;
+            });
+
+            Object.values(gruposObj).forEach(g => {
+                tbDespesas.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="p-3"><span class="px-2 py-0.5 bg-purple-100 text-purple-900 rounded font-bold">${g.num}</span> <span class="font-bold text-slate-800 ml-1">${g.tecnico}</span></td>
+                        <td class="p-3 text-slate-700">${g.cliente} (${g.cidade})</td>
+                        <td class="p-3 text-slate-600">${g.count} item(s)</td>
+                        <td class="p-3 text-slate-600">${g.data ? g.data.split('-').reverse().join('/') : '-'}</td>
+                        <td class="p-3 text-right font-black text-purple-900">${window.formatarMoeda(g.total)}</td>
+                        <td class="p-3 text-slate-500 text-[11px]">${g.autor}</td>
+                    </tr>
+                `;
+            });
+
+            // RENDER TAB 2: VENDAS
+            const tbVendas = document.getElementById('tableBodyVendas');
+            tbVendas.innerHTML = '';
+            document.getElementById('count-vendas').innerText = `${vendasFilt.length} registro(s)`;
+            vendasFilt.forEach(i => {
+                tbVendas.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="p-3 font-bold text-slate-900">${i.cliente}</td>
+                        <td class="p-3 font-bold text-rose-900">${i.modelo}</td>
+                        <td class="p-3 font-mono text-slate-700">${i.serial}</td>
+                        <td class="p-3 text-right font-black text-rose-700">${window.formatarMoeda(i.valor)}</td>
+                        <td class="p-3 text-slate-600">${i.data ? i.data.split('-').reverse().join('/') : '-'}</td>
+                        <td class="p-3 text-slate-700">${i.vendedor}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 border">${i.status}</span></td>
+                    </tr>
+                `;
+            });
+
+            // RENDER TAB 3: COMISSÕES AZUL COM PREVISÃO DE PAGAMENTO
+            const tbComissoes = document.getElementById('tableBodyComissoes');
+            tbComissoes.innerHTML = '';
+            document.getElementById('count-comissoes').innerText = `${comissoesFilt.length} registro(s)`;
+            comissoesFilt.forEach(i => {
+                const previsaoPagto = getNextPaymentDateAdmin(i.date);
+                tbComissoes.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="p-3 font-bold text-slate-900">${i.sellerName}</td>
+                        <td class="p-3 font-bold text-blue-900">${i.nf}</td>
+                        <td class="p-3 text-slate-600">${i.date ? i.date.split('-').reverse().join('/') : '-'}</td>
+                        <td class="p-3 text-slate-800">${i.client}</td>
+                        <td class="p-3 text-right font-bold">${window.formatarMoeda(i.saleValue)}</td>
+                        <td class="p-3 text-right font-black text-blue-700">${window.formatarMoeda(i.commissionValue)}</td>
+                        <td class="p-3 font-semibold text-emerald-800"><i class="fa-regular fa-calendar-days mr-1 text-emerald-600"></i>${previsaoPagto}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${i.status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${i.status || 'Pendente'}</span></td>
+                    </tr>
+                `;
+            });
+
+            // RENDER TAB 4: ESTOQUE
+            const tbEstoque = document.getElementById('tableBodyEstoque');
+            tbEstoque.innerHTML = '';
+            document.getElementById('count-estoque').innerText = `${estoqueFilt.length} registro(s)`;
+            estoqueFilt.forEach(i => {
+                tbEstoque.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="p-3 font-bold text-slate-900">${i.modelo}</td>
+                        <td class="p-3 font-mono text-cyan-900 font-bold">${i.serial}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 border">${i.status}</span></td>
+                        <td class="p-3 text-slate-700">${i.local}</td>
+                        <td class="p-3 text-slate-500">${i.reservadoPor || '-'}</td>
+                        <td class="p-3 text-slate-600">${i.data ? i.data.split('-').reverse().join('/') : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // RENDER TAB 5: SOLICITAÇÕES
+            const tbSolicitacoes = document.getElementById('tableBodySolicitacoes');
+            tbSolicitacoes.innerHTML = '';
+            document.getElementById('count-solicitacoes').innerText = `${solicitacoesFilt.length} registro(s)`;
+            solicitacoesFilt.forEach(i => {
+                tbSolicitacoes.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="p-3 font-bold text-purple-900">${i.numero_solicitacao || '-'}</td>
+                        <td class="p-3 font-bold text-slate-900">${i.cliente?.razao_social || '-'}</td>
+                        <td class="p-3 text-slate-700">${i.comercial?.pedido || '-'}</td>
+                        <td class="p-3 text-slate-700">${i.comercial?.vendedor || '-'}</td>
+                        <td class="p-3 font-bold text-emerald-700">${i.totais?.valor_geral || '-'}</td>
+                        <td class="p-3 text-slate-600">${i.data_registro ? new Date(i.data_registro).toLocaleDateString('pt-BR') : '-'}</td>
+                    </tr>
+                `;
+            });
+        };
+
+        window.exportarDadosGlobaisExcel = async function() {
+            if (typeof ExcelJS === 'undefined') { alert('Carregando ExcelJS...'); return; }
+            const wb = new ExcelJS.Workbook();
+            
+            // Sheet 1: Vendas
+            const wsVendas = wb.addWorksheet('Vendas');
+            wsVendas.columns = [{header: 'Cliente', key: 'cliente', width: 25}, {header: 'Modelo', key: 'modelo', width: 20}, {header: 'Serial', key: 'serial', width: 15}, {header: 'Valor', key: 'valor', width: 15}, {header: 'Data', key: 'data', width: 12}, {header: 'Vendedor', key: 'vendedor', width: 20}, {header: 'Status', key: 'status', width: 15}];
+            window.adminData.vendas.forEach(i => wsVendas.addRow(i));
+
+            // Sheet 2: Comissões
+            const wsComissoes = wb.addWorksheet('Comissões Azul');
+            wsComissoes.columns = [{header: 'Vendedor', key: 'sellerName', width: 20}, {header: 'NF', key: 'nf', width: 10}, {header: 'Cliente', key: 'client', width: 25}, {header: 'Valor Venda', key: 'saleValue', width: 15}, {header: 'Comissão', key: 'commissionValue', width: 15}, {header: 'Status', key: 'status', width: 12}];
+            window.adminData.comissoes.forEach(i => wsComissoes.addRow(i));
+
+            // Sheet 3: Estoque
+            const wsEstoque = wb.addWorksheet('Estoque');
+            wsEstoque.columns = [{header: 'Modelo', key: 'modelo', width: 20}, {header: 'Serial', key: 'serial', width: 15}, {header: 'Status', key: 'status', width: 15}, {header: 'Local', key: 'local', width: 20}, {header: 'Reservado Por', key: 'reservadoPor', width: 25}];
+            window.adminData.estoque.forEach(i => wsEstoque.addRow(i));
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Relatorio_Global_Administrativo_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        };
+    </script>
+</body>
+</html>
