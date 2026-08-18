@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking de Vendas - Portal Grupo CIJ</title>
+    
+    <!-- CONECTANDO O MANIFEST (PWA) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0f172a/ffffff.png?text=CIJ">
+    
+    <!-- Tailwind CSS & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
+        .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+        
+        /* Efeito Mega Menu */
+        .mega-menu { transition: all 0.2s ease-in-out; transform-origin: top; }
+        .group:hover .mega-menu { opacity: 1; visibility: visible; transform: scale(1); }
+
+        /* Pódio Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50">
+
+    <!-- TELA DE LOGIN / BLOQUEIO -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <div class="flex flex-col items-center justify-center gap-2">
+                <svg class="w-16 h-16" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#002D72"/>
+                    <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#0077C8" fill-opacity="0.8"/>
+                    <path d="M50 30 L65 45 L50 60 L35 45 Z" fill="#64B5F6"/>
+                </svg>
+                <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">PORTAL GRUPO CIJ</h1>
+                <p id="login-message" class="text-xs font-semibold text-slate-500">Autenticando acesso ao módulo...</p>
+            </div>
+            <form id="auth-form" class="space-y-4 text-left" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail Corporativo</label>
+                    <input type="email" id="auth-email" required placeholder="seu.nome@grupocij.com.br" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-600 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Senha</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-600">
+                </div>
+                <button type="submit" class="w-full py-3 bg-[#002d72] hover:bg-blue-900 text-white font-extrabold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO SUPERIOR FIXO Z-9990 -->
+    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-[9990] h-16 shrink-0 w-full no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex items-center justify-between h-full gap-4">
+                
+                <!-- LOGO -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 hidden sm:flex">
+                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
+                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">PORTAL CIJ</span>
+                            <span id="user-role-badge-top" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENU SUPERIOR DESKTOP -->
+                <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center h-full">
+                    
+                    <div id="top-nav-tecnica" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-wrench text-teal-400"></i> Técnica <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Módulos Operacionais</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Andamento de instalações</p></div></a>
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Viagens e refeições</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-vendas" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[38rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Área de Vendas & Comercial</span></div>
+                            <div class="p-2 grid grid-cols-3 gap-1 text-slate-800">
+                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Acompanhamento vendas</p></div></a>
+                                <a href="ranking.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-trophy"></i></div><div><h4 class="text-xs font-bold text-slate-900">Ranking Vendas</h4><p class="text-[10px] text-slate-500 mt-0.5">Desempenho da Equipe</p></div></a>
+                                <a href="solicitacao.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-signature"></i></div><div><h4 class="text-xs font-bold text-slate-900">Solicitação CIJ</h4><p class="text-[10px] text-slate-500 mt-0.5">Especificação técnica</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-admin" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-shield-halved text-purple-400"></i> Admin <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[32rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrativo & Operações</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="painel_administrativo.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-shield-halved"></i></div><div><h4 class="text-xs font-bold text-slate-900">Painel Diretoria</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de comissões</p></div></a>
+                                <a href="ranking.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-trophy"></i></div><div><h4 class="text-xs font-bold text-slate-900">Ranking Vendas</h4><p class="text-[10px] text-slate-500 mt-0.5">Desempenho da Equipe</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-financeiro" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 right-0 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Gestão Financeira & Resultados</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Liquidação de vendas</p></div></a>
+                                <a href="ranking.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-trophy"></i></div><div><h4 class="text-xs font-bold text-slate-900">Ranking Vendas</h4><p class="text-[10px] text-slate-500 mt-0.5">Desempenho da Equipe</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                </nav>
+
+                <!-- BOTÕES DIREITA -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="index.html" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition items-center gap-1.5"><i class="fa-solid fa-house"></i> Home</a>
+                    <button onclick="fazerLogout()" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+                    <!-- BOTÃO HAMBURGUER (MOBILE) -->
+                    <button onclick="toggleMobileMenu()" class="lg:hidden text-slate-300 hover:text-white text-xl p-1 px-2 border border-slate-700 rounded-lg bg-slate-800">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 relative w-full h-full">
+        
+        <!-- MENU LATERAL (OVERLAY APENAS MOBILE) -->
+        <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/60 z-[105] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm lg:hidden"></div>
+        <div id="mobile-sidebar" class="fixed inset-y-0 right-0 w-[280px] bg-[#0f172a] shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 border-l border-slate-700 flex flex-col lg:hidden">
+            <div class="p-5 flex justify-between items-center border-b border-slate-800 bg-[#0b1120]"><span class="font-bold text-white text-sm uppercase tracking-wider">Módulos do Sistema</span><button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white text-2xl"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                
+                <div id="mob-vendas" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-vendas')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial</span><i id="sub-vendas-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-vendas" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
+                        <a href="ranking.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-500"><i class="fa-solid fa-trophy text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Ranking Vendas</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-admin" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-admin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-purple-400"></i> Administração</span><i id="sub-admin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-admin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="painel_administrativo.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-purple-900/50 flex items-center justify-center shrink-0 border border-purple-800 text-purple-400"><i class="fa-solid fa-shield-halved text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Painel Diretoria</span></a>
+                        <a href="ranking.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-500"><i class="fa-solid fa-trophy text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Ranking Vendas</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-financeiro" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-fin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro</span><i id="sub-fin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-fin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
+                        <a href="ranking.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-500"><i class="fa-solid fa-trophy text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Ranking Vendas</span></a>
+                    </div>
+                </div>
+
+            </div>
+            <div class="p-4 border-t border-slate-800 bg-[#0b1120]">
+                <button onclick="fazerLogout()" class="w-full py-2.5 rounded-xl text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition flex items-center justify-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
+            </div>
+        </div>
+
+        <!-- ÁREA CENTRAL DE CONTEÚDO -->
+        <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)]">
+
+            <!-- TÍTULO DO MÓDULO -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-5 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
+                    <i class="fa-solid fa-trophy text-[12rem]"></i>
+                </div>
+                <div class="flex items-center space-x-3.5 relative z-10">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-amber-500/30">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Ranking de Vendas</h2>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">Classificação e desempenho de vendas por itens e vendedores.</p>
+                    </div>
+                </div>
+                
+                <div class="relative z-10 flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1.5 shadow-inner w-full sm:w-auto">
+                        <label class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Item Vendido:</label>
+                        <select id="ranking_filterItemType" onchange="window.renderRanking()" class="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-amber-500 cursor-pointer shadow-sm w-full sm:w-auto">
+                            <option value="">Todos os Itens</option>
+                            <option value="Maquina">Maquina</option>
+                            <option value="Consumíveis">Consumíveis</option>
+                            <option value="Locação">Locação</option>
+                            <option value="Alternativo">Alternativo</option>
+                            <option value="Corpo de Prova">Corpo de Prova</option>
+                            <option value="Certificação">Certificação</option>
+                            <option value="Contrato">Contrato</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1.5 shadow-inner w-full sm:w-auto">
+                        <label class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mês Ref:</label>
+                        <input type="month" id="ranking_filterMonth" onchange="window.renderRanking()" class="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-amber-500 cursor-pointer shadow-sm w-full sm:w-auto">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PÓDIOS (TOP 1) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- Pódio Volume -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner animate-float">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Campeão em Volume</h4>
+                    <h3 id="podium_vol_name" class="text-xl font-black text-slate-900 truncate w-full px-2">-</h3>
+                    <div class="mt-3 inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold border border-blue-200">
+                        <span id="podium_vol_val">0</span> Itens
+                    </div>
+                </div>
+
+                <!-- Pódio Faturamento -->
+                <div class="bg-gradient-to-b from-amber-50 to-white rounded-3xl p-6 shadow-md border border-amber-200 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 scale-105 z-10">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+                    <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-4xl mb-3 shadow-inner shadow-amber-500/20 animate-float">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">Campeão Faturamento</h4>
+                    <h3 id="podium_fat_name" class="text-2xl font-black text-slate-900 truncate w-full px-2">-</h3>
+                    <div class="mt-3 inline-block px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-xl text-base font-black shadow-md">
+                        <span id="podium_fat_val">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Pódio Negociação -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                    <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner animate-float">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Melhor Negociador</h4>
+                    <h3 id="podium_neg_name" class="text-xl font-black text-slate-900 truncate w-full px-2">-</h3>
+                    <p class="text-[10px] text-slate-500 mb-2 leading-tight">Maior % média retida</p>
+                    <div class="mt-auto inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-bold border border-emerald-200">
+                        Média de <span id="podium_neg_val">0%</span> comissão
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELA DE CLASSIFICAÇÃO GERAL -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ol text-slate-500"></i> Classificação Geral
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
+                    <table class="w-full text-left text-xs border-collapse min-w-[800px]">
+                        <thead>
+                            <tr class="bg-slate-900 text-white font-bold border-b border-slate-800">
+                                <th class="p-3.5 text-center w-16">Pos</th>
+                                <th class="p-3.5">Vendedor</th>
+                                <th class="p-3.5 text-center">Qtd. Itens</th>
+                                <th class="p-3.5 text-right">Faturamento Total</th>
+                                <th class="p-3.5 text-center text-emerald-300">Comissão Média %</th>
+                                <th class="p-3.5">Itens / Modelos Vendidos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyRanking" class="divide-y divide-slate-200 bg-white text-slate-700">
+                            <!-- Gerado JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center text-xs text-slate-400 font-medium pb-8">
+                * O "Melhor Negociador" é determinado pela maior média de percentual de comissão, o que indica que o vendedor concedeu menos descontos em relação ao preço de tabela base (no caso de máquinas).
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SCRIPT DE INSTALAÇÃO DO SERVICE WORKER (OFFLINE) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erro PWA:', err));
+            });
+        }
+    </script>
+
+    <!-- SCRIPTS DE UI E MENUS -->
+    <script>
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if(sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        };
+    </script>
+
+    <!-- FIREBASE SETUP & LÓGICA DE AUTENTICAÇÃO -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
+            authDomain: "plataforma-cij.firebaseapp.com",
+            projectId: "plataforma-cij",
+            storageBucket: "plataforma-cij.firebasestorage.app",
+            messagingSenderId: "949985395100",
+            appId: "1:949985395100:web:cf881e0c91c63175228859"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        const appId = 'plataforma-cij';
+        const comissoesAzulCol = collection(db, 'artifacts', appId, 'public', 'data', 'comissoes_azul');
+
+        window.listaComissoesAzul = JSON.parse(localStorage.getItem('banco_comissoes_azul_cij') || '[]');
+        window.currentUser = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if(user) {
+                const cleanEmail = user.email.toLowerCase().trim();
+                const masterAdmins = ['adm@grupocij.com', 'marcos@grupocij.com'];
+                let isAdmin = masterAdmins.includes(cleanEmail);
+                let isTecnico = false;
+                let isVendedor = false;
+                let nomeUsuario = cleanEmail.split('@')[0].toUpperCase();
+
+                try {
+                    const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes'));
+                    const usuarios = [];
+                    snap.forEach(d => usuarios.push(d.data()));
+                    const dbUser = usuarios.find(u => u.email.toLowerCase() === cleanEmail);
+                    
+                    if (dbUser) {
+                        nomeUsuario = dbUser.nome || nomeUsuario;
+                        if(dbUser.perfil === 'Admin' || dbUser.perfil === 'Financeiro' || dbUser.perfil === 'Administrador') isAdmin = true;
+                        if(dbUser.perfil === 'Técnico') isTecnico = true;
+                        if(dbUser.perfil === 'Vendedor') isVendedor = true;
+                    }
+                } catch (e) { console.error("Erro ao buscar permissões:", e); }
+
+                // BLOQUEIO PARA TÉCNICOS
+                if (isTecnico) {
+                    loginScreen.classList.remove('hidden');
+                    document.getElementById('login-message').innerHTML = '<span class="text-red-600 font-bold">Acesso Restrito: Técnicos não possuem permissão para este módulo.</span>';
+                    document.getElementById('auth-form').classList.add('hidden');
+                    signOut(auth);
+                    return;
+                }
+
+                loginScreen.classList.add('hidden');
+                window.currentUser = user;
+                
+                if(typeof window.verificarPermissoesUsuario === 'function') {
+                    window.verificarPermissoesUsuario(isAdmin, isTecnico, isVendedor, nomeUsuario);
+                }
+
+                onSnapshot(comissoesAzulCol, (snap) => {
+                    let loaded = [];
+                    snap.forEach(d => loaded.push(d.data()));
+                    
+                    if (loaded.length > 0) {
+                        window.listaComissoesAzul = loaded;
+                        localStorage.setItem('banco_comissoes_azul_cij', JSON.stringify(window.listaComissoesAzul));
+                    }
+                    if (typeof window.renderRanking === 'function') window.renderRanking();
+                });
+            } else {
+                loginScreen.classList.remove('hidden');
+                document.getElementById('auth-form').classList.remove('hidden');
+                document.getElementById('login-message').innerText = 'Faça login para continuar';
+            }
+        });
+
+        window.handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
+            } catch (err) {
+                alert("Erro no login: " + err.message);
+            }
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        window.verificarPermissoesUsuario = function(isAdmin, isTecnico, isVendedor, nomeUsuario) {
+            const badgeTop = document.getElementById('user-role-badge-top');
+            const txt = (isAdmin ? 'Admin / Financeiro' : (isVendedor ? 'Vendedor' : 'Acesso Restrito'));
+            if(badgeTop) badgeTop.innerText = txt + ' • ' + nomeUsuario;
+            
+            const showTecnica = isAdmin || isTecnico;
+            const showVendas = isAdmin || isVendedor;
+            const showAdmin = isAdmin;
+            const showFin = isAdmin || cleanEmail.includes('financeiro');
+
+            document.getElementById('top-nav-tecnica')?.classList.toggle('hidden', !showTecnica);
+            document.getElementById('top-nav-vendas')?.classList.toggle('hidden', !showVendas);
+            document.getElementById('top-nav-admin')?.classList.toggle('hidden', !showAdmin);
+            document.getElementById('top-nav-financeiro')?.classList.toggle('hidden', !showFin);
+        };
+    </script>
+
+    <!-- LÓGICA DO MÓDULO RANKING -->
+    <script>
+        window.formatarMoeda = (val) => {
+            if (val === undefined || val === null || val === '') return '';
+            let numero = val;
+            if (typeof val === 'string') numero = parseFloat(val.replace(',', '.'));
+            if (isNaN(numero)) return '';
+            return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
+
+        window.renderRanking = function() {
+            const monthFilter = document.getElementById('ranking_filterMonth').value;
+            const itemFilter = document.getElementById('ranking_filterItemType').value;
+            
+            // 1. Inicia com TODAS as vendas do Comissões Azul
+            let sales = window.listaComissoesAzul;
+            
+            // Filtro de Mês de Venda
+            if (monthFilter) {
+                sales = sales.filter(s => s.date && s.date.startsWith(monthFilter));
+            }
+
+            // Filtro de Item Vendido
+            if (itemFilter) {
+                sales = sales.filter(s => s.itemType === itemFilter);
+            }
+
+            // 2. Agrupa por Vendedor
+            const sellersObj = {};
+            sales.forEach(s => {
+                const seller = s.sellerName ? s.sellerName.trim() : 'Desconhecido';
+                if (!sellersObj[seller]) {
+                    sellersObj[seller] = {
+                        name: seller,
+                        qtd: 0,
+                        val: 0,
+                        commSum: 0,
+                        models: []
+                    };
+                }
+                sellersObj[seller].qtd += 1;
+                sellersObj[seller].val += parseFloat(s.saleValue) || 0;
+                sellersObj[seller].commSum += parseFloat(s.commissionPercent) || 0;
+                
+                let modelLabel = s.itemType;
+                if (s.itemType === 'Maquina' && s.machineModel) {
+                    modelLabel = `${s.machineCategory} - ${s.machineModel}`;
+                }
+                sellersObj[seller].models.push(modelLabel);
+            });
+
+            // 3. Formata Array e Calcula Média
+            const rankingArray = Object.values(sellersObj).map(s => {
+                s.avgComm = s.qtd > 0 ? (s.commSum / s.qtd) : 0;
+                
+                // Contar modelos repetidos
+                const mCounts = {};
+                s.models.forEach(m => { mCounts[m] = (mCounts[m] || 0) + 1; });
+                s.modelText = Object.entries(mCounts).map(([m, c]) => `<span class="bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap inline-block mr-1 mb-1">${c}x ${m}</span>`).join('');
+                
+                return s;
+            });
+
+            // 4. Determina os Vencedores (Se houver vendas)
+            let winnerQtd = { name: '-', qtd: 0 };
+            let winnerVal = { name: '-', val: 0 };
+            let winnerNeg = { name: '-', avgComm: 0 };
+
+            if (rankingArray.length > 0) {
+                winnerQtd = [...rankingArray].sort((a,b) => b.qtd - a.qtd)[0];
+                winnerVal = [...rankingArray].sort((a,b) => b.val - a.val)[0];
+                // Melhor negociador: maior percentual médio
+                winnerNeg = [...rankingArray].sort((a,b) => b.avgComm - a.avgComm)[0];
+            }
+
+            // Atualiza Pódios
+            document.getElementById('podium_vol_name').innerText = winnerQtd.name;
+            document.getElementById('podium_vol_val').innerText = winnerQtd.qtd;
+
+            document.getElementById('podium_fat_name').innerText = winnerVal.name;
+            document.getElementById('podium_fat_val').innerText = formatarMoeda(winnerVal.val);
+
+            document.getElementById('podium_neg_name').innerText = winnerNeg.name;
+            document.getElementById('podium_neg_val').innerText = winnerNeg.avgComm.toFixed(1).replace('.', ',') + '%';
+
+            // 5. Preenche a Tabela (Ordenada por Faturamento por Padrão)
+            rankingArray.sort((a,b) => b.val - a.val);
+            
+            const tbody = document.getElementById('tableBodyRanking');
+            if (rankingArray.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 font-medium">Nenhum item vendido no período ou filtro selecionado.</td></tr>`;
+            } else {
+                tbody.innerHTML = rankingArray.map((s, index) => {
+                    let posBadge = `<span class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 font-bold mx-auto text-[10px]">${index + 1}º</span>`;
+                    if (index === 0) posBadge = `<span class="w-7 h-7 flex items-center justify-center rounded-full bg-amber-100 text-amber-600 font-black mx-auto text-xs shadow-sm ring-1 ring-amber-300"><i class="fa-solid fa-trophy"></i></span>`;
+                    else if (index === 1) posBadge = `<span class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 font-black mx-auto text-[10px] shadow-sm">2º</span>`;
+                    else if (index === 2) posBadge = `<span class="w-6 h-6 flex items-center justify-center rounded-full bg-orange-100 text-orange-700 font-black mx-auto text-[10px] shadow-sm">3º</span>`;
+
+                    return `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100 group">
+                            <td class="p-3.5">${posBadge}</td>
+                            <td class="p-3.5 font-bold text-slate-900">${s.name}</td>
+                            <td class="p-3.5 text-center font-bold text-blue-700">${s.qtd}</td>
+                            <td class="p-3.5 text-right font-black text-slate-800">${formatarMoeda(s.val)}</td>
+                            <td class="p-3.5 text-center font-bold text-emerald-700">${s.avgComm.toFixed(1).replace('.', ',')}%</td>
+                            <td class="p-3.5 w-[35%]"><div class="flex flex-wrap gap-1">${s.modelText}</div></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        };
+
+        window.onload = function() {
+            const d = new Date();
+            const curMonthStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
+            if(document.getElementById('ranking_filterMonth')) {
+                document.getElementById('ranking_filterMonth').value = curMonthStr;
+            }
+            window.renderRanking();
+        };
+    </script>
+</body>
+</html>
