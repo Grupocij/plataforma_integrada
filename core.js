@@ -750,7 +750,7 @@ onAuthStateChanged(auth, async (user) => {
         window.userVisaoGlobal = userHasGlobalView(dbUser, currentAccessModule);
 
         // Acesso explícito por módulo para todo usuário não-Master.
-        if (!isMaster && currentAccessModule !== 'index.html') {
+        if (!isMaster && currentAccessModule !== 'index.html' && currentAccessModule !== 'home_personalizada.html') {
             if (!userHasModuleAccess(dbUser, currentAccessModule)) {
                 alert("Acesso Negado: Você não tem permissão para acessar este módulo.");
                 window.location.href = 'index.html';
