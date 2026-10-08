@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="pt-BR"><head><title>Clientes - Portal CIJ</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="erp-cadastros-v4-3.css?v=20261002-central1">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head>
+<body data-erp-page="clientes">
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto erp-scroll">
+<div class="max-w-[1500px] mx-auto p-2 md:p-3 space-y-2.5"><nav class="erp-card p-1.5 erp-nav">
+<a href="central_cadastros.html" data-page="dashboard"><i class="fa-solid fa-grid-2"></i> Visão geral</a>
+<a href="cadastros_clientes.html" data-page="clientes"><i class="fa-solid fa-building"></i> Clientes</a>
+<a href="cadastros_modelos.html" data-page="modelos"><i class="fa-solid fa-microchip"></i> Modelos</a>
+<a href="cadastros_consumiveis.html" data-page="consumiveis"><i class="fa-solid fa-droplet"></i> Consumíveis</a>
+<a href="parque_maquinas.html" data-page="parque"><i class="fa-solid fa-industry"></i> Parque de Máquinas</a>
+</nav>
+<script>document.addEventListener('DOMContentLoaded',()=>{const p=document.body.dataset.erpPage||'',k=p==='cliente-ficha'?'clientes':p==='parque-ficha'?'parque':p;document.querySelector(`[data-page="${k}"]`)?.classList.add('active')});</script><div class="erp-card erp-page-head p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><span class="erp-pill bg-blue-50 text-blue-700">CLIENTES</span><h1 class="erp-page-title mt-2">Cadastro de Clientes</h1><p class="erp-muted mt-1">Base oficial do Portal CIJ.</p></div><div class="flex flex-wrap gap-2"><span class="erp-pill erp-anti-dup"><i class="fa-solid fa-shield-halved"></i> Anti-duplicidade ativa</span><button class="erp-btn erp-btn-light" onclick="window.abrirRevisaoDuplicados()"><i class="fa-solid fa-code-merge"></i> Revisar duplicados</button><button class="erp-btn erp-btn-light" onclick="window.abrirImportacaoClientes()"><i class="fa-solid fa-file-import"></i> Importar em massa</button><button class="erp-btn erp-btn-primary" onclick="window.abrirCliente()"><i class="fa-solid fa-plus"></i> Novo cliente</button></div></div>
+<div class="erp-card erp-filterbar p-2 grid lg:grid-cols-[1fr_190px] gap-3"><input id="busca" class="erp-input" oninput="window.renderClientes()" placeholder="Buscar nome, CNPJ, cidade ou contato..."><select id="situacao" class="erp-input" onchange="window.renderClientes()"><option value="">Todos</option><option value="ATIVO">Ativos</option><option value="INATIVO">Inativos</option></select></div>
+<div class="erp-card overflow-hidden"><div class="overflow-auto erp-scroll max-h-[61vh]"><table class="erp-table w-full min-w-[1100px]"><thead><tr><th>Cliente</th><th>CNPJ</th><th>Localização</th><th>Contato principal</th><th>Máquinas</th><th>OS abertas</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="tb-clientes"></tbody></table></div><div id="pager-clientes" class="erp-pager"></div></div><div id="modal-cliente" class="erp-modal hidden"><div class="erp-modal-card"><form onsubmit="window.salvarCliente(event)">
+<div class="p-5 border-b flex justify-between"><div><span class="erp-pill bg-blue-50 text-blue-700">CLIENTE</span><h2 id="cliente-titulo" class="text-xl font-black mt-2">Novo cliente</h2></div><button type="button" class="erp-btn erp-btn-light !w-10 !px-0" onclick="window.erpClose('modal-cliente')"><i class="fa-solid fa-xmark"></i></button></div>
+<div class="p-5 space-y-4"><input id="cli-id" type="hidden">
+<div class="grid md:grid-cols-2 gap-4"><label><span class="erp-label">Razão social *</span><input id="cli-razao" class="erp-input" required></label><label><span class="erp-label">Nome fantasia</span><input id="cli-fantasia" class="erp-input"></label></div>
+<div class="grid md:grid-cols-4 gap-4"><label><span class="erp-label">CNPJ</span><input id="cli-cnpj" class="erp-input" required></label><label class="md:col-span-2"><span class="erp-label">E-mail</span><input id="cli-email" type="email" class="erp-input"></label><label><span class="erp-label">Situação</span><select id="cli-ativo" class="erp-input"><option value="true">ATIVO</option><option value="false">INATIVO</option></select></label></div>
+<div class="grid md:grid-cols-4 gap-4"><label><span class="erp-label">CEP</span><input id="cli-cep" class="erp-input"></label><label class="md:col-span-2"><span class="erp-label">Logradouro</span><input id="cli-logradouro" class="erp-input"></label><label><span class="erp-label">Número</span><input id="cli-numero" class="erp-input"></label></div>
+<div class="grid md:grid-cols-4 gap-4"><label><span class="erp-label">Complemento</span><input id="cli-complemento" class="erp-input"></label><label><span class="erp-label">Bairro</span><input id="cli-bairro" class="erp-input"></label><label><span class="erp-label">Cidade *</span><input id="cli-cidade" class="erp-input" required></label><label><span class="erp-label">UF *</span><input id="cli-uf" maxlength="2" class="erp-input uppercase" required></label></div>
+<div class="erp-card p-4 bg-slate-50"><div class="flex justify-between items-center"><div><h3 class="erp-section-title">Contatos</h3><p class="erp-muted">Contato principal para WhatsApp e comunicação</p></div><button type="button" class="erp-btn erp-btn-light" onclick="window.adicionarContato()"><i class="fa-solid fa-plus"></i> Contato</button></div><div id="contatos" class="mt-3 space-y-2"></div></div>
+<label><span class="erp-label">Observações gerais</span><textarea id="cli-obs" class="erp-input min-h-28" placeholder="Informações relevantes sobre o cliente..."></textarea></label></div>
+<div class="p-5 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="erp-btn erp-btn-light" onclick="window.erpClose('modal-cliente')">Cancelar</button><button class="erp-btn erp-btn-primary">Salvar cliente</button></div></form></div></div></div></main>
+<script type="module" src="core.js?v=20261002-central1"></script>
+<script src="erp-cadastros-v4-3-2.js?v=20261002-central1"></script>
+
+<div id="modal-import-clientes" class="erp-modal hidden"><div class="erp-modal-card max-w-4xl">
+  <div class="p-5 border-b flex justify-between gap-3"><div><span class="erp-pill bg-emerald-50 text-emerald-700">IMPORTAÇÃO EM MASSA</span><h2 class="text-xl font-black mt-2">Importar clientes</h2><p class="erp-muted mt-1">Analisa CNPJ e também Razão Social/Nome Fantasia normalizados antes de gravar.</p></div><button type="button" class="erp-btn erp-btn-light !w-10 !px-0" onclick="window.erpClose('modal-import-clientes')"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="p-5 space-y-4">
+    <div class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900"><b>Importante:</b> a importação é destinada a empresas. Linhas cujo documento tenha <b>11 dígitos (CPF)</b> são identificadas e <b>ignoradas automaticamente</b>, sem bloquear o restante da importação. Clientes com CNPJ já existente ou com nome empresarial compatível são atualizados em vez de duplicados. Se houver mesmo nome com CNPJs diferentes, o sistema exige revisão manual.</div>
+    <div class="flex flex-wrap gap-2"><button type="button" class="erp-btn erp-btn-light" onclick="window.baixarModeloImportacaoClientes()"><i class="fa-solid fa-file-excel text-emerald-700"></i> Baixar modelo da planilha</button></div>
+    <label><span class="erp-label">Planilha preenchida</span><input id="import-client-file" type="file" accept=".xlsx,.xls" class="erp-input !h-auto" onchange="window.processarImportacaoClientes(this.files[0])"></label>
+    <div id="import-client-summary" class="rounded-xl bg-slate-50 border p-3 text-xs text-slate-600">Selecione a planilha modelo preenchida.</div>
+    <div id="import-client-preview" class="erp-import-grid rounded-xl border bg-white px-3"></div>
+  </div>
+  <div class="p-5 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="erp-btn erp-btn-light" onclick="window.erpClose('modal-import-clientes')">Cancelar</button><button id="btn-confirm-client-import" disabled class="erp-btn erp-btn-primary" onclick="window.confirmarImportacaoClientes()"><i class="fa-solid fa-upload"></i> Importar / atualizar clientes</button></div>
+</div></div>
+
+
+<div id="modal-duplicados-clientes" class="erp-modal hidden"><div class="erp-modal-card max-w-4xl">
+  <div class="p-5 border-b flex justify-between gap-3">
+    <div><span class="erp-pill bg-purple-50 text-purple-700">CONSOLIDAÇÃO SEGURA</span><h2 class="text-xl font-black mt-2">Revisar clientes duplicados</h2><p class="erp-muted mt-1">Compara CNPJ e também nomes normalizados, inclusive cadastros antigos sem CNPJ.</p></div>
+    <button type="button" class="erp-btn erp-btn-light !w-10 !px-0" onclick="window.erpClose('modal-duplicados-clientes')"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="p-5 space-y-4">
+    <div class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900"><b>Regra segura:</b> o sistema só consolida automaticamente registros com o mesmo CNPJ ou o mesmo nome quando o grupo possui no máximo um CNPJ válido. Se existirem CNPJs diferentes, apenas sinaliza para revisão.</div>
+    <div id="dup-summary" class="rounded-xl bg-slate-50 border p-3 text-xs text-slate-700"></div>
+    <div id="dup-list" class="space-y-2 max-h-[52vh] overflow-auto"></div>
+  </div>
+  <div class="p-5 border-t bg-slate-50 flex justify-end gap-2">
+    <button type="button" class="erp-btn erp-btn-light" onclick="window.erpClose('modal-duplicados-clientes')">Fechar</button>
+    <button id="btn-consolidar-duplicados" class="erp-btn erp-btn-primary" onclick="window.consolidarDuplicadosSeguros()"><i class="fa-solid fa-code-merge"></i> Consolidar grupos seguros</button>
+  </div>
+</div></div>
+
+</body></html>

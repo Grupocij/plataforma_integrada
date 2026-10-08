@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Hospedagens Corporativas</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet JS & CSS (Mapa Interativo) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Configurações do Tailwind e Estilos Base -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .fade-enter { animation: fadeIn 0.2s ease-out forwards; }
+        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .slide-up-centered { animation: slideUpCentered 0.3s ease-out forwards; }
+        @keyframes slideUpCentered {
+            from { opacity: 0; transform: translate(-50%, calc(-50% + 20px)) scale(0.95); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .toggle-checkbox:checked { right: 0; border-color: #2563eb; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #2563eb; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Ajustes do Leaflet para design corporativo */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .leaflet-popup-content {
+            margin: 0;
+            line-height: 1.4;
+        }
+        .leaflet-container {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden selection:bg-brand-100 selection:text-brand-900">
+
+    <!-- TELA DE LOGIN (Injetada pelo Core ou Local) -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Sincronizando Hotéis Corporativos...</p>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (Exibido após Login) -->
+    <div id="main-content" class="flex-1 flex overflow-hidden w-full hidden">
+        
+        <!-- MENU LATERAL (Desktop) -->
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col h-full shrink-0 shadow-xl z-20">
+            <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+                <div class="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center shadow-inner">
+                    <i class="ph ph-buildings text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base leading-tight tracking-wide">Hospedagens</h1>
+                    <p class="text-xs text-brand-200 font-medium tracking-wider uppercase">Corporativo</p>
+                </div>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="Navigation.goTo('list')" id="nav-btn-list" class="w-full flex items-center gap-3 px-4 py-3 bg-brand-600 text-white rounded-lg transition-all font-medium text-sm shadow-md">
+                    <i class="ph ph-list-dashes text-lg"></i>
+                    <span>Consultar Hotéis</span>
+                </button>
+                <button onclick="Navigation.goTo('map')" id="nav-btn-map" class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all font-medium text-sm">
+                    <i class="ph ph-map-pin-line text-lg text-amber-400"></i>
+                    <span>Mapa de Hotéis</span>
+                </button>
+                <button onclick="Navigation.goTo('form')" id="nav-btn-form" class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all font-medium text-sm">
+                    <i class="ph ph-plus-circle text-lg"></i>
+                    <span>Cadastrar Hotel</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <div class="flex-1 flex flex-col h-full relative overflow-hidden">
+            
+            <!-- HEADER MOBILE CORRIGIDO (div em vez de header) -->
+            <div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center shadow-md z-20">
+                <div class="flex items-center gap-2">
+                    <i class="ph ph-buildings text-xl text-brand-400"></i>
+                    <h1 class="font-bold text-sm">Hospedagens Corporativas</h1>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="Navigation.goTo('list')" class="p-2 bg-slate-800 rounded-lg text-slate-200 active:scale-95 transition-transform" title="Lista"><i class="ph ph-list-dashes text-lg"></i></button>
+                    <button onclick="Navigation.goTo('map')" class="p-2 bg-slate-800 rounded-lg text-amber-400 active:scale-95 transition-transform" title="Mapa"><i class="ph ph-map-pin-line text-lg"></i></button>
+                    <button onclick="Navigation.goTo('form')" class="p-2 bg-brand-600 rounded-lg text-white active:scale-95 transition-transform" title="Cadastrar"><i class="ph ph-plus text-lg"></i></button>
+                </div>
+            </div>
+
+            <!-- CONTEÚDO ROLÁVEL -->
+            <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-8 w-full">
+                <div class="max-w-7xl mx-auto h-full">
+
+                    <!-- TELA 1: LISTAGEM E CONSULTA -->
+                    <section id="view-list" class="fade-enter space-y-6 block">
+                        
+                        <!-- Cabeçalho e Filtros Simplificados -->
+                        <div class="flex flex-col gap-5 bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-2">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-slate-800">Consulta de Hotéis</h2>
+                                    <p class="text-slate-500 text-sm mt-1">Gerencie a rede de hospedagens e solicite cotações rapidamente.</p>
+                                </div>
+                                <button onclick="Navigation.goTo('map')" class="px-4 py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm">
+                                    <i class="ph ph-map-trifold text-lg"></i>
+                                    <span>Ver no Mapa Interativo</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Filtros -->
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-2">
+                                <!-- 🔍 Buscar hotel pelo nome -->
+                                <div class="md:col-span-4 relative group">
+                                    <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-brand-500 transition-colors"></i>
+                                    <input type="text" id="filter-name" oninput="Filters.apply()" placeholder="Buscar hotel pelo nome..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm transition-all shadow-inner">
+                                </div>
+
+                                <!-- 📍 Localização (cidade ou estado) -->
+                                <div class="md:col-span-4 relative group">
+                                    <i class="ph ph-map-pin absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-brand-500 transition-colors"></i>
+                                    <input type="text" id="filter-location" oninput="Filters.apply()" placeholder="Localização (cidade, estado ou UF)..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm transition-all shadow-inner">
+                                </div>
+
+                                <!-- ↕️ Ordenar por -->
+                                <div class="md:col-span-3 relative group">
+                                    <i class="ph ph-arrows-down-up absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-brand-500 transition-colors"></i>
+                                    <select id="filter-sort" onchange="Sorting.changeFromSelect()" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm transition-all shadow-inner cursor-pointer appearance-none">
+                                        <option value="name_asc">Ordenar: Nome (A-Z)</option>
+                                        <option value="name_desc">Ordenar: Nome (Z-A)</option>
+                                        <option value="city_asc">Ordenar: Localização (A-Z)</option>
+                                        <option value="price_asc">Ordenar: Menor Preço</option>
+                                        <option value="price_desc">Ordenar: Maior Preço</option>
+                                    </select>
+                                </div>
+
+                                <!-- Limpar busca -->
+                                <div class="md:col-span-1 flex items-center justify-end">
+                                    <button onclick="Filters.resetAll()" class="w-full h-full px-2 py-2.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-800 rounded-lg transition-colors flex items-center justify-center gap-1 border border-slate-200">
+                                        <i class="ph ph-eraser text-base"></i> <span class="md:hidden lg:inline">Limpar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabela de Dados -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[800px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                                            <th class="p-4 cursor-pointer hover:bg-slate-100 transition-colors group" onclick="Sorting.toggle('name')">
+                                                <div class="flex items-center gap-2">Hotel <i id="sort-icon-name" class="ph ph-arrows-down-up text-slate-300 group-hover:text-brand-500"></i></div>
+                                            </th>
+                                            <th class="p-4 cursor-pointer hover:bg-slate-100 transition-colors group" onclick="Sorting.toggle('city')">
+                                                <div class="flex items-center gap-2">Localização <i id="sort-icon-city" class="ph ph-arrows-down-up text-slate-300 group-hover:text-brand-500"></i></div>
+                                            </th>
+                                            <th class="p-4">Contato</th>
+                                            <th class="p-4 cursor-pointer hover:bg-slate-100 transition-colors group" onclick="Sorting.toggle('price')">
+                                                <div class="flex items-center gap-2">Diária / Pagto <i id="sort-icon-price" class="ph ph-arrows-down-up text-slate-300 group-hover:text-brand-500"></i></div>
+                                            </th>
+                                            <th class="p-4 text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-body" class="divide-y divide-slate-100 text-sm">
+                                        <!-- Renderizado via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Estado Vazio -->
+                            <div id="empty-state" class="hidden p-16 text-center flex-col items-center justify-center bg-white">
+                                <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4 mx-auto">
+                                    <i class="ph ph-folder-open text-3xl"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-slate-700 mb-1">Nenhum hotel encontrado</h3>
+                                <p class="text-slate-500 text-sm mb-6">Tente alterar os termos da busca ou limpar os filtros aplicados.</p>
+                                <button onclick="Filters.resetAll()" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition font-medium text-sm inline-flex items-center gap-2">
+                                    Limpar Filtros
+                                </button>
+                            </div>
+
+                            <!-- Paginação -->
+                            <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <span id="pagination-info" class="text-xs text-slate-500 font-medium">Mostrando 0 a 0 de 0 resultados</span>
+                                <div id="pagination-controls" class="flex items-center gap-1">
+                                    <!-- Renderizado via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TELA 2: MAPA INTERATIVO DE HOTÉIS -->
+                    <section id="view-map" class="fade-enter hidden space-y-6">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                        <i class="ph ph-map-pin text-amber-500"></i> Mapa Interativo de Hotéis
+                                    </h2>
+                                    <p class="text-slate-500 text-sm mt-1">Localize o endereço de destino para encontrar as hospedagens mais próximas.</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-slate-500 font-semibold uppercase">Filtrar por Distância:</span>
+                                    <select id="map-distance-filter" onchange="MapModule.filterByDistance()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer">
+                                        <option value="all">Todos os Hotéis</option>
+                                        <option value="5">Até 5 km</option>
+                                        <option value="10">Até 10 km</option>
+                                        <option value="20">Até 20 km</option>
+                                        <option value="50">Até 50 km</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Campo de Busca de Destino -->
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                                <div class="md:col-span-8 relative">
+                                    <i class="ph ph-magnifying-glass-plus absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
+                                    <input type="text" id="map-dest-input" onkeypress="if(event.key === 'Enter') MapModule.searchDestination()" placeholder="🔎 Digite o endereço de destino (Ex: Rua Blumenau, 1000 - Joinville/SC)..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none text-sm font-medium transition-all shadow-inner">
+                                </div>
+                                <div class="md:col-span-4 flex gap-2">
+                                    <button onclick="MapModule.searchDestination()" id="btn-map-search" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium text-sm px-4 py-3 shadow-sm transition flex items-center justify-center gap-2">
+                                        <i class="ph ph-navigation-arrow text-lg"></i> Buscar Localização
+                                    </button>
+                                    <button onclick="MapModule.clearDestination()" title="Limpar destino" class="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition flex items-center justify-center border border-slate-200">
+                                        <i class="ph ph-x-circle text-xl"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Layout Principal do Mapa e Lista -->
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            <!-- Mapa Container -->
+                            <div class="lg:col-span-8 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                <div id="map-container" class="h-[480px] lg:h-[620px] w-full rounded-xl z-10"></div>
+                                <div id="map-loading" class="hidden absolute inset-0 bg-slate-900/20 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-2xl">
+                                    <div class="bg-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+                                        <i class="ph ph-spinner-gap text-2xl text-brand-600 animate-spin"></i>
+                                        <span class="text-sm font-semibold text-slate-700">Buscando endereço...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sidebar da Lista de Proximidade -->
+                            <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[480px] lg:h-[636px] overflow-hidden">
+                                <div class="p-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                                    <div class="flex items-center gap-2">
+                                        <i class="ph ph-path text-amber-400 text-xl"></i>
+                                        <h3 class="font-bold text-sm">Hotéis Mais Próximos</h3>
+                                    </div>
+                                    <span id="map-results-count" class="text-xs bg-slate-800 text-amber-300 font-semibold px-2.5 py-1 rounded-full">0 hotéis</span>
+                                </div>
+
+                                <div id="map-hotel-list" class="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-slate-50">
+                                    <!-- Cards dos hotéis próximos renderizados via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TELA 3: CADASTRO / EDIÇÃO -->
+                    <section id="view-form" class="fade-enter hidden max-w-4xl mx-auto pb-10">
+                        
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 id="form-title" class="text-2xl font-bold text-slate-800">Cadastrar Hotel</h2>
+                                <p class="text-slate-500 text-sm mt-1">Preencha os dados oficiais para a base corporativa.</p>
+                            </div>
+                            <button onclick="Navigation.goTo('list')" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition shadow-sm text-sm font-medium flex items-center gap-2">
+                                <i class="ph ph-arrow-left"></i> Voltar
+                            </button>
+                        </div>
+
+                        <form id="hotel-form" onsubmit="CRUD.save(event)" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <input type="hidden" id="input-id">
+                            <input type="hidden" id="input-lat">
+                            <input type="hidden" id="input-lng">
+                            
+                            <div class="p-6 md:p-8 space-y-8">
+                                
+                                <!-- Grupo: Identificação -->
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+                                        <i class="ph ph-identification-card text-brand-500"></i> Informações Principais
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+                                        <div class="md:col-span-12">
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nome do Estabelecimento <span class="text-red-500">*</span></label>
+                                            <input type="text" id="input-name" required placeholder="Ex: Hotel Plaza Executivo" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm">
+                                        </div>
+                                        <div class="md:col-span-12">
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Logradouro / Endereço (Rua, Nº, Bairro)</label>
+                                            <input type="text" id="input-address" placeholder="Ex: Av. Brasil, 1500 - Centro" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm">
+                                            <span class="text-[11px] text-slate-400 mt-1 block">Utilizado para posicionar o hotel com precisão no mapa.</span>
+                                        </div>
+                                        <div class="md:col-span-8">
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cidade <span class="text-red-500">*</span></label>
+                                            <input type="text" id="input-city" required placeholder="Ex: Joinville" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm">
+                                        </div>
+                                        <div class="md:col-span-4">
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Estado (UF) <span class="text-red-500">*</span></label>
+                                            <select id="input-state" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm cursor-pointer">
+                                                <option value="">Selecione...</option>
+                                                <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option>
+                                                <option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option>
+                                                <option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+                                                <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option>
+                                                <option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option>
+                                                <option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+                                                <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Grupo: Comercial -->
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+                                        <i class="ph ph-currency-dollar text-brand-500"></i> Dados Comerciais
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Telefone / WhatsApp</label>
+                                            <input type="text" id="input-phone" placeholder="(00) 00000-0000" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Valor Referência (R$)</label>
+                                            <input type="number" id="input-price" step="0.01" min="0" placeholder="0.00 (Opcional)" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Forma de Pagto. Padrão</label>
+                                            <select id="input-payment" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm cursor-pointer">
+                                                <option value="A Definir" selected>A Definir / Não Informado</option>
+                                                <option value="Cartão Corporativo">Cartão Corporativo</option>
+                                                <option value="Faturado na Empresa">Faturado na Empresa</option>
+                                                <option value="Reembolso">Reembolso (Técnico paga)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Grupo: Comodidades -->
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+                                        <i class="ph ph-star text-brand-500"></i> Comodidades Inclusas
+                                    </h3>
+                                    <div class="flex flex-wrap gap-4 md:gap-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <label class="flex items-center gap-2 cursor-pointer group">
+                                            <input type="checkbox" id="input-wifi" class="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer">
+                                            <span class="text-sm text-slate-700 group-hover:text-brand-700 transition">Wi-Fi</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer group">
+                                            <input type="checkbox" id="input-breakfast" class="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer">
+                                            <span class="text-sm text-slate-700 group-hover:text-brand-700 transition">Café da Manhã</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer group">
+                                            <input type="checkbox" id="input-parking" class="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer">
+                                            <span class="text-sm text-slate-700 group-hover:text-brand-700 transition">Estacionamento</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer group">
+                                            <input type="checkbox" id="input-air" class="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer">
+                                            <span class="text-sm text-slate-700 group-hover:text-brand-700 transition">Ar Condicionado</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer group">
+                                            <input type="checkbox" id="input-bed" class="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer">
+                                            <span class="text-sm text-slate-700 group-hover:text-brand-700 transition">Cama Casal</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Grupo: Observações -->
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+                                        <i class="ph ph-text-align-left text-brand-500"></i> Observações Internas
+                                    </h3>
+                                    <div>
+                                        <textarea id="input-notes" rows="3" placeholder="Restrições, regras de faturamento, localização específica..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-sm resize-none"></textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                            
+                            <!-- Rodapé do Formulário -->
+                            <div class="bg-slate-50 p-6 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                                <button type="button" onclick="Navigation.goTo('list')" class="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition font-medium text-sm">Cancelar</button>
+                                <button type="submit" class="px-6 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-md transition font-medium text-sm flex items-center justify-center gap-2">
+                                    <i class="ph ph-floppy-disk text-lg"></i> Salvar Registro
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAIS E COMPONENTES GLOBAIS -->
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 right-6 transform translate-x-full opacity-0 transition-all duration-300 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl min-w-[300px]">
+        <div id="toast-icon" class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"></div>
+        <div>
+            <h4 id="toast-title" class="text-sm font-bold"></h4>
+            <p id="toast-message" class="text-xs opacity-90"></p>
+        </div>
+    </div>
+
+    <!-- Modal Base (Background) -->
+    <div id="modal-backdrop" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-opacity"></div>
+
+    <!-- Modal: Detalhes do Hotel -->
+    <div id="modal-details" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white rounded-2xl shadow-2xl z-50 overflow-hidden slide-up-centered flex flex-col max-h-[90vh]">
+        <!-- Cabeçalho Fixo -->
+        <div class="bg-slate-900 p-5 flex justify-between items-start shrink-0">
+            <div class="pr-4">
+                <h3 id="det-name" class="text-lg font-bold text-white leading-tight">Nome</h3>
+                <p id="det-location" class="text-brand-400 text-sm mt-0.5 font-medium flex items-center gap-1"><i class="ph ph-map-pin"></i> Cidade - UF</p>
+            </div>
+            <button onclick="UI.closeModal('modal-details')" class="text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-lg transition"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        
+        <!-- Conteúdo Rolável -->
+        <div class="p-6 space-y-5 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
+            <div id="det-address-container" class="bg-slate-50 p-3 rounded-xl border border-slate-100 hidden">
+                <span class="block text-xs text-slate-500 mb-0.5">Endereço</span>
+                <span id="det-address" class="text-xs font-semibold text-slate-800"></span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="block text-xs text-slate-500 mb-1">Contato</span>
+                    <span id="det-phone" class="text-sm font-semibold text-slate-800"></span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="block text-xs text-slate-500 mb-1">Valor / Dia</span>
+                    <span id="det-price" class="text-sm font-semibold text-brand-600"></span>
+                </div>
+            </div>
+            
+            <div>
+                <span class="block text-xs text-slate-500 mb-2">Método de Pagamento</span>
+                <span id="det-payment" class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-md border border-slate-200"></span>
+            </div>
+
+            <div>
+                <span class="block text-xs text-slate-500 mb-2">Comodidades</span>
+                <div id="det-amenities" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div>
+                <span class="block text-xs text-slate-500 mb-1">Observações Corporativas</span>
+                <p id="det-notes" class="text-sm text-slate-700 bg-amber-50 p-3 rounded-xl border border-amber-100 italic"></p>
+            </div>
+        </div>
+        
+        <!-- Rodapé Fixo -->
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between shrink-0">
+            <button id="det-btn-edit" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 font-medium text-sm transition">Editar</button>
+            <button id="det-btn-wa" class="px-4 py-2 bg-[#25D366] hover:bg-[#1da851] text-white rounded-lg font-medium text-sm transition shadow-sm flex items-center gap-2">
+                <i class="ph ph-whatsapp-logo text-lg"></i> Cotar no WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: WhatsApp Cotação -->
+    <div id="modal-whatsapp" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-white rounded-2xl shadow-2xl z-50 overflow-hidden slide-up-centered flex flex-col max-h-[90vh]">
+        <div class="bg-[#25D366] p-4 flex justify-between items-center text-white shrink-0">
+            <h3 class="font-bold flex items-center gap-2"><i class="ph ph-whatsapp-logo text-xl"></i> Cotação via WhatsApp</h3>
+            <button onclick="UI.closeModal('modal-whatsapp')" class="hover:bg-white/20 p-1.5 rounded-lg transition"><i class="ph ph-x text-lg"></i></button>
+        </div>
+        <form id="form-whatsapp" onsubmit="WhatsApp.submit(event)" class="p-6 space-y-4 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
+            <input type="hidden" id="wa-hotel-id">
+            
+            <p class="text-xs text-slate-500 mb-2">Preencha os detalhes para gerar a mensagem de cotação.</p>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Qtd. de Hóspedes/Técnicos <span class="text-red-500">*</span></label>
+                <input type="number" id="wa-guests" min="1" value="1" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#25D366] focus:border-[#25D366] outline-none text-sm transition-all">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Check-in <span class="text-red-500">*</span></label>
+                    <input type="date" id="wa-checkin" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#25D366] focus:border-[#25D366] outline-none text-sm transition-all cursor-text">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Check-out <span class="text-red-500">*</span></label>
+                    <input type="date" id="wa-checkout" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#25D366] focus:border-[#25D366] outline-none text-sm transition-all cursor-text">
+                </div>
+            </div>
+            
+            <div id="wa-error" class="hidden p-3 bg-red-50 text-red-600 text-xs font-medium rounded-lg border border-red-100"></div>
+            
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="UI.closeModal('modal-whatsapp')" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition">Cancelar</button>
+                <button type="submit" class="flex-1 py-2.5 bg-[#25D366] text-white rounded-lg text-sm font-medium hover:bg-[#1da851] shadow-sm transition">Gerar Mensagem</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal: Confirmar Exclusão -->
+    <div id="modal-delete" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-white rounded-2xl shadow-2xl z-50 p-6 text-center slide-up-centered">
+        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="ph ph-trash text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Excluir Hotel?</h3>
+        <p class="text-slate-500 text-sm mb-6">Esta ação é irreversível e removerá o hotel da base corporativa.</p>
+        <div class="flex gap-3 justify-center">
+            <button onclick="UI.closeModal('modal-delete')" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium text-sm transition">Cancelar</button>
+            <button id="btn-confirm-delete" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm shadow-sm transition">Excluir</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT DA APLICAÇÃO -->
+    <script>
+        /**
+         * COORDENADAS PADRÃO DAS CIDADES (Para geocodificação offline/fallback rápida)
+         */
+        const CITY_COORDS = {
+            'São Gonçalo dos Campos': [-12.4333, -38.9667],
+            'Aracaju': [-10.9472, -37.0731],
+            'Manaus': [-3.1190, -60.0217],
+            'Araxá': [-19.5931, -46.9406],
+            'Contagem': [-19.9318, -44.0536],
+            'Confins': [-19.6236, -43.8919],
+            'Cacoal': [-11.4386, -61.4472],
+            'Rolim de Moura': [-11.7289, -61.7781],
+            'Porto Velho': [-8.7619, -63.9039],
+            'Ji-Paraná': [-10.8828, -61.9519],
+            'Rio de Janeiro': [-22.9068, -43.1729],
+            'Goiânia': [-16.6869, -49.2648],
+            'Jundiaí': [-23.1857, -46.8892],
+            'Sertãozinho': [-21.1350, -47.9897],
+            'Ribeirão Preto': [-21.1704, -47.8103],
+            'São Paulo': [-23.5505, -46.6333],
+            'Osasco': [-23.5325, -46.7917],
+            'Campinas': [-22.9099, -47.0626],
+            'São José do Rio Preto': [-20.8113, -49.3758],
+            'São Bernardo do Campo': [-23.6944, -46.5653],
+            'Itu': [-23.2642, -47.2992],
+            'Amparo': [-22.7036, -46.7642],
+            'Jaguariúna': [-22.7056, -46.9856],
+            'Registro': [-24.4875, -47.8436],
+            'Irati': [-25.4672, -50.6511],
+            'Pinhão': [-25.6958, -51.6592],
+            'Guarapuava': [-25.3907, -51.4628],
+            'Joaquim Távora': [-23.5008, -49.9256],
+            'Siqueira Campos': [-23.6889, -49.8344],
+            'Ponta Grossa': [-25.0950, -50.1619],
+            'Sulina': [-25.7003, -52.7214],
+            'Laranjeiras do Sul': [-25.4081, -52.4158],
+            'Cascavel': [-24.9578, -53.4594],
+            'Toledo': [-24.7242, -53.7414],
+            'Campo Largo': [-25.4597, -49.5297],
+            'Canoinhas': [-26.1772, -50.3900],
+            'Porto União': [-26.2381, -51.0789],
+            'Sangão': [-28.6292, -49.1308],
+            'Nova Veneza': [-28.6369, -49.4989],
+            'Joaçaba': [-27.1783, -51.5039],
+            'Videira': [-27.0083, -51.1519],
+            'Seara': [-27.1486, -52.3083],
+            'Chapecó': [-27.1004, -52.6152],
+            'Itá': [-27.2881, -52.3258],
+            'Lages': [-27.8158, -50.3258],
+            'Criciúma': [-28.6775, -49.3703],
+            'Tubarão': [-28.4669, -49.0078],
+            'Palhoça': [-27.6453, -48.6678],
+            'Curitibanos': [-27.2828, -50.5844],
+            'Correia Pinto': [-27.5847, -50.3619],
+            'Ponte Alta': [-27.4800, -50.3800],
+            'Joinville': [-26.3045, -48.8487],
+            'Orleans': [-28.3589, -49.2908],
+            'Serafina Corrêa': [-28.7136, -51.9344],
+            'Dois Lajeados': [-28.9839, -51.8342],
+            'Porto Alegre': [-30.0346, -51.2177],
+            'Ilópolis': [-28.9242, -52.1281],
+            'Osório': [-29.8869, -50.2706],
+            'Encruzilhada do Sul': [-30.5439, -52.5219],
+            'Ivoti': [-29.5933, -51.1581],
+            'Canoas': [-29.9178, -51.1836],
+            'Vespasiano Corrêa': [-29.0833, -51.8667],
+            'Muçum': [-29.1667, -51.8667],
+            'Gravataí': [-29.9439, -50.9928],
+            'Gramado': [-29.3786, -50.8764],
+            'Portão': [-29.7003, -51.2403],
+            'Montenegro': [-29.6886, -51.4608],
+            'Encantado': [-29.2356, -51.8703],
+            'Lajeado': [-29.4669, -51.9614],
+            'Torres': [-29.3350, -49.7269],
+            'Cachoeira do Sul': [-30.0389, -52.8936],
+            'Flores da Cunha': [-29.0289, -51.1836],
+            'Santa Cruz do Sul': [-29.7175, -52.4258],
+            'Taquara': [-29.6517, -50.7819],
+            'São Sebastião do Caí': [-29.5867, -51.3756],
+            'Sarandi': [-27.9439, -52.9231],
+            'Antônio Prado': [-28.8589, -51.3197],
+            'Farroupilha': [-29.2239, -51.3481],
+            'Garibaldi': [-29.2589, -51.5342],
+            'São Leopoldo': [-29.7603, -51.1478],
+            'Caxias do Sul': [-29.1681, -51.1794],
+            'Lagoa Vermelha': [-28.2086, -51.5258],
+            'Bento Gonçalves': [-29.1708, -51.5186]
+        };
+
+        const STATE_NAMES = {
+            'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas', 'BA': 'Bahia', 
+            'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo', 'GO': 'Goiás', 
+            'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul', 'MG': 'Minas Gerais', 
+            'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná', 'PE': 'Pernambuco', 'PI': 'Piauí', 
+            'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte', 'RS': 'Rio Grande do Sul', 
+            'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina', 'SP': 'São Paulo', 
+            'SE': 'Sergipe', 'TO': 'Tocantins'
+        };
+
+        const AppState = {
+            hotels: [],
+            filters: { name: '', location: '' },
+            sort: { field: 'name', dir: 'asc' },
+            pagination: { current: 1, perPage: 10 },
+            ui: { currentView: 'list', deletingId: null },
+            map: {
+                leafletInstance: null,
+                hotelMarkers: [],
+                destMarker: null,
+                destinationCoords: null,
+                destinationAddress: '',
+                selectedRadius: 'all'
+            }
+        };
+
+        // Função auxiliar para gerar dados iniciais formatados com coordenadas realistas
+        let _idCounter = 1000;
+        const createHotel = (name, city, state, phone, notes = '', address = '') => {
+            const baseCoords = CITY_COORDS[city] || [-23.5505, -46.6333];
+            // Pequena variação aleatória determinística para não sobrepor pins exatamente no centro da cidade
+            const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const latOffset = ((hash % 30) - 15) * 0.0018;
+            const lngOffset = (((hash * 7) % 30) - 15) * 0.0018;
+
+            return {
+                id: 'h' + (_idCounter++),
+                name: name,
+                address: address,
+                city: city,
+                state: state,
+                phone: phone,
+                price: 0,
+                payment: 'A Definir',
+                wifi: false, breakfast: false, parking: false, air: false, bed: false,
+                notes: notes,
+                lat: baseCoords[0] + latOffset,
+                lng: baseCoords[1] + lngOffset
+            };
+        };
+
+        const DEFAULT_DATA = [
+            createHotel('Hotel Novo Paraíso', 'São Gonçalo dos Campos', 'BA', '(75) 99221-7742', '', 'Centro'),
+            createHotel('Hotel Acalanto', 'São Gonçalo dos Campos', 'BA', '(75) 3612-6700'),
+            createHotel('Hotel Rekinte', 'Aracaju', 'SE', '(79) 98103-6359', '', 'Orla de Atalaia'),
+            createHotel('Hotel Sesc', 'Aracaju', 'SE', '(79) 3021-9880', 'Melhor valor com a carteirinha'),
+            createHotel('Simas Praia Hotel', 'Aracaju', 'SE', '(79) 3243-8600 / (79) 3243-8686'),
+            createHotel('Arcus Hotel', 'Aracaju', 'SE', '(79) 3512-2450'),
+            createHotel('Real Classic Hotel', 'Aracaju', 'SE', '(79) 2106-7020'),
+            createHotel('Ibis Aeroporto', 'Manaus', 'AM', '(92) 3306-4300'),
+            createHotel('Ibis Budget Manaus', 'Manaus', 'AM', '(92) 2127-9900'),
+            createHotel('Hotel Express Vieiralves', 'Manaus', 'AM', '(92) 3303-9933'),
+            createHotel('Hotel SESC - Centro', 'Araxá', 'MG', '(34) 3201-8132'),
+            createHotel('Fenix Hotel Araxá', 'Araxá', 'MG', '(34) 3202-0004'),
+            createHotel('Manferrari Hotel', 'Contagem', 'MG', '(31) 98511-1374'),
+            createHotel('VOA Hotel', 'Confins', 'MG', '(21) 99496-1574', 'Hotel a 10 minutos do Aeroporto de Confins'),
+            createHotel('Eder Hotel', 'Cacoal', 'RO', '(69) 3441-1722'),
+            createHotel('Açaí Palace Hotel', 'Cacoal', 'RO', '(69) 3441-4810'),
+            createHotel('Crystal Palace Hotel', 'Rolim de Moura', 'RO', '(69) 3442-1414'),
+            createHotel('Ecos Hotel Tourist', 'Rolim de Moura', 'RO', '(69) 3442-5555'),
+            createHotel('Hotel Pérola', 'Rolim de Moura', 'RO', '(69) 3442-1919'),
+            createHotel('Hotel Slaviero', 'Porto Velho', 'RO', '(69) 3301-3390'),
+            createHotel('Golden Plaza Hotel', 'Porto Velho', 'RO', '(69) 3225-9000'),
+            createHotel('Flamboyant', 'Porto Velho', 'RO', '(69) 3225-2102'),
+            createHotel('Maximus Hotéis Ji Paraná', 'Ji-Paraná', 'RO', '(69) 3422-9033'),
+            createHotel('Larison Hotéis', 'Ji-Paraná', 'RO', '(69) 2181-5484'),
+            createHotel('Ibis Rio de Janeiro Santos Dumont', 'Rio de Janeiro', 'RJ', '(21) 3506-4500', 'Região: Santos Dumont'),
+            createHotel('Hotel Caracas Rio', 'Rio de Janeiro', 'RJ', '(21) 3975-2872', 'Região: Tauá'),
+            createHotel('Rio Aeroporto Hotel Galeão', 'Rio de Janeiro', 'RJ', '(21) 96838-8857', 'Região: Tauá / Galeão'),
+            createHotel('Hotel San Marino', 'Goiânia', 'GO', '(62) 3250-4600'),
+            createHotel('Red Roof Inn', 'Jundiaí', 'SP', '(11) 2448-3900'),
+            createHotel('Ibis Budget Hotels', 'Sertãozinho', 'SP', '(16) 3521-3400'),
+            createHotel('Hotel Dan Inn', 'Ribeirão Preto', 'SP', '(16) 3605-1500'),
+            createHotel('Dan Inn Ribeirão Preto', 'Ribeirão Preto', 'SP', '(16) 2108-0787'),
+            createHotel('Hotel The Premium', 'São Paulo', 'SP', '(11) 3651-9533', 'Região: Vila Anastasia'),
+            createHotel('Hotel Dan Inn Planalto São Paulo', 'São Paulo', 'SP', '(11) 3311-7311', 'Região: Vila Anastasia'),
+            createHotel('Hotel Ibis Osasco', 'Osasco', 'SP', '(11) 2813-7200', 'Listado sob Vila Anastasia'),
+            createHotel('Fênix Hotel', 'Campinas', 'SP', '(19) 3772-4600'),
+            createHotel('Uniclass Hotel', 'São Paulo', 'SP', '(11) 98960-4408', 'Bairro: Lapa (Atendimento Tondo)'),
+            createHotel('Ibis Budget São José do Rio Preto', 'São José do Rio Preto', 'SP', '(17) 3600-1500', 'Aeroporto S. José / Santa Fé do Sul'),
+            createHotel('Hotel La Bello', 'São José do Rio Preto', 'SP', '(17) 99615-0525', 'Aeroporto S. José / Santa Fé do Sul'),
+            createHotel('Hotel Litani Comfort Inn', 'São José do Rio Preto', 'SP', '(17) 3631-0430', 'Aeroporto S. José / Santa Fé do Sul'),
+            createHotel('Pampas Palace Hotel', 'São Bernardo do Campo', 'SP', '(11) 4122-2000'),
+            createHotel('Jardim Hotel', 'São Bernardo do Campo', 'SP', '(11) 4125-6660'),
+            createHotel('Ibis São Bernardo do Campo', 'São Bernardo do Campo', 'SP', '(11) 4380-7210'),
+            createHotel('Hotel KK', 'Itu', 'SP', '(11) 4013-9000'),
+            createHotel('Ancona Center Hotel', 'Amparo', 'SP', '(19) 3807-5866'),
+            createHotel('Hotel Stelati', 'Amparo', 'SP', '(19) 3514-6500'),
+            createHotel('Hotel Transamerica FIT', 'Jaguariúna', 'SP', '(11) 91352-3795', 'Listado sob Amparo'),
+            createHotel('Hotel Regis', 'Registro', 'SP', '(13) 99207-2022'),
+            createHotel('Hotel Monte Líbano', 'Irati', 'PR', '(42) 3422-1177'),
+            createHotel('Hotel Habib', 'Irati', 'PR', '(42) 3422-2500'),
+            createHotel('Pinhão Park Hotel', 'Pinhão', 'PR', '(42) 98418-1111'),
+            createHotel('Royal Trip Hotel', 'Guarapuava', 'PR', '(42) 98825-6170'),
+            createHotel('Hotel Lorenzetti BR', 'Guarapuava', 'PR', '(42) 3624-0249'),
+            createHotel('Hotel Lorenzetti Express', 'Guarapuava', 'PR', '(42) 3624-6408'),
+            createHotel('Atalaia Palace', 'Guarapuava', 'PR', '(42) 3622-2992'),
+            createHotel('Hotel Guairacá', 'Guarapuava', 'PR', '(42) 3629-3620'),
+            createHotel('Hotel Villa Real', 'Joaquim Távora', 'PR', '(43) 99680-4458'),
+            createHotel('Hotel Gold ville', 'Siqueira Campos', 'PR', '(43) 3571-0100'),
+            createHotel('Hotel Pax Express', 'Ponta Grossa', 'PR', '(42) 3220-4050'),
+            createHotel('Geneviee Palace Hotel', 'Ponta Grossa', 'PR', '(42) 3223-7844'),
+            createHotel('Hotel 10 Ponta Grossa', 'Ponta Grossa', 'PR', '(42) 3223-1010'),
+            createHotel('Hotel Ypê', 'Ponta Grossa', 'PR', '(42) 3323-1520'),
+            createHotel('Hilário Scheneider e Cia LTDA', 'Sulina', 'PR', '(46) 3244-1123'),
+            createHotel('Hotel Palmeiras', 'Laranjeiras do Sul', 'PR', '(42) 3635-1190'),
+            createHotel('Hotel Sauípe', 'Cascavel', 'PR', '(45) 3322-4040', 'Centro'),
+            createHotel('Hotel Plaza Cascavel', 'Cascavel', 'PR', '(45) 99832-1415', 'Centro'),
+            createHotel('Vila Verde Hotel', 'Toledo', 'PR', '(45) 99917-7976'),
+            createHotel('Olinda Hotel e Eventos', 'Toledo', 'PR', '(45) 3278-5050'),
+            createHotel('Rosas Hotel', 'Toledo', 'PR', '(45) 99922-8025'),
+            createHotel('Hotel Campo Largo Express', 'Campo Largo', 'PR', '(41) 3032-5000'),
+            createHotel('Petry Plaza Hotel', 'Canoinhas', 'SC', '(47) 99630-2666 / (47) 3621-6999'),
+            createHotel('Santa Catarina Plaza Hotel', 'Canoinhas', 'SC', '(47) 3622-8400'),
+            createHotel('Planalto Hotel', 'Canoinhas', 'SC', '(47) 3621-6300'),
+            createHotel('Hotel Flex', 'Canoinhas', 'SC', '(47) 3622-0074'),
+            createHotel('Opera Hotel', 'Porto União', 'SC', '(42) 3522-3949'),
+            createHotel('Novo Hotel Iguaçu', 'Porto União', 'SC', '(42) 3522-1733'),
+            createHotel('Coral Palace Hotel', 'Sangão', 'SC', '(48) 3655-0710 / (48) 99849-7250'),
+            createHotel('Hotel Dolomiti Caravaggio', 'Nova Veneza', 'SC', '(48) 3476-0393'),
+            createHotel('Hotel Joaçaba', 'Joaçaba', 'SC', '(49) 3521-4131'),
+            createHotel('Hotel Bordignon', 'Joaçaba', 'SC', '(49) 3521-3959 / (49) 98821-3548'),
+            createHotel('Hotel Farol', 'Joaçaba', 'SC', '(49) 3521-2760'),
+            createHotel('Hotel do Comércio', 'Joaçaba', 'SC', '(49) 9980-0939 / (49) 3522-2211'),
+            createHotel('Hotel do Gringo', 'Joaçaba', 'SC', '(49) 3030-8899'),
+            createHotel('Verde vale Hotel', 'Videira', 'SC', '(49) 3566-1622 / (49) 99166-2263'),
+            createHotel('Ita Park Hotel', 'Seara', 'SC', '(49) 3458-2282'),
+            createHotel('Tri Hotel', 'Chapecó', 'SC', '(54) 99936-1077'),
+            createHotel('Pousada Encantos de Itá', 'Itá', 'SC', '(49) 99829-6878'),
+            createHotel('Lages Plaza Hotel', 'Lages', 'SC', '(49) 3021-2020'),
+            createHotel('Afford Hotel', 'Lages', 'SC', '(49) 99916-4229'),
+            createHotel('Map Hotel', 'Lages', 'SC', '(49) 3221-5411 / (49) 98886-3165'),
+            createHotel('TRI HOTEL', 'Criciúma', 'SC', '(48) 3046-8500'),
+            createHotel('Hotel Rio Jordão', 'Criciúma', 'SC', '(48) 99199-7898'),
+            createHotel('Hotel San Silvestre', 'Tubarão', 'SC', '(48) 98832-2410'),
+            createHotel('Oscar Palace Hotel', 'Tubarão', 'SC', '(48) 3622-3342'),
+            createHotel('Ok Inn Hotel', 'Tubarão', 'SC', '(48) 3632-5232 / (48) 99983-0146'),
+            createHotel('Hotel Zunino', 'Palhoça', 'SC', '(48) 3342-5050'),
+            createHotel('Hotel Pontal', 'Palhoça', 'SC', '(48) 3242-4541'),
+            createHotel('Hotel Paris', 'Curitibanos', 'SC', '(49) 3245-0302'),
+            createHotel('Gaboardi Park Hotel', 'Curitibanos', 'SC', '(49) 3241-7100'),
+            createHotel('Hotel Paraíso', 'Correia Pinto', 'SC', '(49) 3243-1227 / (49) 99111-1227'),
+            createHotel('Hotel Correia Pinto', 'Correia Pinto', 'SC', '(49) 99174-2443'),
+            createHotel('Hotel House', 'Ponte Alta', 'SC', '(49) 99903-2119'),
+            createHotel('Hotel VX', 'Joinville', 'SC', '(47) 99977-1557', '', 'Rua Blumenau, 500'),
+            createHotel('Hotel 2 H', 'Joinville', 'SC', '(47) 99172-5399', '', 'Rua XV de Novembro, 1200'),
+            createHotel('Hotel Real NOB', 'Orleans', 'SC', '(48) 3466-4455'),
+            createHotel('Via Gênova Parque Hotel', 'Serafina Corrêa', 'RS', '(54) 99702-9631'),
+            createHotel('Hotel Giacomin', 'Dois Lajeados', 'RS', '(54) 99272-1626'),
+            createHotel('Rubbo Hotel', 'Dois Lajeados', 'RS', '(54) 99698-4977'),
+            createHotel('Hotel Sesc Campestre', 'Porto Alegre', 'RS', '(51) 3382-8822'),
+            createHotel('Expresso Aeroporto', 'Porto Alegre', 'RS', '(51) 3022-2020'),
+            createHotel('Hotel e Restaurante Bonfanti', 'Ilópolis', 'RS', '(51) 3774-1310'),
+            createHotel('Tri Hotel', 'Osório', 'RS', '(51) 2161-9877'),
+            createHotel('Center Executive Hotel', 'Encruzilhada do Sul', 'RS', '(51) 99510-4446'),
+            createHotel('Conceição Palace Hotel', 'Encruzilhada do Sul', 'RS', '(51) 3733-4110'),
+            createHotel('Hotel Visão', 'Ivoti', 'RS', '(51) 3104-8845'),
+            createHotel('Hotel Ville House Premium', 'Canoas', 'RS', '(51) 3785-4904'),
+            createHotel('Hotel Metropolitan', 'Canoas', 'RS', '(51) 3052-3444'),
+            createHotel('Hotel Belvedere', 'Vespasiano Corrêa / Muçum', 'RS', '(51) 99480-1725'),
+            createHotel('Hotel Marchetti', 'Vespasiano Corrêa / Muçum', 'RS', '(51) 3755-1253'),
+            createHotel('Hengu Hotel', 'Vespasiano Corrêa / Muçum', 'RS', '(51) 3751-6848'),
+            createHotel('Hotel Intercity Shopping', 'Gravataí', 'RS', '(51) 3533-4800'),
+            createHotel('Life Infinity Gramado', 'Gramado', 'RS', '(54) 99931-4341'),
+            createHotel('De Stefani', 'Portão / Montenegro', 'RS', '(51) 3106-6688 / (51) 99725-2814'),
+            createHotel('Hengu Hotel', 'Encantado', 'RS', '(51) 3751-6848'),
+            createHotel('Di Marco Hotel', 'Encantado', 'RS', '(51) 98991-7047'),
+            createHotel('Zallon Hotel Executivo', 'Lajeado', 'RS', '(51) 98641-7472'),
+            createHotel('Valler Montanha', 'Lajeado', 'RS', '(51) 3714-1413'),
+            createHotel('Hotel Mariani', 'Lajeado', 'RS', '(51) 3710-1129'),
+            createHotel('Farol Hotel', 'Torres', 'RS', '(51) 3664-1240'),
+            createHotel('Hotel Sesc', 'Torres', 'RS', '(51) 3626-9400'),
+            createHotel('Hotel Costa Dalpiaz', 'Torres', 'RS', '(51) 3664-3224'),
+            createHotel('Hotel Jacuí', 'Cachoeira do Sul', 'RS', '(51) 98687-3384'),
+            createHotel('Hamburgo Hotel', 'Cachoeira do Sul', 'RS', '(51) 98050-6777 / (51) 3722-4176'),
+            createHotel('Tropical Hotel Confort - Rede Bonnel', 'Cachoeira do Sul', 'RS', '(51) 3723-3388 / (51) 99814-3840'),
+            createHotel('Hotel Fiório', 'Flores da Cunha', 'RS', '(54) 3292-2535'),
+            createHotel('Hotel Antônio\'s LTDA', 'Santa Cruz do Sul', 'RS', '(51) 3713-1140'),
+            createHotel('Hotel Santa Cruz', 'Santa Cruz do Sul', 'RS', '(51) 3056-3134'),
+            createHotel('Hotel Villa Souza', 'Santa Cruz do Sul', 'RS', '(51) 99962-8875'),
+            createHotel('Candemil Executivo', 'Taquara', 'RS', '(51) 99294-0627'),
+            createHotel('Hotel Cardozo', 'Taquara', 'RS', '(51) 3543-2021'),
+            createHotel('Hotel Steffen', 'São Sebastião do Caí', 'RS', '(51) 99752-7596'),
+            createHotel('Dall\'Onder Ski Hotel', 'Sarandi', 'RS', '(54) 3698-6100'),
+            createHotel('Tri Hotel', 'Antônio Prado', 'RS', '(54) 3754-0670'),
+            createHotel('Hotel Pradense', 'Antônio Prado', 'RS', '(54) 3293-1105'),
+            createHotel('Ibis Budget Farroupilha', 'Farroupilha', 'RS', '(54) 3771-1212'),
+            createHotel('Di Capri Hotel', 'Farroupilha', 'RS', '(54) 2109-1919'),
+            createHotel('Farina Park Hotel', 'Farroupilha / Garibaldi', 'RS', '(54) 99982-2049', 'Listado em Farroupilha e Garibaldi'),
+            createHotel('Hotel Express Confort', 'São Leopoldo', 'RS', '(51) 3037-6565'),
+            createHotel('HDEZ (Hotel 10)', 'São Leopoldo', 'RS', '(51) 3579-4810'),
+            createHotel('Klein Ville Dois Irmãos', 'São Leopoldo', 'RS', '(51) 3564-1569'),
+            createHotel('Sky Samuara', 'Caxias do Sul', 'RS', '(54) 99662-1961'),
+            createHotel('Tri Hotel Executive', 'Caxias do Sul', 'RS', '(54) 3289-2000'),
+            createHotel('Letto Hotel', 'Caxias do Sul', 'RS', '(54) 3536-7177'),
+            createHotel('Lagoa Vermelha Parque Hotel', 'Lagoa Vermelha', 'RS', '(51) 99612-5880'),
+            createHotel('Hotel Mont Blanc', 'Bento Gonçalves', 'RS', '(54) 98432-7342')
+        ];
+
+        /**
+         * CÁLCULO DE DISTÂNCIA (Fórmula de Haversine)
+         */
+        function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+            const R = 6371; // Raio da Terra em km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        /**
+         * GEOCODIFICAÇÃO (Conversão de Endereço em Coordenadas Lat/Lng)
+         */
+        async function geocodeAddress(query) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+                    headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' }
+                });
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lng: parseFloat(data[0].lon),
+                        displayName: data[0].display_name
+                    };
+                }
+            } catch (err) {
+                console.warn("Geocodificação via API falhou ou está offline, fallback ativo.", err);
+            }
+            return null;
+        }
+
+        /**
+         * GERENCIAMENTO DE DADOS (Local Storage)
+         */
+        const App = {
+            init: () => {
+                const stored = localStorage.getItem('corp_hotels_db_v5');
+                if (stored) {
+                    AppState.hotels = JSON.parse(stored);
+                } else {
+                    AppState.hotels = [...DEFAULT_DATA];
+                    App.saveData();
+                }
+                Render.table();
+            },
+            saveData: () => {
+                localStorage.setItem('corp_hotels_db_v5', JSON.stringify(AppState.hotels));
+            }
+        };
+
+        /**
+         * NAVEGAÇÃO E UI GERAL
+         */
+        const Navigation = {
+            goTo: (view) => {
+                document.getElementById('view-list').classList.add('hidden');
+                document.getElementById('view-map').classList.add('hidden');
+                document.getElementById('view-form').classList.add('hidden');
+                
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+                AppState.ui.currentView = view;
+                
+                const btnList = document.getElementById('nav-btn-list');
+                const btnMap = document.getElementById('nav-btn-map');
+                const btnForm = document.getElementById('nav-btn-form');
+                
+                const activeClass = 'w-full flex items-center gap-3 px-4 py-3 bg-brand-600 text-white rounded-lg transition-all font-medium text-sm shadow-md';
+                const inactiveClass = 'w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all font-medium text-sm';
+
+                btnList.className = view === 'list' ? activeClass : inactiveClass;
+                btnMap.className = view === 'map' ? activeClass : inactiveClass;
+                btnForm.className = view === 'form' ? activeClass : inactiveClass;
+
+                if (view === 'list') {
+                    Render.table();
+                } else if (view === 'map') {
+                    setTimeout(() => {
+                        MapModule.init();
+                    }, 100);
+                } else if (view === 'form') {
+                    if(!document.getElementById('input-id').value) {
+                        document.getElementById('hotel-form').reset();
+                        document.getElementById('input-lat').value = '';
+                        document.getElementById('input-lng').value = '';
+                        document.getElementById('form-title').innerText = 'Cadastrar Hotel';
+                    }
+                }
+            }
+        };
+
+        const UI = {
+            openModal: (id) => {
+                document.getElementById('modal-backdrop').classList.remove('hidden');
+                document.getElementById(id).classList.remove('hidden');
+            },
+            closeModal: (id) => {
+                document.getElementById('modal-backdrop').classList.add('hidden');
+                document.getElementById(id).classList.add('hidden');
+            },
+            showToast: (title, message, type = 'success') => {
+                const toast = document.getElementById('toast');
+                const iconContainer = document.getElementById('toast-icon');
+                
+                document.getElementById('toast-title').innerText = title;
+                document.getElementById('toast-message').innerText = message;
+                document.getElementById('toast-title').className = type === 'success' ? 'text-sm font-bold text-emerald-900' : 'text-sm font-bold text-red-900';
+                document.getElementById('toast-message').className = type === 'success' ? 'text-xs text-emerald-700' : 'text-xs text-red-700';
+                toast.className = `fixed top-6 right-6 transition-all duration-300 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl min-w-[300px] border ${type === 'success' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`;
+                
+                iconContainer.className = `w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`;
+                iconContainer.innerHTML = type === 'success' ? '<i class="ph ph-check-circle text-2xl"></i>' : '<i class="ph ph-warning text-2xl"></i>';
+
+                void toast.offsetWidth;
+                toast.classList.remove('translate-x-full', 'opacity-0');
+
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                }, 3500);
+            }
+        };
+
+        const Filters = {
+            apply: () => {
+                AppState.filters.name = document.getElementById('filter-name').value.toLowerCase().trim();
+                AppState.filters.location = document.getElementById('filter-location').value.toLowerCase().trim();
+                AppState.pagination.current = 1; 
+                Render.table();
+            },
+            resetAll: () => {
+                document.getElementById('filter-name').value = '';
+                document.getElementById('filter-location').value = '';
+                document.getElementById('filter-sort').value = 'name_asc';
+                AppState.filters = { name: '', location: '' };
+                AppState.sort = { field: 'name', dir: 'asc' };
+                Sorting.updateHeadersUI();
+                Filters.apply();
+            }
+        };
+
+        const Sorting = {
+            toggle: (field) => {
+                if (AppState.sort.field === field) {
+                    AppState.sort.dir = AppState.sort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    AppState.sort.field = field;
+                    AppState.sort.dir = 'asc';
+                }
+                Sorting.updateHeadersUI();
+                
+                const selectVal = `${AppState.sort.field}_${AppState.sort.dir}`;
+                const sel = document.getElementById('filter-sort');
+                if (sel && sel.querySelector(`option[value="${selectVal}"]`)) {
+                    sel.value = selectVal;
+                }
+                
+                Render.table();
+            },
+            changeFromSelect: () => {
+                const val = document.getElementById('filter-sort').value;
+                const [field, dir] = val.split('_');
+                AppState.sort = { field, dir };
+                Sorting.updateHeadersUI();
+                Render.table();
+            },
+            updateHeadersUI: () => {
+                ['name', 'city', 'price'].forEach(f => {
+                    const el = document.getElementById(`sort-icon-${f}`);
+                    if(el) el.className = 'ph ph-arrows-down-up text-slate-300 group-hover:text-brand-500 transition-colors';
+                });
+                
+                const activeIcon = document.getElementById(`sort-icon-${AppState.sort.field}`);
+                if(activeIcon) {
+                    activeIcon.className = AppState.sort.dir === 'asc' ? 'ph ph-sort-ascending text-brand-600 font-bold' : 'ph ph-sort-descending text-brand-600 font-bold';
+                }
+            }
+        };
+
+        const CRUD = {
+            save: async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('input-id').value;
+                const priceVal = parseFloat(document.getElementById('input-price').value);
+
+                const name = document.getElementById('input-name').value.trim();
+                const address = document.getElementById('input-address').value.trim();
+                const city = document.getElementById('input-city').value.trim();
+                const state = document.getElementById('input-state').value;
+                let lat = parseFloat(document.getElementById('input-lat').value);
+                let lng = parseFloat(document.getElementById('input-lng').value);
+
+                let isGeocoded = false;
+
+                const fullSearchQuery = `${address ? address + ', ' : ''}${city}, ${state}, Brasil`;
+                const geoRes = await geocodeAddress(fullSearchQuery);
+                
+                if (geoRes) {
+                    lat = geoRes.lat;
+                    lng = geoRes.lng;
+                    isGeocoded = true;
+                } else if (CITY_COORDS[city]) {
+                    const base = CITY_COORDS[city];
+                    lat = base[0] + (Math.random() - 0.5) * 0.02;
+                    lng = base[1] + (Math.random() - 0.5) * 0.02;
+                    isGeocoded = true;
+                }
+
+                if (!isGeocoded && (!lat || !lng)) {
+                    UI.showToast('Aviso de Localização', 'Não foi possível identificar as coordenadas exatas do hotel no mapa. O cadastro foi salvo, mas revise o endereço futuramente.', 'error');
+                }
+
+                const hotelData = {
+                    id: id || Date.now().toString(),
+                    name: name,
+                    address: address,
+                    city: city,
+                    state: state,
+                    phone: document.getElementById('input-phone').value.trim() || 'Não informado',
+                    price: isNaN(priceVal) ? 0 : priceVal,
+                    payment: document.getElementById('input-payment').value,
+                    wifi: document.getElementById('input-wifi').checked,
+                    breakfast: document.getElementById('input-breakfast').checked,
+                    parking: document.getElementById('input-parking').checked,
+                    air: document.getElementById('input-air').checked,
+                    bed: document.getElementById('input-bed').checked,
+                    notes: document.getElementById('input-notes').value.trim(),
+                    lat: lat || null,
+                    lng: lng || null
+                };
+
+                if (id) {
+                    const idx = AppState.hotels.findIndex(h => h.id === id);
+                    if(idx !== -1) AppState.hotels[idx] = hotelData;
+                    UI.showToast('Atualizado!', 'Dados do hotel salvos com sucesso.');
+                } else {
+                    AppState.hotels.push(hotelData);
+                    UI.showToast('Cadastrado!', 'Novo hotel inserido na base corporativa.');
+                }
+
+                App.saveData();
+                document.getElementById('hotel-form').reset();
+                document.getElementById('input-id').value = '';
+                document.getElementById('input-lat').value = '';
+                document.getElementById('input-lng').value = '';
+                
+                if (AppState.map.leafletInstance) {
+                    MapModule.renderHotelMarkers();
+                }
+
+                Navigation.goTo('list');
+            },
+            edit: (id) => {
+                const hotel = AppState.hotels.find(h => h.id === id);
+                if(!hotel) return;
+
+                document.getElementById('input-id').value = hotel.id;
+                document.getElementById('input-name').value = hotel.name;
+                document.getElementById('input-address').value = hotel.address || '';
+                document.getElementById('input-city').value = hotel.city;
+                document.getElementById('input-state').value = hotel.state;
+                document.getElementById('input-phone').value = hotel.phone === 'Não informado' ? '' : hotel.phone;
+                document.getElementById('input-price').value = hotel.price === 0 ? '' : hotel.price;
+                document.getElementById('input-payment').value = hotel.payment;
+                
+                document.getElementById('input-wifi').checked = hotel.wifi;
+                document.getElementById('input-breakfast').checked = hotel.breakfast;
+                document.getElementById('input-parking').checked = hotel.parking;
+                document.getElementById('input-air').checked = hotel.air;
+                document.getElementById('input-bed').checked = hotel.bed;
+                document.getElementById('input-notes').value = hotel.notes || '';
+                
+                document.getElementById('input-lat').value = hotel.lat || '';
+                document.getElementById('input-lng').value = hotel.lng || '';
+
+                document.getElementById('form-title').innerText = 'Editar Hotel';
+                UI.closeModal('modal-details');
+                Navigation.goTo('form');
+            },
+            confirmDelete: (id) => {
+                AppState.ui.deletingId = id;
+                UI.closeModal('modal-details');
+                UI.openModal('modal-delete');
+            },
+            executeDelete: () => {
+                if(!AppState.ui.deletingId) return;
+                AppState.hotels = AppState.hotels.filter(h => h.id !== AppState.ui.deletingId);
+                App.saveData();
+                UI.closeModal('modal-delete');
+                UI.showToast('Excluído', 'O hotel foi removido do sistema.', 'error');
+                AppState.ui.deletingId = null;
+                
+                if (AppState.map.leafletInstance) {
+                    MapModule.renderHotelMarkers();
+                }
+
+                Render.table();
+            }
+        };
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', CRUD.executeDelete);
+
+        const Render = {
+            getFilteredData: () => {
+                return AppState.hotels.filter(h => {
+                    if (AppState.filters.name) {
+                        if (!h.name.toLowerCase().includes(AppState.filters.name)) return false;
+                    }
+                    if (AppState.filters.location) {
+                        const loc = AppState.filters.location;
+                        const cityStr = h.city.toLowerCase();
+                        const ufStr = h.state.toLowerCase();
+                        const addressStr = (h.address || '').toLowerCase();
+                        const stateNameStr = (STATE_NAMES[h.state] || '').toLowerCase();
+                        
+                        if (!cityStr.includes(loc) && !ufStr.includes(loc) && !addressStr.includes(loc) && !stateNameStr.includes(loc)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }).sort((a, b) => {
+                    const field = AppState.sort.field;
+                    const dir = AppState.sort.dir === 'asc' ? 1 : -1;
+                    if (a[field] < b[field]) return -1 * dir;
+                    if (a[field] > b[field]) return 1 * dir;
+                    return 0;
+                });
+            },
+            table: () => {
+                const data = Render.getFilteredData();
+                const tbody = document.getElementById('table-body');
+                const emptyState = document.getElementById('empty-state');
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    emptyState.classList.add('flex');
+                    document.getElementById('pagination-info').innerText = 'Nenhum resultado';
+                    document.getElementById('pagination-controls').innerHTML = '';
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                const totalPages = Math.ceil(data.length / AppState.pagination.perPage);
+                if (AppState.pagination.current > totalPages) AppState.pagination.current = totalPages;
+                
+                const startIdx = (AppState.pagination.current - 1) * AppState.pagination.perPage;
+                const paginatedData = data.slice(startIdx, startIdx + AppState.pagination.perPage);
+
+                tbody.innerHTML = paginatedData.map(h => {
+                    const priceFmt = h.price > 0 ? `R$ ${h.price.toFixed(2).replace('.', ',')}` : '<span class="text-slate-400 italic">Sob consulta</span>';
+                    
+                    return `
+                        <tr class="hover:bg-brand-50/30 transition-colors group">
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800">${h.name}</div>
+                                ${h.address ? `<div class="text-xs text-slate-500 font-medium">${h.address}</div>` : ''}
+                                <div class="flex gap-1 mt-1 mb-1.5">
+                                    ${h.wifi ? '<i class="ph ph-wifi-high text-brand-500" title="Wi-Fi"></i>' : ''}
+                                    ${h.breakfast ? '<i class="ph ph-coffee text-amber-600" title="Café da Manhã"></i>' : ''}
+                                    ${h.parking ? '<i class="ph ph-car text-slate-500" title="Estacionamento"></i>' : ''}
+                                    ${h.air ? '<i class="ph ph-snowflake text-cyan-500" title="Ar Cond."></i>' : ''}
+                                </div>
+                                ${h.notes ? `<div class="text-[11px] text-slate-500 line-clamp-2 leading-tight bg-slate-50 p-1.5 rounded border border-slate-100" title="${h.notes}"><span class="font-semibold text-slate-600">Obs:</span> ${h.notes}</div>` : ''}
+                            </td>
+                            <td class="p-4 align-top">
+                                <span class="text-slate-700 font-medium">${h.city}</span>
+                                <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded ml-1 font-bold">${h.state}</span>
+                            </td>
+                            <td class="p-4 text-slate-600 font-medium align-top">${h.phone}</td>
+                            <td class="p-4 align-top">
+                                <div class="text-brand-700 font-bold">${priceFmt}</div>
+                                <div class="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5">${h.payment}</div>
+                            </td>
+                            <td class="p-4 text-center align-top">
+                                <div class="flex justify-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity mt-1">
+                                    <button onclick="CRUD.edit('${h.id}')" class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition" title="Editar">
+                                        <i class="ph ph-pencil-simple text-lg"></i>
+                                    </button>
+                                    <button onclick="ViewDetails.open('${h.id}')" class="p-2 bg-slate-100 hover:bg-brand-100 text-slate-600 hover:text-brand-700 rounded-lg transition" title="Visualizar Detalhes">
+                                        <i class="ph ph-eye text-lg"></i>
+                                    </button>
+                                    <button onclick="WhatsApp.openModal('${h.id}')" class="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition" title="Cotar WhatsApp">
+                                        <i class="ph ph-whatsapp-logo text-lg"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('pagination-info').innerText = `Mostrando ${startIdx + 1} a ${Math.min(startIdx + AppState.pagination.perPage, data.length)} de ${data.length} resultados`;
+                
+                let pagHtml = '';
+                pagHtml += `<button onclick="Render.changePage(${AppState.pagination.current - 1})" ${AppState.pagination.current === 1 ? 'disabled' : ''} class="p-1.5 rounded text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"><i class="ph ph-caret-left text-lg"></i></button>`;
+                pagHtml += `<span class="px-3 text-sm font-semibold text-slate-700">${AppState.pagination.current} / ${totalPages}</span>`;
+                pagHtml += `<button onclick="Render.changePage(${AppState.pagination.current + 1})" ${AppState.pagination.current === totalPages ? 'disabled' : ''} class="p-1.5 rounded text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"><i class="ph ph-caret-right text-lg"></i></button>`;
+                
+                document.getElementById('pagination-controls').innerHTML = pagHtml;
+            },
+            changePage: (page) => {
+                AppState.pagination.current = page;
+                Render.table();
+            }
+        };
+
+        const MapModule = {
+            init: () => {
+                const mapContainer = document.getElementById('map-container');
+                if (!mapContainer) return;
+
+                if (!AppState.map.leafletInstance) {
+                    AppState.map.leafletInstance = L.map('map-container', {
+                        zoomControl: true
+                    }).setView([-26.3045, -48.8487], 6);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(AppState.map.leafletInstance);
+                }
+
+                setTimeout(() => {
+                    AppState.map.leafletInstance.invalidateSize();
+                }, 200);
+
+                MapModule.renderHotelMarkers();
+            },
+
+            renderHotelMarkers: () => {
+                const map = AppState.map.leafletInstance;
+                if (!map) return;
+
+                AppState.map.hotelMarkers.forEach(m => map.removeLayer(m.marker));
+                AppState.map.hotelMarkers = [];
+
+                const bounds = L.latLngBounds();
+                let validPinsCount = 0;
+
+                const blueIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color:#2563eb; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 4px 6px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white;"><i class="ph-bold ph-bed text-sm"></i></div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14],
+                    popupAnchor: [0, -14]
+                });
+
+                AppState.hotels.forEach(hotel => {
+                    if (hotel.lat && hotel.lng) {
+                        const marker = L.marker([hotel.lat, hotel.lng], { icon: blueIcon }).addTo(map);
+                        
+                        const priceText = hotel.price > 0 ? `R$ ${hotel.price.toFixed(2).replace('.', ',')}` : 'Sob consulta';
+                        const popupContent = `
+                            <div class="p-3 w-60">
+                                <span class="inline-block px-2 py-0.5 bg-brand-50 text-brand-700 font-bold text-[10px] rounded mb-1">${hotel.city} - ${hotel.state}</span>
+                                <h4 class="font-bold text-slate-800 text-sm leading-snug">${hotel.name}</h4>
+                                ${hotel.address ? `<p class="text-xs text-slate-500 mt-0.5"><i class="ph ph-map-pin"></i> ${hotel.address}</p>` : ''}
+                                <p class="text-xs text-slate-600 mt-1 font-medium"><i class="ph ph-phone"></i> ${hotel.phone}</p>
+                                <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Diária</span>
+                                        <span class="text-xs font-bold text-brand-600">${priceText}</span>
+                                    </div>
+                                    <button onclick="ViewDetails.open('${hotel.id}')" class="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-medium transition shadow-sm">
+                                        Ver detalhes
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+
+                        marker.bindPopup(popupContent);
+                        AppState.map.hotelMarkers.push({ hotelId: hotel.id, marker: marker, hotel: hotel });
+                        
+                        bounds.extend([hotel.lat, hotel.lng]);
+                        validPinsCount++;
+                    }
+                });
+
+                if (validPinsCount > 0 && !AppState.map.destinationCoords) {
+                    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+                }
+
+                MapModule.updateProximityList();
+            },
+
+            searchDestination: async () => {
+                const input = document.getElementById('map-dest-input').value.trim();
+                if (!input) {
+                    UI.showToast('Digite um endereço', 'Informe um endereço de destino para calcular a proximidade.', 'error');
+                    return;
+                }
+
+                const loading = document.getElementById('map-loading');
+                loading.classList.remove('hidden');
+
+                const query = input.includes('Brasil') ? input : `${input}, Brasil`;
+                const result = await geocodeAddress(query);
+
+                loading.classList.add('hidden');
+
+                if (!result) {
+                    UI.showToast('Endereço não encontrado', 'Não conseguimos localizar este endereço. Tente incluir a cidade ou estado.', 'error');
+                    return;
+                }
+
+                AppState.map.destinationCoords = { lat: result.lat, lng: result.lng };
+                AppState.map.destinationAddress = result.displayName;
+
+                const map = AppState.map.leafletInstance;
+
+                if (AppState.map.destMarker) {
+                    map.removeLayer(AppState.map.destMarker);
+                }
+
+                const redDestIcon = L.divIcon({
+                    className: 'custom-dest-icon',
+                    html: `<div style="background-color:#ef4444; width:36px; height:36px; border-radius:50%; border:3px solid white; box-shadow:0 6px 12px rgba(239, 68, 68, 0.5); display:flex; align-items:center; justify-content:center; color:white;" class="animate-bounce"><i class="ph-bold ph-crosshair text-lg"></i></div>`,
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18],
+                    popupAnchor: [0, -18]
+                });
+
+                AppState.map.destMarker = L.marker([result.lat, result.lng], { icon: redDestIcon }).addTo(map);
+                AppState.map.destMarker.bindPopup(`
+                    <div class="p-3 w-56">
+                        <span class="inline-block px-2 py-0.5 bg-red-50 text-red-700 font-bold text-[10px] rounded mb-1">Destino da Viagem</span>
+                        <h4 class="font-bold text-slate-800 text-xs leading-snug">${input}</h4>
+                    </div>
+                `).openPopup();
+
+                map.setView([result.lat, result.lng], 12);
+                MapModule.updateProximityList();
+                UI.showToast('Destino Encontrado!', 'Hotéis ordenados por proximidade do endereço informado.');
+            },
+
+            clearDestination: () => {
+                document.getElementById('map-dest-input').value = '';
+                AppState.map.destinationCoords = null;
+                AppState.map.destinationAddress = '';
+
+                if (AppState.map.destMarker && AppState.map.leafletInstance) {
+                    AppState.map.leafletInstance.removeLayer(AppState.map.destMarker);
+                    AppState.map.destMarker = null;
+                }
+
+                MapModule.renderHotelMarkers();
+                UI.showToast('Destino Limpo', 'O mapa voltou a exibir todos os hotéis cadastrados.');
+            },
+
+            filterByDistance: () => {
+                const select = document.getElementById('map-distance-filter');
+                AppState.map.selectedRadius = select.value;
+                MapModule.updateProximityList();
+            },
+
+            updateProximityList: () => {
+                const listContainer = document.getElementById('map-hotel-list');
+                const countBadge = document.getElementById('map-results-count');
+                const dest = AppState.map.destinationCoords;
+                const radiusFilter = AppState.map.selectedRadius;
+
+                let hotelList = AppState.hotels.map(h => {
+                    let dist = null;
+                    if (dest && h.lat && h.lng) {
+                        dist = calculateDistanceKm(dest.lat, dest.lng, h.lat, h.lng);
+                    }
+                    return { ...h, distance: dist };
+                });
+
+                if (dest) {
+                    hotelList = hotelList.filter(h => h.distance !== null);
+                    hotelList.sort((a, b) => a.distance - b.distance);
+
+                    if (radiusFilter !== 'all') {
+                        const maxKm = parseFloat(radiusFilter);
+                        hotelList = hotelList.filter(h => h.distance <= maxKm);
+                    }
+                } else {
+                    hotelList.sort((a, b) => a.name.localeCompare(b.name));
+                }
+
+                countBadge.innerText = `${hotelList.length} hotéis`;
+
+                if (hotelList.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="p-8 text-center flex flex-col items-center justify-center text-slate-400 h-full">
+                            <i class="ph ph-map-pin-line text-4xl mb-2 text-slate-300"></i>
+                            <p class="text-xs font-semibold text-slate-600">Nenhum hotel no raio selecionado.</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Tente aumentar a distância máxima no filtro.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listContainer.innerHTML = hotelList.map((h, index) => {
+                    const priceFmt = h.price > 0 ? `R$ ${h.price.toFixed(2).replace('.', ',')}` : 'Sob consulta';
+                    const distBadge = h.distance !== null 
+                        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full">
+                             <i class="ph ph-navigation-arrow text-amber-600"></i> ${h.distance < 1 ? (h.distance * 1000).toFixed(0) + ' m' : h.distance.toFixed(1) + ' km'}
+                           </span>`
+                        : '';
+
+                    return `
+                        <div onclick="MapModule.focusHotel('${h.id}')" class="p-3 bg-white rounded-xl border border-slate-200 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 bg-slate-100 text-slate-600 group-hover:bg-brand-600 group-hover:text-white rounded-full flex items-center justify-center text-[10px] font-bold transition">
+                                        ${index + 1}
+                                    </span>
+                                    <h4 class="font-bold text-slate-800 text-xs group-hover:text-brand-600 transition leading-snug line-clamp-1">${h.name}</h4>
+                                </div>
+                                ${distBadge}
+                            </div>
+                            
+                            <div class="mt-2 text-[11px] text-slate-500 space-y-0.5">
+                                <p><i class="ph ph-map-pin"></i> ${h.city} - ${h.state} ${h.address ? `• ${h.address}` : ''}</p>
+                                <p><i class="ph ph-phone"></i> ${h.phone}</p>
+                            </div>
+
+                            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span class="text-xs font-bold text-brand-700">${priceFmt}</span>
+                                <span class="text-[11px] text-brand-600 font-medium group-hover:underline flex items-center gap-1">
+                                    Ver no mapa <i class="ph ph-arrow-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            focusHotel: (hotelId) => {
+                const item = AppState.map.hotelMarkers.find(m => m.hotelId === hotelId);
+                if (item && AppState.map.leafletInstance) {
+                    AppState.map.leafletInstance.setView([item.hotel.lat, item.hotel.lng], 15);
+                    item.marker.openPopup();
+                } else {
+                    UI.showToast('Localização indisponível', 'Este hotel não possui coordenadas mapeadas.', 'error');
+                }
+            }
+        };
+
+        const ViewDetails = {
+            open: (id) => {
+                const hotel = AppState.hotels.find(h => h.id === id);
+                if(!hotel) return;
+
+                document.getElementById('det-name').innerText = hotel.name;
+                document.getElementById('det-location').innerHTML = `<i class="ph ph-map-pin"></i> ${hotel.city} - ${hotel.state}`;
+                document.getElementById('det-phone').innerText = hotel.phone;
+                document.getElementById('det-price').innerText = hotel.price > 0 ? `R$ ${hotel.price.toFixed(2).replace('.',',')}` : 'Sob Consulta';
+                document.getElementById('det-payment').innerText = hotel.payment;
+                
+                const addressContainer = document.getElementById('det-address-container');
+                const addressEl = document.getElementById('det-address');
+                if (hotel.address) {
+                    addressEl.innerText = hotel.address;
+                    addressContainer.classList.remove('hidden');
+                } else {
+                    addressContainer.classList.add('hidden');
+                }
+
+                let amHtml = '';
+                if(hotel.wifi) amHtml += '<span class="px-2 py-1 bg-brand-50 text-brand-700 text-xs rounded-md border border-brand-100 flex items-center gap-1"><i class="ph ph-wifi-high"></i> Wi-Fi</span>';
+                if(hotel.breakfast) amHtml += '<span class="px-2 py-1 bg-amber-50 text-amber-700 text-xs rounded-md border border-amber-100 flex items-center gap-1"><i class="ph ph-coffee"></i> Café</span>';
+                if(hotel.parking) amHtml += '<span class="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-md border border-slate-200 flex items-center gap-1"><i class="ph ph-car"></i> Garagem</span>';
+                if(hotel.air) amHtml += '<span class="px-2 py-1 bg-cyan-50 text-cyan-700 text-xs rounded-md border border-cyan-100 flex items-center gap-1"><i class="ph ph-snowflake"></i> Ar Cond.</span>';
+                if(hotel.bed) amHtml += '<span class="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md border border-purple-100 flex items-center gap-1"><i class="ph ph-bed"></i> Cama Casal</span>';
+                
+                document.getElementById('det-amenities').innerHTML = amHtml || '<span class="text-xs text-slate-400">Nenhuma comodidade registrada.</span>';
+                
+                const notesEl = document.getElementById('det-notes');
+                if(hotel.notes) {
+                    notesEl.innerText = hotel.notes;
+                    notesEl.parentElement.classList.remove('hidden');
+                } else {
+                    notesEl.parentElement.classList.add('hidden');
+                }
+
+                document.getElementById('det-btn-edit').onclick = () => CRUD.edit(id);
+                document.getElementById('det-btn-wa').onclick = () => WhatsApp.openModal(id);
+                
+                const delBtn = document.createElement('button');
+                delBtn.className = 'text-slate-400 hover:text-red-400 bg-white/10 hover:bg-white/20 p-1.5 rounded-lg transition ml-2';
+                delBtn.innerHTML = '<i class="ph ph-trash text-xl"></i>';
+                delBtn.onclick = () => CRUD.confirmDelete(id);
+                
+                const modalHeaderRight = document.querySelector('#modal-details .pr-4').nextElementSibling;
+                if(modalHeaderRight.previousElementSibling && modalHeaderRight.previousElementSibling.tagName === 'BUTTON') {
+                     modalHeaderRight.parentElement.insertBefore(delBtn, modalHeaderRight);
+                } else {
+                    modalHeaderRight.parentElement.insertBefore(delBtn, modalHeaderRight);
+                    const buttons = modalHeaderRight.parentElement.querySelectorAll('button:not(:last-child)');
+                    if(buttons.length > 1) buttons[0].remove();
+                }
+
+                UI.openModal('modal-details');
+            }
+        };
+
+        const WhatsApp = {
+            openModal: (id) => {
+                document.getElementById('wa-hotel-id').value = id;
+                document.getElementById('form-whatsapp').reset();
+                document.getElementById('wa-error').classList.add('hidden');
+                
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                const formatISO = (date) => {
+                    const y = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, '0');
+                    const d = String(date.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+
+                document.getElementById('wa-checkin').value = formatISO(today);
+                document.getElementById('wa-checkout').value = formatISO(tomorrow);
+
+                UI.closeModal('modal-details');
+                UI.openModal('modal-whatsapp');
+            },
+            submit: (e) => {
+                e.preventDefault();
+                const id = document.getElementById('wa-hotel-id').value;
+                const hotel = AppState.hotels.find(h => h.id === id);
+                if(!hotel) return;
+
+                const checkinStr = document.getElementById('wa-checkin').value;
+                const checkoutStr = document.getElementById('wa-checkout').value;
+                const guests = document.getElementById('wa-guests').value;
+                const errorEl = document.getElementById('wa-error');
+
+                if(!checkinStr || !checkoutStr) {
+                    errorEl.innerText = "Preencha as datas de Check-in e Check-out.";
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                const dIn = new Date(checkinStr + "T12:00:00");
+                const dOut = new Date(checkoutStr + "T12:00:00");
+
+                if (dOut <= dIn) {
+                    errorEl.innerText = "Atenção: A data de Check-out deve ser posterior ao Check-in.";
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                errorEl.classList.add('hidden');
+
+                const timeDiff = dOut.getTime() - dIn.getTime();
+                const nights = Math.round(timeDiff / (1000 * 3600 * 24));
+
+                const formatBrDate = (dateStr) => {
+                    const [y, m, d] = dateStr.split('-');
+                    return `${d}/${m}/${y}`;
+                };
+
+                const rawPhone = hotel.phone.split('/')[0];
+                const cleanPhone = rawPhone.replace(/\D/g, '');
+                
+                if(cleanPhone.length < 10) {
+                    UI.showToast('Erro', 'Número de telefone inválido ou não cadastrado.', 'error');
+                    return;
+                }
+
+                const finalPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+                
+                const msg = `Olá! Sou da equipe de gestão corporativa de viagens.\n\nGostaria de verificar a disponibilidade e solicitar uma cotação para o hotel *${hotel.name}* (${hotel.city}-${hotel.state}).\n\n📋 *Detalhes para Cotação:*\n• Quantidade de hóspedes/técnicos: ${guests}\n• Data de Check-in: ${formatBrDate(checkinStr)}\n• Data de Check-out: ${formatBrDate(checkoutStr)}\n• Quantidade de noites: ${nights}\n• Método de Pagamento preferencial: ${hotel.payment}\n\nFico no aguardo, obrigado!`;
+                
+                window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                UI.closeModal('modal-whatsapp');
+            }
+        };
+
+        // Inicializado pelo core.js após o login
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            App.init();
+        };
+
+    </script>
+    <script type="module" src="core.js"></script>
+</body>
+</html>

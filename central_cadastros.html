@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="pt-BR"><head><title>Cadastros & Ativos - Portal CIJ</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="erp-cadastros-v4-3.css?v=20261002-central1"></head>
+<body data-erp-page="dashboard">
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto erp-scroll">
+<div class="max-w-[1500px] mx-auto p-2 md:p-3 space-y-2.5"><nav class="erp-card p-1.5 erp-nav">
+<a href="central_cadastros.html" data-page="dashboard"><i class="fa-solid fa-grid-2"></i> Visão geral</a>
+<a href="cadastros_clientes.html" data-page="clientes"><i class="fa-solid fa-building"></i> Clientes</a>
+<a href="cadastros_modelos.html" data-page="modelos"><i class="fa-solid fa-microchip"></i> Modelos</a>
+<a href="cadastros_consumiveis.html" data-page="consumiveis"><i class="fa-solid fa-droplet"></i> Consumíveis</a>
+<a href="parque_maquinas.html" data-page="parque"><i class="fa-solid fa-industry"></i> Parque de Máquinas</a>
+</nav>
+<script>document.addEventListener('DOMContentLoaded',()=>{const p=document.body.dataset.erpPage||'',k=p==='cliente-ficha'?'clientes':p==='parque-ficha'?'parque':p;document.querySelector(`[data-page="${k}"]`)?.classList.add('active')});</script><div class="erp-card erp-page-head p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div><span class="erp-pill bg-blue-50 text-blue-700 border border-blue-200">BASE MESTRE MULTIPÁGINA</span><h1 class="erp-page-title mt-2">Cadastros & Ativos</h1><p class="erp-muted mt-1">Clientes, modelos, consumíveis e máquinas físicas em páginas separadas.</p></div>
+<a href="cadastros_clientes.html" class="erp-btn erp-btn-primary"><i class="fa-solid fa-plus"></i> Cadastrar cliente</a></div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><div class="erp-kpi"><span>Clientes ativos</span><b id="kpi-clientes">0</b></div><div class="erp-kpi"><span>Modelos ativos</span><b id="kpi-modelos">0</b></div><div class="erp-kpi"><span>Máquinas no parque</span><b id="kpi-parque">0</b></div><div class="erp-kpi"><span>Consumíveis abaixo do mínimo</span><b id="kpi-baixo">0</b></div></div>
+<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+<a class="erp-home-card" href="cadastros_clientes.html"><div class="w-11 h-11 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg"><i class="fa-solid fa-building"></i></div><h2 class="font-black mt-3">Clientes</h2><p class="erp-muted mt-1">Cadastro completo, observações, máquinas, OS e OSR.</p></a>
+<a class="erp-home-card" href="cadastros_modelos.html"><div class="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg"><i class="fa-solid fa-microchip"></i></div><h2 class="font-black mt-3">Modelos</h2><p class="erp-muted mt-1">Marca, modelo, tipo e categoria para padronização.</p></a>
+<a class="erp-home-card" href="parque_maquinas.html"><div class="w-11 h-11 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center text-lg"><i class="fa-solid fa-industry"></i></div><h2 class="font-black mt-3">Parque de Máquinas</h2><p class="erp-muted mt-1">Série, cliente, venda, garantia, QR e histórico.</p></a>
+<a class="erp-home-card" href="cadastros_consumiveis.html"><div class="w-11 h-11 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center text-lg"><i class="fa-solid fa-droplet"></i></div><h2 class="font-black mt-3">Consumíveis</h2><p class="erp-muted mt-1">Cadastro operacional e estoque, sem preços.</p></a>
+</div></div></main>
+<script type="module" src="core.js?v=20261002-central1"></script>
+<script src="erp-cadastros-v4-3-2.js?v=20261002-central1"></script>
+</body></html>

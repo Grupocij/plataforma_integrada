@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Central de OS — Portal CIJ</title>
+ <link rel="manifest" href="manifest.json">
+ <script src="https://cdn.tailwindcss.com"></script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <link rel="stylesheet" href="central-os.css?v=20261002-central1">
+</head>
+<body>
+ <main id="main-content" class="hidden">
+  <div class="cos-wrap">
+   <section class="cos-titlebar">
+    <div><div class="cos-eyebrow">SERVIÇOS / CONSULTA E RESULTADOS</div><h1>Central de OS</h1><p>Encontre os atendimentos, acompanhe os resultados e consulte o faturamento.</p></div>
+    <div class="cos-actions"><button id="cos-refresh" class="cos-btn" type="button"><i class="fa-solid fa-rotate"></i> Atualizar</button><a id="cos-new" class="cos-btn cos-primary hidden" href="assistencia.html?novaOS=1"><i class="fa-solid fa-plus"></i> Criar OS</a></div>
+   </section>
+   <div id="cos-status" role="status" aria-live="polite" class="cos-status">Preparando a consulta…</div>
+   <section class="cos-card cos-filters" aria-label="Filtros da consulta">
+    <form id="cos-filter-form">
+     <div class="cos-filter-grid">
+      <label>Número da OS<input id="cos-number" placeholder="Ex.: OS-00125" autocomplete="off"></label>
+      <label>Cliente<input id="cos-client" list="cos-clients" placeholder="Nome do cliente" autocomplete="off"><datalist id="cos-clients"></datalist></label>
+      <label>Situação da OS<select id="cos-stage"><option value="FINALIZADAS">Finalizadas / Encerradas</option><option value="TODAS">Todas as situações</option><option value="ENCERRADOS">Encerradas administrativamente</option><option value="FATURAMENTO">Finalizadas, aguardando faturamento</option><option value="ENTRADA">Entrada</option><option value="TRIAGEM">Triagem / Diagnóstico</option><option value="ORCAMENTOS">Orçamentos</option><option value="AGENDAMENTO">Agendamento / Execução</option><option value="CANCELADOS">Canceladas</option></select></label>
+      <label>Data de referência<select id="cos-date-field"><option value="finished">Finalização técnica</option><option value="closed">Encerramento administrativo</option><option value="created">Criação da OS</option><option value="invoiceDate">Faturamento</option></select></label>
+      <label>De<input type="date" id="cos-from"></label><label>Até<input type="date" id="cos-to"></label>
+      <label>Técnico<input id="cos-tech" list="cos-techs" placeholder="Nome do técnico"><datalist id="cos-techs"></datalist></label>
+      <label>Equipamento / Série<input id="cos-equipment" placeholder="Modelo ou número de série"></label>
+      <label id="cos-financial-filter" class="hidden">Faturamento<select id="cos-financial"><option value="">Todas as situações</option><option value="FATURADO">Faturado</option><option value="PENDENTE">Pendente</option><option value="NAO_FATURAVEL">Não faturável</option></select></label>
+      <label>Tipo de atendimento<select id="cos-kind"><option value="">Todos</option><option value="INTERNO">Interno / Laboratório</option><option value="EXTERNO">Externo / Campo</option></select></label>
+     </div>
+     <div class="cos-filter-footer"><span id="cos-scope"></span><div class="cos-actions"><button type="button" id="cos-clear" class="cos-btn">Limpar filtros</button><button type="submit" class="cos-btn cos-primary"><i class="fa-solid fa-filter"></i> Aplicar filtros</button></div></div>
+    </form>
+   </section>
+   <div class="cos-tabs" role="tablist" aria-label="Visualização da central"><button type="button" id="cos-tab-orders" role="tab" aria-selected="true" aria-controls="cos-panel-orders" data-tab="orders" class="active"><i class="fa-solid fa-table-list"></i> Ordens de serviço</button><button type="button" id="cos-tab-indicators" role="tab" aria-selected="false" aria-controls="cos-panel-indicators" data-tab="indicators" class="hidden"><i class="fa-solid fa-chart-column"></i> Indicadores</button><button type="button" id="cos-tab-finance" role="tab" aria-selected="false" aria-controls="cos-panel-finance" data-tab="finance" class="hidden"><i class="fa-solid fa-file-invoice-dollar"></i> Faturamento</button></div>
+   <section id="cos-panel-orders" role="tabpanel" aria-labelledby="cos-tab-orders">
+    <div class="cos-card">
+     <div class="cos-table-head"><div><h2>Ordens de serviço</h2><p id="cos-count">Carregando…</p></div><div class="cos-actions"><label class="cos-sort-label">Ordenar<select id="cos-sort"><option value="finished-desc">Finalização mais recente</option><option value="created-desc">Criação mais recente</option><option value="number-desc">Número da OS</option><option value="client-asc">Cliente A–Z</option></select></label><button type="button" id="cos-export" class="cos-btn hidden"><i class="fa-solid fa-download"></i> Exportar CSV</button></div></div>
+     <div class="cos-table-scroll"><table class="cos-table"><thead id="cos-orders-head"></thead><tbody id="cos-orders-body"></tbody></table></div><div id="cos-pager" class="cos-pager"></div>
+    </div>
+   </section>
+   <section id="cos-panel-indicators" class="hidden" role="tabpanel" aria-labelledby="cos-tab-indicators"><div id="cos-indicator-cards" class="cos-kpis"></div><div class="cos-charts"><section class="cos-card cos-chart"><h2>Atendimentos por situação</h2><div id="cos-by-stage"></div></section><section class="cos-card cos-chart"><h2>Atendimentos por cliente</h2><div id="cos-by-client"></div></section><section class="cos-card cos-chart"><h2>Atendimentos por técnico / equipe</h2><p>Cada atendimento é contado uma vez, pela equipe registrada na OS.</p><div id="cos-by-tech"></div></section><section class="cos-card cos-chart"><h2>Finalizações por mês</h2><div id="cos-by-month"></div></section></div></section>
+   <section id="cos-panel-finance" class="hidden" role="tabpanel" aria-labelledby="cos-tab-finance"><p class="cos-note">Valores registrados nas OS do filtro atual. Faturado corresponde à NF informada, sem representar pagamento recebido. Versões antigas de orçamento não são somadas novamente.</p><div id="cos-finance-cards" class="cos-kpis"></div><div class="cos-charts"><section class="cos-card cos-chart"><h2>Faturamento por mês da NF</h2><div id="cos-revenue-month"></div></section><section class="cos-card cos-chart"><h2>Faturamento por cliente</h2><div id="cos-revenue-client"></div></section></div><section class="cos-card"><div class="cos-table-head"><div><h2>Conferência de faturamento</h2><p>Uma linha por ciclo de atendimento. Ciclos anteriores ficam identificados.</p></div></div><div class="cos-table-scroll"><table class="cos-table"><thead><tr><th>OS / Ciclo</th><th>Cliente</th><th>Situação</th><th>NF</th><th>Data da NF</th><th class="cos-right">Orçado</th><th class="cos-right">Aprovado</th><th class="cos-right">Faturado</th><th class="cos-right">Diferença</th></tr></thead><tbody id="cos-finance-body"></tbody></table></div><div id="cos-finance-pager" class="cos-pager"></div></section></section>
+  </div>
+ </main>
+ <div id="cos-detail" class="cos-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cos-detail-title"><section class="cos-modal-card"><div class="cos-detail-head"><div><div class="cos-eyebrow">CONSULTA DA ORDEM DE SERVIÇO</div><h2 id="cos-detail-title">OS</h2></div><button type="button" id="cos-detail-close" class="cos-btn" aria-label="Fechar detalhes"><i class="fa-solid fa-xmark"></i></button></div><div id="cos-detail-content"></div><div class="cos-detail-footer"><button type="button" id="cos-detail-dismiss" class="cos-btn">Fechar</button><a id="cos-open-assist" class="cos-btn cos-primary hidden">Abrir na Assistência</a></div></section></div>
+ <script src="central-os-dados.js?v=20261002-central1"></script>
+ <script src="central-os.js?v=20261002-central1"></script>
+ <script type="module" src="core.js?v=20261002-central1"></script>
+</body></html>

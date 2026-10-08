@@ -5,331 +5,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Veículos - Portal Grupo CIJ</title>
     
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0f172a/ffffff.png?text=CIJ">
-    
-    <!-- Tailwind CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ExcelJS & FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
-        .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
-        
         .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
-        
-        .mega-menu { transition: all 0.2s ease-in-out; transform-origin: top; }
-        .group:hover .mega-menu { opacity: 1; visibility: visible; transform: scale(1); }
         @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .alert-pulse { animation: pulse-slow 1.5s infinite; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50">
 
-    <!-- TELA DE LOGIN / BLOQUEIO -->
-    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
-            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
-            <p id="login-message" class="text-xs text-slate-500">Autenticando acesso ao módulo...</p>
-            <form id="auth-form" onsubmit="handleLogin(event)" class="space-y-4 text-left">
-                <input type="email" id="auth-email" required placeholder="E-mail" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-600 font-medium">
-                <input type="password" id="auth-password" required placeholder="Senha" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-blue-600">
-                <button type="submit" class="w-full py-3 bg-[#002d72] hover:bg-blue-900 text-white font-extrabold rounded-xl text-xs transition shadow-lg">Entrar</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- CABEÇALHO SUPERIOR FIXO -->
-    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-[9990] h-16 shrink-0 w-full">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-            <div class="flex items-center justify-between h-full gap-4">
-                
-                <!-- LOGO -->
-                <div class="flex items-center gap-3 shrink-0">
-                    <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 hidden sm:flex">
-                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
-                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">PORTAL CIJ</span>
-                            <span id="user-role-badge-top" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MENU SUPERIOR DESKTOP (MEGA DROPDOWNS) -->
-                <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center h-full">
-                    
-                    <div id="top-nav-tecnica" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-wrench text-teal-400"></i> Técnica <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
-                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
-                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Módulos Operacionais</span></div>
-                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
-                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Andamento de instalações</p></div></a>
-                                <a href="simulador.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calculator"></i></div><div><h4 class="text-xs font-bold text-slate-900">Simulador Financeiro</h4><p class="text-[10px] text-slate-500 mt-0.5">Projeção de consumos</p></div></a>
-                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Viagens e refeições</p></div></a>
-                                <a href="veiculos_mobile.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-car"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Mobile</h4><p class="text-[10px] text-slate-500 mt-0.5">Retirada de frota</p></div></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="top-nav-vendas" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
-                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[38rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
-                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Área de Vendas & Comercial</span></div>
-                            <div class="p-2 grid grid-cols-3 gap-1 text-slate-800">
-                                <a href="solicitacao.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-signature"></i></div><div><h4 class="text-xs font-bold text-slate-900">Solicitação CIJ</h4><p class="text-[10px] text-slate-500 mt-0.5">Especificação técnica</p></div></a>
-                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista de Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Consulta e andamento</p></div></a>
-                                <a href="simulador.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calculator"></i></div><div><h4 class="text-xs font-bold text-slate-900">Simulador Financeiro</h4><p class="text-[10px] text-slate-500 mt-0.5">Projeção para clientes</p></div></a>
-                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle de Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Lançamentos e reembolso</p></div></a>
-                                <a href="veiculos_mobile.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-car"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Mobile</h4><p class="text-[10px] text-slate-500 mt-0.5">Retirada da frota</p></div></a>
-                                <a href="tabelas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf"></i></div><div><h4 class="text-xs font-bold text-slate-900">Documentos Oficiais</h4><p class="text-[10px] text-slate-500 mt-0.5">Manuais e arquivos</p></div></a>
-                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Acompanhamento vendas</p></div></a>
-                                <a href="estoque.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4 class="text-xs font-bold text-slate-900">Estoque Equipamentos</h4><p class="text-[10px] text-slate-500 mt-0.5">Consulta de máquinas</p></div></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="top-nav-admin" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-shield-halved text-purple-400"></i> Admin <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
-                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[32rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
-                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrativo & Operações</span></div>
-                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
-                                <a href="estoque.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4 class="text-xs font-bold text-slate-900">Estoque Equipamentos</h4><p class="text-[10px] text-slate-500 mt-0.5">Gestão de entradas e saídas</p></div></a>
-                                <a href="veiculos.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center shrink-0"><i class="fa-solid fa-car-tunnel"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Gerencial</h4><p class="text-[10px] text-slate-500 mt-0.5">Auditoria da frota</p></div></a>
-                                <a href="vendas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-cart-shopping"></i></div><div><h4 class="text-xs font-bold text-slate-900">Vendas (Saídas)</h4><p class="text-[10px] text-slate-500 mt-0.5">Registro faturado</p></div></a>
-                                <a href="admin.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-shield-halved"></i></div><div><h4 class="text-xs font-bold text-slate-900">Painel Diretoria</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de comissões</p></div></a>
-                                <a href="usuarios.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-100 flex items-center justify-center shrink-0"><i class="fa-solid fa-users-gear"></i></div><div><h4 class="text-xs font-bold text-slate-900">Gerenciar Usuários</h4><p class="text-[10px] text-slate-500 mt-0.5">Permissões e senhas</p></div></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="top-nav-financeiro" class="relative group h-full flex items-center hidden">
-                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
-                        <div class="mega-menu absolute top-14 right-0 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
-                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Gestão Financeira & Resultados</span></div>
-                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
-                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle de Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de reembolsos</p></div></a>
-                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Liquidação de vendas</p></div></a>
-                                <a href="dashboard-equip.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-pie"></i></div><div><h4 class="text-xs font-bold text-slate-900">Dashboard Gerencial</h4><p class="text-[10px] text-slate-500 mt-0.5">Faturamento e lucros</p></div></a>
-                                <a href="comissoes-consumiveis.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div><div><h4 class="text-xs font-bold text-slate-900">Com. Consumíveis</h4><p class="text-[10px] text-slate-500 mt-0.5">Contratos e renovações</p></div></a>
-                            </div>
-                        </div>
-                    </div>
-
-                </nav>
-
-                <!-- BOTÕES DIREITA -->
-                <div class="flex items-center gap-2 shrink-0">
-                    <a href="index.html" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition items-center gap-1.5"><i class="fa-solid fa-house"></i> Home</a>
-                    <button onclick="fazerLogout()" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
-                    <!-- BOTÃO HAMBURGUER (MOBILE) -->
-                    <button onclick="toggleMobileMenu()" class="lg:hidden text-slate-300 hover:text-white text-xl p-1 px-2 border border-slate-700 rounded-lg bg-slate-800">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </header>
-
-    <div class="flex flex-1 relative w-full h-full">
+    <!-- ÁREA CENTRAL DE CONTEÚDO (MÓDULO VEÍCULOS GERENCIAL) -->
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
         
-        <!-- MENU LATERAL (OVERLAY APENAS MOBILE) -->
-        <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/60 z-[105] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm lg:hidden"></div>
-        <div id="mobile-sidebar" class="fixed inset-y-0 right-0 w-[280px] bg-[#0f172a] shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 border-l border-slate-700 flex flex-col lg:hidden">
-            <div class="p-5 flex justify-between items-center border-b border-slate-800 bg-[#0b1120]"><span class="font-bold text-white text-sm uppercase tracking-wider">Módulos do Sistema</span><button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white text-2xl"><i class="fa-solid fa-xmark"></i></button></div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-                
-                <div id="mob-tecnica" class="hidden">
-                    <button onclick="toggleMobSubmenu('sub-tecnica')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700"><span class="flex items-center gap-2"><i class="fa-solid fa-wrench text-emerald-400"></i> Técnica</span><i id="sub-tecnica-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
-                    <div id="sub-tecnica" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
-                        <a href="solicitacoes-lista.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-400"><i class="fa-solid fa-list-check text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Lista Solicitações</span></a>
-                        <a href="simulador.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-calculator text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Simulador Financeiro</span></a>
-                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle Despesas</span></a>
-                        <a href="veiculos_mobile.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-500"><i class="fa-solid fa-car text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Mobile</span></a>
-                    </div>
-                </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3"><i class="fa-solid fa-car-tunnel text-teal-600"></i> Painel Gerencial de Veículos</h2>
+            <p class="text-sm text-slate-500 mt-1">Auditoria de KM, relatórios de uso e controle de manutenção (Óleo).</p>
+        </div>
 
-                <div id="mob-vendas" class="hidden">
-                    <button onclick="toggleMobSubmenu('sub-vendas')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial</span><i id="sub-vendas-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
-                    <div id="sub-vendas" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
-                        <a href="solicitacao.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-blue-900/50 flex items-center justify-center shrink-0 border border-blue-800 text-blue-400"><i class="fa-solid fa-file-signature text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Solicitação CIJ</span></a>
-                        <a href="solicitacoes-lista.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-400"><i class="fa-solid fa-list-check text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Lista de Solicitações</span></a>
-                        <a href="simulador.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-calculator text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Simulador Financeiro</span></a>
-                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle de Despesas</span></a>
-                        <a href="veiculos_mobile.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-500"><i class="fa-solid fa-car text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Mobile</span></a>
-                        <a href="tabelas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-400"><i class="fa-solid fa-file-pdf text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Documentos Oficiais</span></a>
-                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
-                        <a href="estoque.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-cyan-900/50 flex items-center justify-center shrink-0 border border-cyan-800 text-cyan-400"><i class="fa-solid fa-boxes-stacked text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Estoque Equipamentos</span></a>
-                    </div>
-                </div>
-
-                <div id="mob-admin" class="hidden">
-                    <button onclick="toggleMobSubmenu('sub-admin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-purple-400"></i> Administração</span><i id="sub-admin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
-                    <div id="sub-admin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
-                        <a href="estoque.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-cyan-900/50 flex items-center justify-center shrink-0 border border-cyan-800 text-cyan-400"><i class="fa-solid fa-boxes-stacked text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Estoque Equipamentos</span></a>
-                        <a href="veiculos.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-car-tunnel text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Gerencial</span></a>
-                        <a href="vendas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-rose-900/50 flex items-center justify-center shrink-0 border border-rose-800 text-rose-400"><i class="fa-solid fa-cart-shopping text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Vendas (Saídas)</span></a>
-                        <a href="admin.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-purple-900/50 flex items-center justify-center shrink-0 border border-purple-800 text-purple-400"><i class="fa-solid fa-shield-halved text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Painel Administrativo</span></a>
-                        <a href="usuarios.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center shrink-0 border border-slate-700 text-slate-200"><i class="fa-solid fa-users-gear text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Gerenciar Usuários</span></a>
-                    </div>
-                </div>
-
-                <div id="mob-financeiro" class="hidden">
-                    <button onclick="toggleMobSubmenu('sub-fin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro</span><i id="sub-fin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
-                    <div id="sub-fin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
-                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle de Despesas</span></a>
-                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
-                        <a href="dashboard-equip.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-500"><i class="fa-solid fa-chart-pie text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Dashboard Gerencial</span></a>
-                        <a href="comissoes-consumiveis.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-400"><i class="fa-solid fa-file-invoice-dollar text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Com. Consumíveis</span></a>
-                    </div>
-                </div>
-
-            </div>
-            <div class="p-4 border-t border-slate-800 bg-[#0b1120]">
-                <button onclick="fazerLogout()" class="w-full py-2.5 rounded-xl text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition flex items-center justify-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
+        <!-- PAINEL DE STATUS DA FROTA -->
+        <div class="space-y-3">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-car text-teal-600"></i> Status Atual e Manutenção da Frota (Alerta a cada 10.000 km)
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="frota-status-cards">
+                <!-- Injetado dinamicamente via JS -->
             </div>
         </div>
 
-        <!-- ÁREA CENTRAL DE CONTEÚDO (MÓDULO VEÍCULOS) SEM MARGEM LATERAL LG -->
-        <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6">
-            
-            <!-- TÍTULO DO MÓDULO -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3"><i class="fa-solid fa-car-tunnel text-teal-600"></i> Painel Gerencial de Veículos</h2>
-                <p class="text-sm text-slate-500 mt-1">Auditoria de KM, relatórios de uso e controle de manutenção (Óleo).</p>
-            </div>
-
-            <!-- PAINEL DE STATUS DA FROTA (MANUTENÇÃO / ÓLEO) -->
-            <div class="space-y-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-car text-teal-600"></i> Status Atual e Manutenção da Frota (Alerta a cada 10.000 km)
+        <!-- FORMULÁRIO DE REGISTRO DE USO -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+                <h3 id="formTitleUso" class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-route text-teal-600"></i> Editar/Registrar Uso de Veículo
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="frota-status-cards">
-                    <!-- Injetado dinamicamente via JS para Gol, Polo, Polo Track -->
-                </div>
+                <button type="button" id="btnCancelEditUso" onclick="window.resetFormUso()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
+                    Cancelar Edição
+                </button>
             </div>
 
-            <!-- FORMULÁRIO DE REGISTRO DE USO -->
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
-                    <h3 id="formTitleUso" class="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-route text-teal-600"></i> Editar/Registrar Uso de Veículo
-                    </h3>
-                    <button type="button" id="btnCancelEditUso" onclick="resetFormUso()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition border border-slate-300">
-                        Cancelar Edição
-                    </button>
-                </div>
-
-                <form id="usoForm" onsubmit="salvarUsoVeiculo(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Veículo *</label>
-                            <select id="u_veiculo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-teal-600">
-                                <option value="Gol">Volkswagen Gol</option>
-                                <option value="Polo">Volkswagen Polo</option>
-                                <option value="Polo Track">Volkswagen Polo Track</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Data *</label>
-                            <input type="date" id="u_data" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-teal-600">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Usuário / Motorista *</label>
-                            <input type="text" id="u_usuario" required placeholder="Nome do usuário" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-teal-600">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">KM de Saída *</label>
-                            <input type="number" min="0" id="u_km_saida" required placeholder="Ex: 45000" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-teal-600">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">KM de Chegada (Opcional)</label>
-                            <input type="number" min="0" id="u_km_chegada" placeholder="Deixe vazio se estiver em uso" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-teal-600">
-                        </div>
-                        <div class="lg:col-span-3">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Destino / Observações / Finalidade</label>
-                            <input type="text" id="u_obs" placeholder="Ex: Visita a cliente em Joinville, viagem de rotina..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-teal-600">
-                        </div>
-                    </div>
-                    <div class="flex justify-end pt-3">
-                        <button type="submit" id="btnSubmitUso" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2">
-                            <i class="fa-solid fa-save"></i> Registrar / Atualizar
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- HISTÓRICO E FILTROS -->
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
-                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-teal-600"></i> Histórico de Utilização dos Veículos
-                    </h3>
-                    <button onclick="exportarExcelVeiculos()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-excel"></i> Exportar Excel
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <form id="usoForm" onsubmit="window.salvarUsoVeiculo(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Veículo</label>
-                        <select id="filtroVeiculo" onchange="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
-                            <option value="">Todos os Veículos</option>
-                            <option value="Gol">Gol</option>
-                            <option value="Polo">Polo</option>
-                            <option value="Polo Track">Polo Track</option>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Veículo *</label>
+                        <select id="u_veiculo" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-semibold outline-none focus:border-teal-600 transition cursor-pointer">
+                            <option value="Gol">Volkswagen Gol</option>
+                            <option value="Polo">Volkswagen Polo</option>
+                            <option value="Polo Track">Volkswagen Polo Track</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Usuário</label>
-                        <input type="text" id="filtroUsuario" placeholder="Nome..." oninput="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Data *</label>
+                        <input type="date" id="u_data" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-teal-600 transition cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
-                        <input type="date" id="filtroDataDe" onchange="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Usuário / Motorista *</label>
+                        <input type="text" id="u_usuario" required placeholder="Nome do usuário" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-teal-600 transition">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
-                        <input type="date" id="filtroDataAte" onchange="renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">KM de Saída *</label>
+                        <input type="number" min="0" id="u_km_saida" required placeholder="Ex: 45000" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-teal-600 transition shadow-inner">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">KM de Chegada (Opcional)</label>
+                        <input type="number" min="0" id="u_km_chegada" placeholder="Deixe vazio se estiver em uso" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-teal-600 transition">
+                    </div>
+                    <div class="lg:col-span-3">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Destino / Observações / Finalidade</label>
+                        <input type="text" id="u_obs" placeholder="Ex: Visita a cliente em Joinville..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-teal-600 transition">
                     </div>
                 </div>
+                <div class="flex justify-end pt-4 mt-2 border-t border-slate-100">
+                    <button type="submit" id="btnSubmitUso" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-8 rounded-xl transition shadow-md text-sm flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-save"></i> Registrar / Atualizar
+                    </button>
+                </div>
+            </form>
+        </div>
 
-                <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
-                    <table class="w-full text-left border-collapse min-w-[900px] text-xs">
-                        <thead>
-                            <tr class="bg-slate-900 text-white font-bold">
-                                <th class="p-3">Veículo</th>
-                                <th class="p-3">Data</th>
-                                <th class="p-3">Usuário</th>
-                                <th class="p-3 text-right">KM Saída</th>
-                                <th class="p-3 text-right">KM Chegada</th>
-                                <th class="p-3 text-right">KM Rodados</th>
-                                <th class="p-3">Observações</th>
-                                <th class="p-3 text-center no-print">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaUso" class="divide-y divide-slate-200 font-medium bg-white">
-                        </tbody>
-                    </table>
+        <!-- HISTÓRICO E FILTROS -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 mb-10">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-teal-600"></i> Histórico de Utilização dos Veículos
+                </h3>
+                <button onclick="window.exportarExcelVeiculos()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Veículo</label>
+                    <select id="filtroVeiculo" onchange="window.renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600 cursor-pointer">
+                        <option value="">Todos os Veículos</option>
+                        <option value="Gol">Gol</option>
+                        <option value="Polo">Polo</option>
+                        <option value="Polo Track">Polo Track</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Usuário</label>
+                    <input type="text" id="filtroUsuario" placeholder="Nome..." oninput="window.renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                    <input type="date" id="filtroDataDe" onchange="window.renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                    <input type="date" id="filtroDataAte" onchange="window.renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-teal-600 cursor-pointer">
                 </div>
             </div>
 
-        </main>
-    </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar mt-3">
+                <table class="w-full text-left border-collapse min-w-[900px] text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th class="p-3">Veículo</th>
+                            <th class="p-3">Data</th>
+                            <th class="p-3">Usuário</th>
+                            <th class="p-3 text-right">KM Saída</th>
+                            <th class="p-3 text-right">KM Chegada</th>
+                            <th class="p-3 text-right">KM Rodados</th>
+                            <th class="p-3">Observações</th>
+                            <th class="p-3 text-center no-print">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaUso" class="divide-y divide-slate-200 font-medium bg-white text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
     <!-- MODAL DE CONFIRMAÇÃO DE AÇÃO -->
     <div id="modalAcaoConfirmacao" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
@@ -337,8 +152,8 @@
             <h4 id="modalAcaoTitulo" class="text-base font-bold text-slate-900"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> Confirmação</h4>
             <p id="modalAcaoTexto" class="text-xs text-slate-600">Deseja realmente executar esta ação?</p>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="fecharModalAcao()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
-                <button id="modalAcaoBtnSim" onclick="" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition">Confirmar</button>
+                <button onclick="window.fecharModalAcao()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar</button>
+                <button id="modalAcaoBtnSim" onclick="" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Confirmar</button>
             </div>
         </div>
     </div>
@@ -349,213 +164,60 @@
             <h4 class="text-base font-bold text-slate-900"><i class="fa-solid fa-oil-can text-teal-600 mr-2"></i> Registrar Troca de Óleo</h4>
             <p class="text-xs text-slate-600">Deseja reiniciar o contador de manutenção para o veículo <strong id="oleoVeiculoNome">Gol</strong>? O marcador de óleo será zerado a partir do KM atual.</p>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="fecharModalOleo()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
-                <button id="btnConfirmarOleo" onclick="" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition">Sim, Registrar Troca</button>
+                <button onclick="window.fecharModalOleo()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar</button>
+                <button id="btnConfirmarOleo" onclick="" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition cursor-pointer">Sim, Registrar Troca</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-5 right-5 hidden z-[9999] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i><span id="toast-message" class="text-xs font-semibold">Sucesso!</span></div>
+    <!-- MOTOR CENTRAL DO SISTEMA -->
+    <script type="module" src="core.js"></script>
 
-    <!-- SCRIPT DE INSTALAÇÃO DO SERVICE WORKER (OFFLINE) -->
+    <!-- LÓGICA DO MÓDULO VEÍCULOS -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erro PWA:', err));
-            });
-        }
-    </script>
-
-    <!-- SCRIPTS DE UI: MENUS E MODAIS -->
-    <script>
-        window.toggleMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('mobile-overlay');
-            if(sidebar.classList.contains('translate-x-full')) {
-                sidebar.classList.remove('translate-x-full');
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            } else {
-                sidebar.classList.add('translate-x-full');
-                overlay.classList.add('opacity-0');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            }
-        };
-
-        window.toggleMobSubmenu = function(id) {
-            const el = document.getElementById(id);
-            const icon = document.getElementById(id + '-icon');
-            if(el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                icon.classList.add('rotate-180');
-            } else {
-                el.classList.add('hidden');
-                icon.classList.remove('rotate-180');
-            }
-        };
-
-        window.mostrarNotificacao = function(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = msg;
-            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3500);
-        };
-    </script>
-
-    <!-- SCRIPT FIREBASE E LÓGICA DE VEÍCULOS -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
-            authDomain: "plataforma-cij.firebaseapp.com",
-            projectId: "plataforma-cij",
-            storageBucket: "plataforma-cij.firebasestorage.app",
-            messagingSenderId: "949985395100",
-            appId: "1:949985395100:web:cf881e0c91c63175228859"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        
-        const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-        });
-        
-        const appId = 'plataforma-cij';
-
-        const usoCol = collection(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso');
-        const manutencaoCol = collection(db, 'artifacts', appId, 'public', 'data', 'veiculos_manutencao');
-
         window.listaUso = [];
         window.statusFrota = {
             'Gol': { ultimoKm: 0, ultimaTrocaOleoKm: 0, emUso: false, motoristaAtual: '' },
             'Polo': { ultimoKm: 0, ultimaTrocaOleoKm: 0, emUso: false, motoristaAtual: '' },
             'Polo Track': { ultimoKm: 0, ultimaTrocaOleoKm: 0, emUso: false, motoristaAtual: '' }
         };
-        window.isUserAdmin = false;
+        let usoEditingId = null;
 
-        onAuthStateChanged(auth, async (user) => {
-            const loginScreen = document.getElementById('login-screen');
-            if(user) {
-                const cleanEmail = (user.email || '').toLowerCase().trim();
-                
-                const masterAdmins = ['adm@grupocij.com', 'marcos@grupocij.com'];
-                let isAdmin = masterAdmins.includes(cleanEmail);
-                let isTecnico = false;
-                let isVendedor = false;
-                let nomeUsuario = cleanEmail.split('@')[0].toUpperCase();
+        // 1. INICIALIZAÇÃO DO MÓDULO PELO CORE.JS
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
 
-                try {
-                    const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes'));
-                    const usuarios = [];
-                    snap.forEach(d => usuarios.push(d.data()));
-                    const dbUser = usuarios.find(u => u.email.toLowerCase() === cleanEmail);
-                    
-                    if (dbUser) {
-                        nomeUsuario = dbUser.nome || nomeUsuario;
-                        if(dbUser.perfil === 'Admin') isAdmin = true;
-                        if(dbUser.perfil === 'Técnico') isTecnico = true;
-                        if(dbUser.perfil === 'Vendedor') isVendedor = true;
+            const userField = document.getElementById('u_usuario');
+            if (userField && !userField.value) {
+                userField.value = window.nomeUsuarioLogado || '';
+            }
+
+            const usoCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'veiculos_uso');
+            const manutencaoCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'veiculos_manutencao');
+
+            window.fsOnSnapshot(usoCol, (snap) => {
+                window.listaUso = [];
+                snap.forEach(d => window.listaUso.push(d.data()));
+                window.calcularStatusFrota();
+                window.renderizarTabela();
+            });
+
+            window.fsOnSnapshot(manutencaoCol, (snap) => {
+                snap.forEach(d => {
+                    const dat = d.data();
+                    if (dat.veiculo && window.statusFrota[dat.veiculo]) {
+                        window.statusFrota[dat.veiculo].ultimaTrocaOleoKm = dat.ultimaTrocaOleoKm || 0;
                     }
-                } catch (e) { console.error("Erro ao buscar permissões:", e); }
-
-                loginScreen.classList.add('hidden');
-                window.currentUser = user;
-                window.isUserAdmin = isAdmin; // Importante para liberar botão de Óleo
-                
-                if(typeof window.verificarPermissoesUsuario === 'function') {
-                    window.verificarPermissoesUsuario(isAdmin, isTecnico, isVendedor, nomeUsuario);
-                }
-
-                // Preenche o form de uso se estiver vazio
-                const userField = document.getElementById('u_usuario');
-                if (userField && !userField.value) { userField.value = nomeUsuario; }
-
-                // Escutar dados de uso
-                onSnapshot(usoCol, (snap) => {
-                    window.listaUso = [];
-                    snap.forEach(d => window.listaUso.push(d.data()));
-                    calcularStatusFrota();
-                    if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
-                }, (err) => console.error(err));
-
-                // Escutar dados de manutenção
-                onSnapshot(manutencaoCol, (snap) => {
-                    snap.forEach(d => {
-                        const dat = d.data();
-                        if (dat.veiculo && window.statusFrota[dat.veiculo]) {
-                            window.statusFrota[dat.veiculo].ultimaTrocaOleoKm = dat.ultimaTrocaOleoKm || 0;
-                        }
-                    });
-                    calcularStatusFrota();
-                    if(typeof window.renderizarTabela === 'function') window.renderizarTabela();
-                }, (err) => console.error(err));
-
-            } else {
-                loginScreen.classList.remove('hidden');
-            }
-        });
-
-        window.handleLogin = async (e) => {
-            e.preventDefault();
-            try {
-                await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value);
-            } catch (err) {
-                alert("Erro no login: " + err.message);
-            }
-        };
-
-        window.fazerLogout = () => signOut(auth);
-
-        window.salvarUsoNuvem = async (item) => {
-            try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso', item.id), item); } 
-            catch(e) { console.error(e); }
-        };
-
-        window.deletarUsoNuvem = async (id) => {
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'veiculos_uso', id)); } 
-            catch(e) { console.error(e); }
-        };
-
-        window.salvarManutencaoNuvem = async (veiculo, ultimaTrocaOleoKm) => {
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'veiculos_manutencao', veiculo), {
-                    veiculo: veiculo, ultimaTrocaOleoKm: ultimaTrocaOleoKm, atualizadoEm: new Date().toISOString()
                 });
-            } catch(e) { console.error(e); }
+                window.calcularStatusFrota();
+                window.renderizarTabela();
+            });
+
+            document.getElementById('u_data').valueAsDate = new Date();
         };
 
-        // LÓGICA DE INTERFACE DOS MENUS (INJETADA)
-        window.verificarPermissoesUsuario = function(isAdmin, isTecnico, isVendedor, nomeUsuario) {
-            const badgeTop = document.getElementById('user-role-badge-top');
-            const txt = (isAdmin ? 'Admin / Financeiro' : (isTecnico ? 'Técnico' : (isVendedor ? 'Vendedor' : 'Acesso Restrito')));
-            if(badgeTop) badgeTop.innerText = txt + ' • ' + nomeUsuario;
-            
-            const showTecnica = isAdmin || isTecnico;
-            const showVendas = isAdmin || isVendedor;
-            const showAdmin = isAdmin;
-            const showFin = isAdmin;
-
-            document.getElementById('top-nav-tecnica')?.classList.toggle('hidden', !showTecnica);
-            document.getElementById('top-nav-vendas')?.classList.toggle('hidden', !showVendas);
-            document.getElementById('top-nav-admin')?.classList.toggle('hidden', !showAdmin);
-            document.getElementById('top-nav-financeiro')?.classList.toggle('hidden', !showFin);
-
-            // Menus Sidebar Mobile
-            document.getElementById('mob-tecnica')?.classList.toggle('hidden', !showTecnica);
-            document.getElementById('mob-vendas')?.classList.toggle('hidden', !showVendas);
-            document.getElementById('mob-admin')?.classList.toggle('hidden', !showAdmin);
-            document.getElementById('mob-financeiro')?.classList.toggle('hidden', !showFin);
-        };
-    </script>
-
-    <!-- LÓGICA DOS VEÍCULOS -->
-    <script>
-        function calcularStatusFrota() {
+        window.calcularStatusFrota = function() {
             Object.keys(window.statusFrota).forEach(v => {
                 window.statusFrota[v].ultimoKm = 0;
                 window.statusFrota[v].emUso = false;
@@ -577,10 +239,10 @@
                     }
                 }
             });
-            renderizarCardsFrota();
-        }
+            window.renderizarCardsFrota();
+        };
 
-        function renderizarCardsFrota() {
+        window.renderizarCardsFrota = function() {
             const container = document.getElementById('frota-status-cards');
             if (!container) return;
             container.innerHTML = '';
@@ -615,8 +277,8 @@
                     ? `<span class="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase"><i class="fa-solid fa-user-clock mr-1"></i> Em Uso: ${st.motoristaAtual}</span>`
                     : `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase"><i class="fa-solid fa-check mr-1"></i> Disponível</span>`;
 
-                const btnResetAdmin = window.isUserAdmin ? `
-                    <button onclick="abrirModalOleo('${v}')" class="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-[11px] transition shadow-sm flex items-center justify-center gap-1.5">
+                const btnResetAdmin = window.userVisaoGlobal ? `
+                    <button onclick="window.abrirModalOleo('${v}')" class="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-[11px] transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="fa-solid fa-oil-can"></i> Registrar Troca (Zerar)
                     </button>
                 ` : '';
@@ -643,7 +305,7 @@
                     </div>
                 `;
             });
-        }
+        };
 
         window.getFilteredUso = function() {
             const fVeiculo = document.getElementById('filtroVeiculo')?.value || '';
@@ -656,6 +318,7 @@
                 if (fUsuario && !(item.usuario || '').toLowerCase().includes(fUsuario)) return false;
                 if (fDe && item.data && item.data < fDe) return false;
                 if (fAte && item.data && item.data > fAte) return false;
+                if (window.userVisaoGlobal === false && (item.usuario || '').toLowerCase() !== (window.nomeUsuarioLogado || '').toLowerCase()) return false;
                 return true;
             });
         };
@@ -690,15 +353,13 @@
                         <td class="p-3 text-right font-black text-emerald-700">${typeof kmRodados === 'number' ? kmRodados.toLocaleString('pt-BR') : '-'}</td>
                         <td class="p-3 text-slate-600">${item.obs || '-'}</td>
                         <td class="p-3 text-center space-x-1 no-print">
-                            <button onclick="editarUso('${item.id}')" title="Editar" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="pedirExclusaoUso('${item.id}')" title="Excluir" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="window.editarUso('${item.id}')" title="Editar" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="window.pedirExclusaoUso('${item.id}')" title="Excluir" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 `;
             });
         };
-
-        let usoEditingId = null;
 
         window.salvarUsoVeiculo = function(e) {
             e.preventDefault();
@@ -709,7 +370,6 @@
             
             const kmChegadaVal = document.getElementById('u_km_chegada').value;
             const kmChegada = kmChegadaVal ? parseFloat(kmChegadaVal) : null;
-            
             const obs = document.getElementById('u_obs').value.trim();
 
             if (kmChegada !== null && kmChegada < kmSaida) {
@@ -720,17 +380,18 @@
             const itemData = {
                 id: usoEditingId !== null ? usoEditingId : Date.now().toString(),
                 veiculo, data, usuario, km_saida: kmSaida, km_chegada: kmChegada, obs,
-                status: kmChegada !== null ? 'concluido' : 'ativo'
+                status: kmChegada !== null ? 'concluido' : 'ativo',
+                autor: window.currentUser ? window.currentUser.email : ''
             };
 
-            if (typeof window.salvarUsoNuvem === 'function') window.salvarUsoNuvem(itemData);
+            try { window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'veiculos_uso', itemData.id), itemData); } catch(e){}
 
             window.mostrarNotificacao('Registro de uso salvo com sucesso!');
             window.resetFormUso();
         };
 
         window.editarUso = function(id) {
-            pedirConfirmacaoAcao('Editar Registro', 'Deseja carregar este registro para edição?', () => {
+            window.pedirConfirmacaoAcao('Editar Registro', 'Deseja carregar este registro para edição?', () => {
                 const item = window.listaUso.find(i => i.id === id);
                 if (!item) return;
 
@@ -746,7 +407,6 @@
                 document.getElementById('btnSubmitUso').innerHTML = '<i class="fa-solid fa-save"></i> Atualizar Registro';
                 document.getElementById('btnCancelEditUso').classList.remove('hidden');
 
-                // Rolar a página de conteúdo até o formulário
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         };
@@ -761,8 +421,8 @@
         };
 
         window.pedirExclusaoUso = function(id) {
-            pedirConfirmacaoAcao('Excluir Registro', 'Deseja realmente apagar este registro de utilização?', () => {
-                if (typeof window.deletarUsoNuvem === 'function') window.deletarUsoNuvem(id);
+            window.pedirConfirmacaoAcao('Excluir Registro', 'Deseja realmente apagar este registro de utilização?', () => {
+                try { window.fsDeleteDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'veiculos_uso', id)); } catch(e){}
                 window.mostrarNotificacao('Registro excluído com sucesso!');
             });
         };
@@ -773,8 +433,12 @@
             
             document.getElementById('oleoVeiculoNome').innerText = veiculo;
             document.getElementById('btnConfirmarOleo').onclick = () => {
-                fecharModalOleo();
-                if (typeof window.salvarManutencaoNuvem === 'function') window.salvarManutencaoNuvem(veiculo, kmAtual);
+                window.fecharModalOleo();
+                try { 
+                    window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'veiculos_manutencao', veiculo), {
+                        veiculo: veiculo, ultimaTrocaOleoKm: kmAtual, atualizadoEm: new Date().toISOString()
+                    }); 
+                } catch(e){}
                 window.mostrarNotificacao(`Troca registrada para o ${veiculo} no KM ${kmAtual.toLocaleString('pt-BR')}!`);
             };
             document.getElementById('modalResetOleo').classList.remove('hidden');
@@ -785,7 +449,7 @@
         window.pedirConfirmacaoAcao = function(titulo, texto, callback) {
             document.getElementById('modalAcaoTitulo').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> ${titulo}`;
             document.getElementById('modalAcaoTexto').innerText = texto;
-            document.getElementById('modalAcaoBtnSim').onclick = () => { fecharModalAcao(); callback(); };
+            document.getElementById('modalAcaoBtnSim').onclick = () => { window.fecharModalAcao(); callback(); };
             document.getElementById('modalAcaoConfirmacao').classList.remove('hidden');
         };
 
@@ -835,11 +499,6 @@
             saveAs(new Blob([buffer]), `Controle_Veiculos_CIJ_${new Date().toISOString().slice(0, 10)}.xlsx`);
             window.mostrarNotificacao('Planilha exportada com sucesso!');
         };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const dt = document.getElementById('u_data');
-            if (dt) dt.valueAsDate = new Date();
-        });
     </script>
 </body>
 </html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Suporte OSR - Portal CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased bg-slate-50">
+
+    <!-- TELA DE LOGIN INJETADA PELO CORE -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Sincronizando com o banco de dados...</p>
+        </div>
+    </div>
+
+    <!-- ÁREA CENTRAL -->
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
+        
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 shrink-0">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-headset"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded border border-blue-300">Serviços e Atendimento</span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                        Gestão de Suporte Remoto (OSR)
+                    </h1>
+                    <p class="text-slate-500 text-sm mt-1">
+                        Monitoramento e histórico dos atendimentos lançados pelo aplicativo mobile.
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPIS / INDICADORES -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total de OSRs</p>
+                    <h2 class="text-3xl font-black text-blue-600 mt-1" id="kpi-total">0</h2>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center text-lg shrink-0 border border-blue-100">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                <div class="min-w-0 flex-1 pr-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top Cliente (Mais Chama)</p>
+                    <h2 class="text-lg font-black text-purple-700 mt-1 truncate" id="kpi-top-client">-</h2>
+                    <p class="text-xs font-semibold text-slate-500" id="kpi-top-client-val">0 chamados</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-400 flex items-center justify-center text-lg shrink-0 border border-purple-100">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                <div class="min-w-0 flex-1 pr-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top Técnico (Atendimentos)</p>
+                    <h2 class="text-lg font-black text-emerald-600 mt-1 truncate" id="kpi-top-tech">-</h2>
+                    <p class="text-xs font-semibold text-slate-500" id="kpi-top-tech-val">0 resoluções</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-400 flex items-center justify-center text-lg shrink-0 border border-emerald-100">
+                    <i class="fa-solid fa-user-gear"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Taxa de Resolução</p>
+                    <h2 class="text-3xl font-black text-amber-500 mt-1" id="kpi-resolvidos">0%</h2>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-400 flex items-center justify-center text-lg shrink-0 border border-amber-100">
+                    <i class="fa-solid fa-check-double"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4 shrink-0">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Pesquisa
+                </h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                    <input type="date" id="filtro-data-de" onchange="window.aplicarFiltros()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                    <input type="date" id="filtro-data-ate" onchange="window.aplicarFiltros()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente</label>
+                    <select id="filtro-cliente" onchange="window.aplicarFiltros()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-600 cursor-pointer">
+                        <option value="">Todos os Clientes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico</label>
+                    <select id="filtro-tecnico" onchange="window.aplicarFiltros()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-600 cursor-pointer">
+                        <option value="">Todos os Técnicos</option>
+                    </select>
+                </div>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <button onclick="window.setFiltroMesAtual()" class="flex-1 px-2 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl text-xs transition shadow-sm border border-blue-200 cursor-pointer text-center">Mês Atual</button>
+                    <button onclick="window.limparFiltros()" class="flex-1 px-2 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition shadow-sm cursor-pointer text-center" title="Limpar tudo"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TABELA DE RESULTADOS -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-10 shrink-0 flex flex-col min-h-[400px]">
+            <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-table-list text-blue-600"></i> Relatório de Atendimentos
+                </h3>
+                
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-grow md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="table-search" placeholder="Pesquisa livre..." onkeyup="window.pesquisaLivre()" class="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900">
+                    </div>
+                    <button onclick="window.exportarParaExcel()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 transition shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-file-excel"></i> Exportar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto overflow-y-auto custom-scrollbar flex-1">
+                <table class="w-full text-left text-xs min-w-[1000px]">
+                    <thead class="text-[11px] text-slate-500 uppercase bg-slate-100 font-bold border-b border-slate-200 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-5 py-3">OSR / Data</th>
+                            <th scope="col" class="px-5 py-3">Técnico</th>
+                            <th scope="col" class="px-5 py-3">Cliente / Contato</th>
+                            <th scope="col" class="px-5 py-3">Máquina & Peças</th>
+                            <th scope="col" class="px-5 py-3">Resumo do Defeito</th>
+                            <th scope="col" class="px-5 py-3 text-center">Status</th>
+                            <th scope="col" class="px-5 py-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-slate-100 font-medium text-slate-700 bg-white"></tbody>
+                </table>
+            </div>
+
+            <!-- PAGINAÇÃO -->
+            <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <span class="text-[10px] font-bold text-slate-500" id="info-page-table">Pág. 1 de 1</span>
+                <div class="flex gap-2">
+                    <button onclick="window.mudarPaginaTabela(-1)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition cursor-pointer shadow-sm disabled:opacity-50"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                    <button onclick="window.mudarPaginaTabela(1)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition cursor-pointer shadow-sm disabled:opacity-50"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE DETALHES DA OSR -->
+    <div id="modalDetalhes" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-file-invoice text-blue-400"></i> Detalhes do Chamado</h3>
+                    <p id="modal_osr_title" class="text-xs text-slate-400 mt-0.5 font-mono">OSR-0000</p>
+                </div>
+                <button onclick="window.fecharModal()" class="text-slate-400 hover:text-white p-1 cursor-pointer transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-5">
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cliente</span>
+                        <span id="mod_cliente" class="font-bold text-slate-800 text-sm"></span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Contato</span>
+                        <span id="mod_contato" class="font-semibold text-slate-700"></span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Máquina / Modelo</span>
+                        <span id="mod_maquina" class="font-bold text-blue-700"></span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Data / Técnico</span>
+                        <span id="mod_data_tec" class="font-semibold text-slate-700"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Defeito Relatado</h4>
+                    <p id="mod_defeito" class="text-sm text-slate-700 bg-rose-50/50 p-3 rounded-xl border border-rose-100 whitespace-pre-wrap"></p>
+                </div>
+
+                <div>
+                    <h4 class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1"><i class="fa-solid fa-wrench mr-1"></i> Parecer Técnico / Solução</h4>
+                    <p id="mod_solucao" class="text-sm text-slate-700 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100 whitespace-pre-wrap"></p>
+                </div>
+
+                <!-- NOVA ÁREA DE PEÇAS NO MODAL -->
+                <div>
+                    <h4 class="text-[10px] font-bold text-purple-600 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1"><i class="fa-solid fa-gears mr-1"></i> Peças Necessárias / Utilizadas</h4>
+                    <p id="mod_pecas" class="text-sm text-slate-700 bg-purple-50/50 p-3 rounded-xl border border-purple-100 whitespace-pre-wrap"></p>
+                </div>
+            </div>
+            
+            <div class="p-5 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span id="mod_status" class="px-3 py-1.5 rounded-lg text-xs font-bold border"></span>
+                <button onclick="window.fecharModal()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOTOR CENTRAL DO SISTEMA -->
+    <script type="module" src="core.js"></script>
+
+    <!-- LÓGICA DO MÓDULO GERENCIAL OSR -->
+    <script>
+        window.rawOSRData = [];
+        window.filteredData = [];
+        
+        window.tablePage = 1;
+        window.tablePerPage = 10;
+
+        window.setFiltroMesAtual = function() {
+            const date = new Date();
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(y, date.getMonth() + 1, 0).getDate();
+            
+            document.getElementById('filtro-data-de').value = `${y}-${m}-01`;
+            document.getElementById('filtro-data-ate').value = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+            window.aplicarFiltros();
+        };
+
+        window.limparFiltros = function() {
+            document.getElementById('filtro-data-de').value = '';
+            document.getElementById('filtro-data-ate').value = '';
+            document.getElementById('filtro-cliente').value = '';
+            document.getElementById('filtro-tecnico').value = '';
+            document.getElementById('table-search').value = '';
+            window.aplicarFiltros();
+        };
+
+        // INICIALIZAÇÃO
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
+
+            window.setFiltroMesAtual();
+
+            const osrCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr');
+            
+            window.fsOnSnapshot(osrCol, (snap) => {
+                window.rawOSRData = [];
+                snap.forEach(d => {
+                    const obj = d.data();
+                    let dReal = '';
+                    if (obj.timestamp) {
+                        dReal = new Date(obj.timestamp).toISOString().split('T')[0];
+                    } else if (obj.data_formatada) {
+                        const p = obj.data_formatada.split(',')[0].split('/');
+                        if(p.length === 3) dReal = `${p[2]}-${p[1]}-${p[0]}`;
+                    }
+                    obj.dataComparacao = dReal;
+                    window.rawOSRData.push(obj);
+                });
+                
+                popularSelects();
+                window.aplicarFiltros();
+            });
+        };
+
+        function popularSelects() {
+            const clientes = [...new Set(window.rawOSRData.map(i => (i.cliente || '').trim()))].filter(Boolean).sort();
+            const tecnicos = [...new Set(window.rawOSRData.map(i => (i.tecnico || '').trim()))].filter(Boolean).sort();
+
+            const selCli = document.getElementById('filtro-cliente');
+            const selTec = document.getElementById('filtro-tecnico');
+
+            const curCli = selCli.value;
+            const curTec = selTec.value;
+
+            selCli.innerHTML = '<option value="">Todos os Clientes</option>';
+            clientes.forEach(c => selCli.innerHTML += `<option value="${c}">${c}</option>`);
+            selCli.value = curCli;
+
+            selTec.innerHTML = '<option value="">Todos os Técnicos</option>';
+            tecnicos.forEach(t => selTec.innerHTML += `<option value="${t}">${t}</option>`);
+            selTec.value = curTec;
+        }
+
+        window.aplicarFiltros = function() {
+            const fDe = document.getElementById('filtro-data-de').value;
+            const fAte = document.getElementById('filtro-data-ate').value;
+            const fCli = document.getElementById('filtro-cliente').value;
+            const fTec = document.getElementById('filtro-tecnico').value;
+            const fBusca = document.getElementById('table-search').value.toLowerCase();
+
+            window.filteredData = window.rawOSRData.filter(item => {
+                // Se a visão global for falsa, o técnico só vê os chamados dele
+                if (window.userVisaoGlobal === false && item.autor_email !== window.currentUser.email) return false;
+
+                if (fDe && item.dataComparacao && item.dataComparacao < fDe) return false;
+                if (fAte && item.dataComparacao && item.dataComparacao > fAte) return false;
+                if (fCli && item.cliente !== fCli) return false;
+                if (fTec && item.tecnico !== fTec) return false;
+                
+                if (fBusca) {
+                    const junta = `${item.osr} ${item.cliente} ${item.tecnico} ${item.maquina} ${item.defeito} ${item.pecas}`.toLowerCase();
+                    if (!junta.includes(fBusca)) return false;
+                }
+                
+                return true;
+            });
+
+            // Ordem decrescente
+            window.filteredData.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            atualizarKPIs();
+            window.tablePage = 1;
+            window.renderTabela();
+        };
+
+        window.pesquisaLivre = function() {
+            window.aplicarFiltros();
+        };
+
+        function atualizarKPIs() {
+            const data = window.filteredData;
+            document.getElementById('kpi-total').innerText = data.length;
+
+            const cliCount = {};
+            const tecCount = {};
+            let resolvidos = 0;
+
+            data.forEach(i => {
+                const c = i.cliente || 'Desconhecido';
+                const t = i.tecnico || 'Desconhecido';
+                cliCount[c] = (cliCount[c] || 0) + 1;
+                tecCount[t] = (tecCount[t] || 0) + 1;
+                if (i.conclusao && i.conclusao.includes('Resolvido')) resolvidos++;
+            });
+
+            let topCli = '-', topCliVal = 0;
+            for(let [k,v] of Object.entries(cliCount)) { if(v > topCliVal) { topCliVal = v; topCli = k; } }
+            
+            let topTec = '-', topTecVal = 0;
+            for(let [k,v] of Object.entries(tecCount)) { if(v > topTecVal) { topTecVal = v; topTec = k; } }
+
+            const pctResolvido = data.length > 0 ? Math.round((resolvidos / data.length) * 100) : 0;
+
+            document.getElementById('kpi-top-client').innerText = topCli;
+            document.getElementById('kpi-top-client-val').innerText = `${topCliVal} chamado(s)`;
+            document.getElementById('kpi-top-tech').innerText = topTec;
+            document.getElementById('kpi-top-tech-val').innerText = `${topTecVal} atendimento(s)`;
+            document.getElementById('kpi-resolvidos').innerText = `${pctResolvido}%`;
+        }
+
+        window.renderTabela = function() {
+            const tbody = document.getElementById('data-table-body');
+            tbody.innerHTML = '';
+
+            const data = window.filteredData;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-medium">Nenhum OSR encontrado.</td></tr>`;
+                document.getElementById('info-page-table').innerText = 'Pág. 1 de 1';
+                return;
+            }
+
+            const totalPages = Math.ceil(data.length / window.tablePerPage) || 1;
+            if (window.tablePage > totalPages) window.tablePage = totalPages;
+            if (window.tablePage < 1) window.tablePage = 1;
+
+            const start = (window.tablePage - 1) * window.tablePerPage;
+            const paginatedItems = data.slice(start, start + window.tablePerPage);
+
+            paginatedItems.forEach(item => {
+                const isResolvido = item.conclusao && item.conclusao.includes('Resolvido');
+                const badgeColor = isResolvido ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300';
+                
+                let df = item.dataComparacao ? item.dataComparacao.split('-').reverse().join('/') : '-';
+                let resumoDef = (item.defeito || '').length > 45 ? (item.defeito || '').substring(0, 45) + '...' : (item.defeito || '');
+
+                // Lógica de Peças Trocadas (Badge Visual)
+                const hasPecas = item.pecas && item.pecas.trim() !== '';
+                const pecasBadge = hasPecas ? `<span class="mt-1 block text-[9px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded w-max"><i class="fa-solid fa-gears"></i> Peças Inclusas</span>` : '';
+
+                const itemEncoded = encodeURIComponent(JSON.stringify(item));
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">
+                            <span class="block font-black text-blue-900">${item.osr || 'S/N'}</span>
+                            <span class="text-[10px] text-slate-500 font-bold">${df}</span>
+                        </td>
+                        <td class="p-3 font-bold text-slate-800">${item.tecnico}</td>
+                        <td class="p-3">
+                            <span class="block font-semibold text-slate-900">${item.cliente}</span>
+                            <span class="text-[10px] text-slate-500">${item.contato}</span>
+                        </td>
+                        <td class="p-3">
+                            <span class="block font-medium text-slate-700">${item.maquina}</span>
+                            ${pecasBadge}
+                        </td>
+                        <td class="p-3 text-slate-600 text-[11px] max-w-[200px] truncate" title="${item.defeito}">${resumoDef}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-1 text-[10px] font-bold rounded-lg border ${badgeColor}">${item.conclusao}</span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="window.abrirModal('${itemEncoded}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-slate-700 text-[10px] font-bold transition shadow-sm cursor-pointer">
+                                Ver Detalhes
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('info-page-table').innerText = `Pág. ${window.tablePage} de ${totalPages}`;
+        };
+
+        window.mudarPaginaTabela = function(dir) {
+            window.tablePage += dir;
+            window.renderTabela();
+        };
+
+        // LÓGICA DO MODAL
+        window.abrirModal = function(itemEncoded) {
+            const item = JSON.parse(decodeURIComponent(itemEncoded));
+            
+            document.getElementById('modal_osr_title').innerText = item.osr || 'OSR-0000';
+            document.getElementById('mod_cliente').innerText = item.cliente || '-';
+            document.getElementById('mod_contato').innerText = item.contato || '-';
+            document.getElementById('mod_maquina').innerText = item.maquina || '-';
+            
+            let dataFmt = item.dataComparacao ? item.dataComparacao.split('-').reverse().join('/') : '-';
+            document.getElementById('mod_data_tec').innerHTML = `${dataFmt} <br> <span class="text-blue-700 font-bold">${item.tecnico}</span>`;
+            
+            document.getElementById('mod_defeito').innerText = item.defeito || 'Sem registro.';
+            document.getElementById('mod_solucao').innerText = item.solucao || 'Sem registro.';
+            
+            // Injeção do campo de Peças no Modal
+            document.getElementById('mod_pecas').innerText = item.pecas || 'Nenhuma peça solicitada/utilizada neste atendimento.';
+
+            const isRes = item.conclusao && item.conclusao.includes('Resolvido');
+            const elStatus = document.getElementById('mod_status');
+            elStatus.innerText = item.conclusao || 'Pendente';
+            elStatus.className = `px-3 py-1.5 rounded-lg text-xs font-bold border ${isRes ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`;
+
+            document.getElementById('modalDetalhes').classList.remove('hidden');
+        };
+
+        window.fecharModal = function() {
+            document.getElementById('modalDetalhes').classList.add('hidden');
+        };
+
+        // EXPORTAÇÃO EXCEL
+        window.exportarParaExcel = async function() {
+            if (typeof ExcelJS === 'undefined') { alert('Carregando Excel...'); return; }
+            if (window.filteredData.length === 0) { alert('Nenhum dado para exportar.'); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Relatório OSR');
+
+            ws.columns = [
+                { header: 'OSR', key: 'osr', width: 15 },
+                { header: 'Data', key: 'data', width: 15 },
+                { header: 'Técnico', key: 'tec', width: 20 },
+                { header: 'Cliente', key: 'cli', width: 30 },
+                { header: 'Contato', key: 'con', width: 20 },
+                { header: 'Máquina', key: 'maq', width: 25 },
+                { header: 'Peças Utilizadas', key: 'pecas', width: 35 },
+                { header: 'Defeito Relatado', key: 'def', width: 50 },
+                { header: 'Parecer Técnico', key: 'par', width: 50 },
+                { header: 'Status Final', key: 'stat', width: 25 }
+            ];
+
+            const headerRow = ws.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F172A' } };
+
+            window.filteredData.forEach(i => {
+                ws.addRow({
+                    osr: i.osr,
+                    data: i.dataComparacao ? i.dataComparacao.split('-').reverse().join('/') : '',
+                    tec: i.tecnico,
+                    cli: i.cliente,
+                    con: i.contato,
+                    maq: i.maquina,
+                    pecas: i.pecas || 'Nenhuma',
+                    def: i.defeito,
+                    par: i.solucao,
+                    stat: i.conclusao
+                });
+            });
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Relatorio_OSR_${new Date().toISOString().slice(0,10)}.xlsx`);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="pt-BR"><head><title>Ficha do Cliente - Portal CIJ</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="erp-cadastros-v4-3.css?v=20261002-central1"></head>
+<body data-erp-page="cliente-ficha">
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto erp-scroll">
+<div class="max-w-[1500px] mx-auto p-2 md:p-3 space-y-2.5"><nav class="erp-card p-1.5 erp-nav">
+<a href="central_cadastros.html" data-page="dashboard"><i class="fa-solid fa-grid-2"></i> Visão geral</a>
+<a href="cadastros_clientes.html" data-page="clientes"><i class="fa-solid fa-building"></i> Clientes</a>
+<a href="cadastros_modelos.html" data-page="modelos"><i class="fa-solid fa-microchip"></i> Modelos</a>
+<a href="cadastros_consumiveis.html" data-page="consumiveis"><i class="fa-solid fa-droplet"></i> Consumíveis</a>
+<a href="parque_maquinas.html" data-page="parque"><i class="fa-solid fa-industry"></i> Parque de Máquinas</a>
+</nav>
+<script>document.addEventListener('DOMContentLoaded',()=>{const p=document.body.dataset.erpPage||'',k=p==='cliente-ficha'?'clientes':p==='parque-ficha'?'parque':p;document.querySelector(`[data-page="${k}"]`)?.classList.add('active')});</script><div class="erp-card erp-page-head p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><span class="erp-pill bg-blue-50 text-blue-700">FICHA 360º</span><h1 id="ficha-nome" class="erp-page-title mt-2">Cliente</h1><p id="ficha-meta" class="erp-muted mt-1">-</p></div><div class="flex gap-2"><a id="btn-editar-cliente" class="erp-btn erp-btn-light"><i class="fa-solid fa-pen"></i> Editar</a><a id="btn-nova-maquina" class="erp-btn erp-btn-primary"><i class="fa-solid fa-plus"></i> Nova máquina</a></div></div>
+<div id="ficha-kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+<div class="grid xl:grid-cols-2 gap-4"><section class="erp-card p-4"><h2 class="erp-section-title">Dados cadastrais</h2><div id="ficha-dados" class="mt-4 grid sm:grid-cols-2 gap-4"></div></section><section class="erp-card p-4"><h2 class="erp-section-title">Observações gerais</h2><div id="ficha-obs" class="mt-3 text-xs whitespace-pre-wrap min-h-28 rounded-xl bg-slate-50 border p-3"></div></section></div>
+<section class="erp-card p-4"><h2 class="erp-section-title">Equipamentos associados</h2><p class="erp-muted mt-1">Máquinas vinculadas a este cliente</p><div id="ficha-maquinas" class="mt-4 grid md:grid-cols-2 xl:grid-cols-3 gap-3"></div></section>
+<section class="erp-card p-4"><h2 class="erp-section-title">OS e OSR</h2><p class="erp-muted mt-1">Histórico unificado de atendimentos</p><div id="ficha-historico" class="erp-timeline mt-4"></div></section></div></main>
+<script type="module" src="core.js?v=20261002-central1"></script>
+<script src="erp-cadastros-v4-3-2.js?v=20261002-central1"></script>
+</body></html>

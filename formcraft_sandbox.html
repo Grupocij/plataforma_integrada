@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormCraft Pro - Portal CIJ</title>
+    
+    <!-- Tailwind & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Configuração Tailwind FormCraft -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff', 100: '#e0f2fe', 500: '#0284c7', 600: '#0369a1',
+                            700: '#075985', 800: '#0c4a6e', 900: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .signature-canvas { touch-action: none; cursor: crosshair; }
+        .conditional-field-hidden { display: none !important; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased bg-slate-50">
+
+    <!-- TELA DE LOGIN INJETADA PELO CORE -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Sincronizando Módulo...</p>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
+        
+        <!-- CABEÇALHO OFICIAL & NAVEGAÇÃO -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4 shrink-0 relative overflow-hidden">
+            
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black text-slate-900 tracking-tight leading-none">FormCraft Pro</h1>
+                    <p class="text-slate-500 text-xs mt-1">Gerador oficial de formulários dinâmicos e check-lists do Portal CIJ.</p>
+                </div>
+            </div>
+
+            <!-- Navegação Superior do FormCraft -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                <nav class="flex items-center space-x-1 sm:space-x-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <button id="nav-btn-list" onclick="navigateTo('list')" class="flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-bold transition-colors bg-brand-600 text-white shadow-sm">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                        <span>Meus Formulários</span>
+                    </button>
+                    <button id="nav-btn-editor" onclick="createNewForm()" class="flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-bold transition-colors text-slate-500 hover:text-slate-800 hover:bg-slate-200">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Criar Formulário</span>
+                    </button>
+                </nav>
+
+                <!-- Ações do Editor (Só visíveis quando editando) -->
+                <div id="editor-header-actions" class="flex items-center space-x-2 hidden">
+                    <button onclick="exportJSON()" title="Exportar Estrutura JSON" class="p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="clearFormEditor()" title="Limpar Campos do Editor" class="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-200">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="saveFormToDatabase()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center space-x-2 transition-colors shadow-sm">
+                        <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                        <span>Salvar Formulário</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TELAS DO FORMCRAFT -->
+        <!-- ========================================== -->
+
+        <!-- 1. TELA: MEUS FORMULÁRIOS -->
+        <section id="screen-list" class="space-y-4 w-full">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="relative flex-1 w-full">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-forms-input" oninput="filterFormsList()" placeholder="Buscar formulário..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-brand-500 shadow-sm">
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <input type="file" id="import-json-input" accept=".json" class="hidden" onchange="importJSONFile(event)">
+                    <button onclick="document.getElementById('import-json-input').click()" class="flex-1 sm:flex-none px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 shadow-sm">
+                        <i data-lucide="upload" class="w-3.5 h-3.5 text-brand-600"></i> <span>Importar</span>
+                    </button>
+                    <button onclick="exportAllFormsJSON()" class="flex-1 sm:flex-none px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 shadow-sm">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-brand-600"></i> <span>Exportar Todos</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="forms-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+            <div id="no-forms-state" class="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-12 text-center flex flex-col items-center justify-center hidden">
+                <div class="bg-slate-100 p-4 rounded-full text-slate-400 mb-3"><i data-lucide="folder-open" class="w-10 h-10"></i></div>
+                <h3 class="text-base font-bold text-slate-800">Nenhum formulário salvo</h3>
+                <p class="text-xs text-slate-500 mt-1 mb-4">A sua base de dados está vazia. Crie o primeiro!</p>
+                <button onclick="createNewForm()" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-2 shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i> <span>Criar Formulário</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. TELA: EDITOR -->
+        <section id="screen-editor" class="w-full flex flex-col lg:flex-row gap-4 flex-1 hidden pb-10">
+            <!-- Painel Lateral -->
+            <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col shrink-0 max-h-[700px]">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Tipos de Campos
+                </h2>
+                <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 overflow-y-auto custom-scrollbar pr-1">
+                    <button onclick="addField('short_text')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="type" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Resposta Curta</div></div>
+                    </button>
+                    <button onclick="addField('long_text')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="align-left" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Resposta Longa</div></div>
+                    </button>
+                    <button onclick="addField('number')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="binary" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Numérica</div></div>
+                    </button>
+                    <button onclick="addField('single_select')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Seleção Única</div></div>
+                    </button>
+                    <button onclick="addField('multi_select')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="check-square" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Múltipla Seleção</div></div>
+                    </button>
+                    <button onclick="addField('date')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="calendar" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Data</div></div>
+                    </button>
+                    <button onclick="addField('time')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="clock" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Hora</div></div>
+                    </button>
+                    <button onclick="addField('signature')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="pen-tool" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Assinatura</div></div>
+                    </button>
+                    <button onclick="addField('images')" class="flex items-center space-x-3 p-2.5 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 transition-all text-left">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500"><i data-lucide="image" class="w-3.5 h-3.5"></i></div>
+                        <div><div class="text-[11px] font-bold">Fotos/Imagens</div></div>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Área Construtor -->
+            <section class="flex-1 flex flex-col gap-4 min-w-0">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 border-t-4 border-t-brand-600">
+                    <div class="flex items-center justify-between mb-3">
+                        <span id="editor-mode-badge" class="px-2.5 py-1 bg-brand-50 text-brand-700 font-bold text-[10px] uppercase rounded border border-brand-200">Construindo Lógica</span>
+                        <button onclick="previewCurrentEditorForm()" class="text-[10px] font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded border border-brand-200 flex items-center gap-1.5 transition">
+                            <i data-lucide="play" class="w-3.5 h-3.5"></i> Testar Preview e Condicionais
+                        </button>
+                    </div>
+                    <input type="text" id="form-title-input" oninput="updateFormHeader()" placeholder="Título do Formulário" class="w-full text-lg font-black text-slate-900 border-b-2 border-slate-200 focus:border-brand-600 focus:outline-none pb-1 transition-colors mb-2">
+                    <textarea id="form-description-input" oninput="updateFormHeader()" rows="2" placeholder="Instruções de preenchimento (Opcional)" class="w-full text-xs font-medium text-slate-600 border border-slate-200 rounded-xl p-2.5 focus:border-brand-600 focus:outline-none resize-none"></textarea>
+                </div>
+
+                <div id="fields-container" class="space-y-3">
+                    <div id="empty-state" class="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-10 text-center flex flex-col items-center">
+                        <div class="text-slate-300 mb-2"><i data-lucide="copy-plus" class="w-8 h-8"></i></div>
+                        <h3 class="text-sm font-bold text-slate-700">Formulário Vazio</h3>
+                        <p class="text-xs text-slate-500 mt-1">Adicione campos pelo painel lateral.</p>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- 3. TELA: PREVIEW / PREENCHIMENTO -->
+        <section id="screen-preview" class="w-full max-w-3xl mx-auto flex-1 hidden pb-10">
+            <div class="mb-3 flex justify-end">
+                <button id="btn-edit-from-preview" onclick="editForm(activeFormId)" class="text-xs font-bold text-brand-600 bg-white px-4 py-2 rounded-xl border border-brand-200 shadow-sm flex items-center gap-1.5 hover:bg-slate-50 transition">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i> Voltar ao Editor
+                </button>
+            </div>
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-900 text-white p-6 border-b border-slate-800">
+                    <h2 id="preview-title" class="text-xl font-black">Sem Título</h2>
+                    <p id="preview-description" class="text-slate-400 text-xs mt-1 whitespace-pre-line"></p>
+                </div>
+                <form id="interactive-preview-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-5 bg-slate-50">
+                    <div id="preview-fields-container" class="space-y-5"></div>
+                    <div class="pt-4 border-t border-slate-200 flex justify-between items-center">
+                        <button type="button" onclick="resetPreviewForm()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition">Limpar Respostas</button>
+                        <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2 transition"><i data-lucide="check"></i> Enviar Resposta</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 4. TELA: RESPOSTAS -->
+        <section id="screen-responses" class="w-full max-w-5xl mx-auto flex-1 hidden pb-10">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center mb-4">
+                <div>
+                    <h2 id="responses-form-title" class="text-base font-black text-slate-900">Respostas Recebidas</h2>
+                    <p id="responses-summary-subtitle" class="text-[11px] text-slate-500 font-bold">Carregando...</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="exportResponsesCSV()" class="px-3 py-2 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV</button>
+                    <button onclick="exportResponsesJSON()" class="px-3 py-2 bg-slate-100 text-slate-800 hover:bg-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition"><i data-lucide="download" class="w-4 h-4"></i> JSON</button>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div id="responses-list-container" class="divide-y divide-slate-100"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAIS DO FORMCRAFT -->
+    <!-- Lógica Condicional -->
+    <div id="logic-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 flex flex-col">
+            <div class="px-5 py-4 bg-slate-900 text-white rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4 text-brand-400"></i> Lógica Condicional</h3>
+                <button onclick="closeLogicModal()" class="text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto max-h-[70vh] space-y-4 custom-scrollbar">
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-2">
+                    <p class="text-xs font-bold text-blue-900 leading-relaxed"><i data-lucide="info" class="w-4 h-4 inline-block mr-1 text-blue-600"></i> Ocultar ou mostrar o campo atual dependendo das respostas anteriores do usuário.</p>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm">
+                    <h4 class="text-[10px] font-black uppercase text-slate-500">Criar Nova Regra</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1">Se a Pergunta...</label>
+                            <select id="rule-trigger-select" onchange="onRuleTriggerChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:border-brand-500 outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1">Operador</label>
+                            <select id="rule-operator-select" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:border-brand-500 outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1">For igual a...</label>
+                            <div id="rule-value-container">
+                                <input type="text" id="rule-value-input" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:border-brand-500 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-600 mb-1">Mostrar Pergunta:</label>
+                            <select id="rule-target-select" class="w-full text-xs border border-slate-300 bg-slate-100 rounded-lg p-2.5 font-bold text-slate-500 outline-none cursor-not-allowed"></select>
+                        </div>
+                    </div>
+                    <button onclick="addConditionalRule()" class="w-full bg-brand-600 hover:bg-brand-700 transition text-white text-xs font-bold py-2.5 rounded-lg mt-2 shadow-sm"><i data-lucide="plus" class="w-3 h-3 inline-block mr-1"></i> Salvar Condição</button>
+                </div>
+
+                <div>
+                    <h4 class="text-[10px] font-black uppercase text-slate-500 mb-2 mt-4">Regras Ativas Neste Campo</h4>
+                    <div id="modal-rules-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ver Resposta Detalhada -->
+    <div id="response-detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 flex flex-col max-h-[85vh]">
+            <div class="px-5 py-4 bg-slate-900 text-white rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-bold text-sm">Dados da Resposta</h3>
+                <button onclick="closeResponseDetailModal()" class="text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="modal-response-content" class="p-5 overflow-y-auto space-y-3 flex-1 text-xs custom-scrollbar"></div>
+        </div>
+    </div>
+
+    <!-- Confirmação -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xs w-full p-6 text-center border border-slate-200 my-auto">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="alert-triangle"></i></div>
+            <h3 id="confirm-modal-message" class="text-sm font-bold text-slate-900 mb-4">Confirmar?</h3>
+            <div class="flex gap-2">
+                <button onclick="closeConfirmModal(false)" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 transition text-xs font-bold rounded-xl cursor-pointer">Cancelar</button>
+                <button onclick="closeConfirmModal(true)" class="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 transition text-white text-xs font-bold rounded-xl shadow-md cursor-pointer">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all z-[99999]">
+        <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-bold">Ok!</span>
+    </div>
+
+    <!-- MOTOR CENTRAL (Autenticação e Permissões CIJ) -->
+    <script type="module" src="core.js"></script>
+
+    <!-- LÓGICA DO FORMCRAFT ADAPTADA -->
+    <script>
+        const LOCAL_KEY_FORMS = 'sandbox_formcraft_forms';
+        const LOCAL_KEY_SUBS = 'sandbox_formcraft_submissions';
+
+        const typeLabels = {
+            short_text: 'Resposta Curta', long_text: 'Resposta Longa', number: 'Numérica',
+            single_select: 'Seleção Única', multi_select: 'Múltipla Seleção', date: 'Data',
+            time: 'Hora', signature: 'Assinatura', images: 'Imagens', documents: 'Documentos'
+        };
+
+        const operatorLabels = {
+            equals: 'For igual a', not_equals: 'Diferente de', contains: 'Contém', not_contains: 'Não contém',
+            greater_than: 'Maior que', less_than: 'Menor que', greater_or_equal: 'Maior/Igual', less_or_equal: 'Menor/Igual'
+        };
+
+        let allSavedForms = [];
+        let allSubmissions = [];
+        let activeFormId = null;
+        let activeLogicFieldId = null;
+        let currentFormData = { id: null, title: "", description: "", fields: [], rules: [] };
+
+        // Função de Inicialização disparada pelo core.js
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            lucide.createIcons();
+
+            // Buscar dados locais (Fallback)
+            allSavedForms = JSON.parse(localStorage.getItem(LOCAL_KEY_FORMS) || '[]');
+            allSubmissions = JSON.parse(localStorage.getItem(LOCAL_KEY_SUBS) || '[]');
+            renderFormsList();
+
+            // Mantendo a conexão com o Banco "Fantasma" de Testes no Firebase como solicitado
+            const formsRef = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_forms');
+            window.fsOnSnapshot(formsRef, (snap) => {
+                const cloudForms = [];
+                snap.forEach(d => cloudForms.push(d.data()));
+                if(cloudForms.length > 0) {
+                    allSavedForms = cloudForms;
+                    localStorage.setItem(LOCAL_KEY_FORMS, JSON.stringify(allSavedForms));
+                    renderFormsList();
+                }
+            });
+
+            const subsRef = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_submissions');
+            window.fsOnSnapshot(subsRef, (snap) => {
+                const cloudSubs = [];
+                snap.forEach(d => cloudSubs.push(d.data()));
+                if(cloudSubs.length > 0) {
+                    allSubmissions = cloudSubs;
+                    localStorage.setItem(LOCAL_KEY_SUBS, JSON.stringify(allSubmissions));
+                    if(document.getElementById('screen-responses').classList.contains('hidden') === false) renderResponsesScreen();
+                }
+            });
+        };
+
+        let pendingConfirmCallback = null;
+        window.showConfirmModal = function(msg, callback) {
+            document.getElementById('confirm-modal-message').innerText = msg;
+            pendingConfirmCallback = callback;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        };
+        window.closeConfirmModal = function(confirmed) {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            if (confirmed && pendingConfirmCallback) pendingConfirmCallback();
+            pendingConfirmCallback = null;
+        };
+
+        window.navigateTo = function(screenName) {
+            ['list', 'editor', 'preview', 'responses'].forEach(s => document.getElementById(`screen-${s}`).classList.add('hidden'));
+            document.getElementById('editor-header-actions').classList.add('hidden');
+            
+            document.getElementById('nav-btn-list').className = "flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-bold transition-colors text-slate-500 hover:text-slate-800 hover:bg-slate-200 cursor-pointer";
+            document.getElementById('nav-btn-editor').className = "flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-bold transition-colors text-slate-500 hover:text-slate-800 hover:bg-slate-200 cursor-pointer";
+
+            if (screenName === 'list') {
+                document.getElementById('screen-list').classList.remove('hidden');
+                document.getElementById('nav-btn-list').classList.add('bg-brand-600', 'text-white');
+                document.getElementById('nav-btn-list').classList.remove('text-slate-500', 'hover:bg-slate-200');
+                renderFormsList();
+            } else if (screenName === 'editor') {
+                document.getElementById('screen-editor').classList.remove('hidden');
+                document.getElementById('editor-header-actions').classList.remove('hidden');
+                document.getElementById('nav-btn-editor').classList.add('bg-brand-600', 'text-white');
+                document.getElementById('nav-btn-editor').classList.remove('text-slate-500', 'hover:bg-slate-200');
+                renderEditor();
+            } else if (screenName === 'preview') {
+                document.getElementById('screen-preview').classList.remove('hidden');
+                renderPreview();
+            } else if (screenName === 'responses') {
+                document.getElementById('screen-responses').classList.remove('hidden');
+                renderResponsesScreen();
+            }
+            lucide.createIcons();
+        };
+
+        window.renderFormsList = function(filterText = '') {
+            const grid = document.getElementById('forms-grid');
+            const empty = document.getElementById('no-forms-state');
+            grid.innerHTML = '';
+            
+            const filtered = allSavedForms.filter(f => (f.title||'').toLowerCase().includes(filterText.toLowerCase()));
+            
+            if (filtered.length === 0) { empty.classList.remove('hidden'); grid.classList.add('hidden'); return; }
+            empty.classList.add('hidden'); grid.classList.remove('hidden');
+
+            filtered.forEach(form => {
+                const subCount = allSubmissions.filter(s => s.formId === form.id).length;
+                grid.innerHTML += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3 hover:border-brand-400 hover:shadow-md transition">
+                        <div>
+                            <div class="flex justify-between items-start mb-1"><h3 class="font-black text-sm text-slate-800 line-clamp-1">${escapeHtml(form.title)}</h3><span class="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">${form.fields.length} campos</span></div>
+                            <p class="text-[10px] font-medium text-slate-500 line-clamp-2 min-h-[30px]">${escapeHtml(form.description || 'Sem descrição')}</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500">
+                            <span class="bg-brand-50 text-brand-700 px-2 py-1 rounded-lg border border-brand-200 shadow-sm">${subCount} Respostas</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1.5 pt-1">
+                            <button onclick="previewForm('${form.id}')" title="Testar Formulário" class="bg-slate-50 hover:bg-brand-50 hover:text-brand-600 text-slate-600 p-2 rounded-lg border border-slate-200 transition flex justify-center cursor-pointer shadow-sm"><i data-lucide="play" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="viewResponses('${form.id}')" title="Ver Respostas" class="bg-slate-50 hover:bg-amber-50 hover:text-amber-600 text-slate-600 p-2 rounded-lg border border-slate-200 transition flex justify-center cursor-pointer shadow-sm"><i data-lucide="inbox" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="editForm('${form.id}')" title="Editar Estrutura" class="bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-600 p-2 rounded-lg border border-slate-200 transition flex justify-center cursor-pointer shadow-sm"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="deleteFormFromDatabase('${form.id}')" title="Excluir" class="bg-slate-50 hover:bg-red-50 hover:text-red-600 text-slate-600 p-2 rounded-lg border border-slate-200 transition flex justify-center cursor-pointer shadow-sm"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        };
+
+        window.filterFormsList = () => window.renderFormsList(document.getElementById('search-forms-input').value);
+
+        window.createNewForm = function() {
+            currentFormData = { id: null, title: "Novo Formulário", description: "", fields: [], rules: [] };
+            document.getElementById('form-title-input').value = currentFormData.title;
+            document.getElementById('form-description-input').value = currentFormData.description;
+            window.navigateTo('editor');
+        };
+
+        window.editForm = function(id) {
+            currentFormData = JSON.parse(JSON.stringify(allSavedForms.find(f => f.id === id)));
+            activeFormId = id;
+            if(!currentFormData.rules) currentFormData.rules = [];
+            document.getElementById('form-title-input').value = currentFormData.title;
+            document.getElementById('form-description-input').value = currentFormData.description || '';
+            window.navigateTo('editor');
+        };
+
+        window.previewForm = function(id) {
+            currentFormData = JSON.parse(JSON.stringify(allSavedForms.find(f => f.id === id)));
+            activeFormId = id;
+            if(!currentFormData.rules) currentFormData.rules = [];
+            window.navigateTo('preview');
+        };
+
+        window.previewCurrentEditorForm = () => window.navigateTo('preview');
+        window.viewResponses = function(id) { activeFormId = id; window.navigateTo('responses'); };
+
+        window.generateId = () => 'f_' + Math.random().toString(36).substr(2, 9);
+        window.updateFormHeader = function() {
+            currentFormData.title = document.getElementById('form-title-input').value;
+            currentFormData.description = document.getElementById('form-description-input').value;
+        };
+
+        window.saveFormToDatabase = async function() {
+            if(!currentFormData.title) { window.showToast('Informe um título.', 'error'); return; }
+            currentFormData.id = currentFormData.id || window.generateId();
+            
+            try {
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_forms', currentFormData.id), currentFormData);
+                window.showToast('Formulário Salvo Oficialmente!');
+                setTimeout(() => window.navigateTo('list'), 800);
+            } catch(e) { window.showToast('Erro ao salvar no Banco de Dados.', 'error'); }
+        };
+
+        window.deleteFormFromDatabase = function(id) {
+            window.showConfirmModal('Deseja excluir este formulário do banco de dados?', async () => {
+                try { await window.fsDeleteDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_forms', id)); window.showToast('Excluído.'); } catch(e){}
+            });
+        };
+
+        window.addField = function(type) {
+            currentFormData.fields.push({ id: window.generateId(), type: type, label: `Pergunta sem título`, instruction: "", required: false, options: (type.includes('select') ? ['Opção 1'] : []) });
+            window.renderEditor(); window.showToast('Campo adicionado.');
+        };
+
+        window.removeField = function(id) {
+            currentFormData.fields = currentFormData.fields.filter(f => f.id !== id);
+            if(currentFormData.rules) currentFormData.rules = currentFormData.rules.filter(r => r.triggerId !== id && r.targetId !== id);
+            window.renderEditor();
+        };
+
+        window.moveField = function(idx, dir) {
+            if(idx+dir < 0 || idx+dir >= currentFormData.fields.length) return;
+            const temp = currentFormData.fields[idx];
+            currentFormData.fields[idx] = currentFormData.fields[idx+dir];
+            currentFormData.fields[idx+dir] = temp;
+            window.renderEditor();
+        };
+
+        window.toggleRequired = function(id) { currentFormData.fields.find(f => f.id === id).required = !currentFormData.fields.find(f => f.id === id).required; };
+        window.updateFieldProperty = function(id, prop, val) { currentFormData.fields.find(f => f.id === id)[prop] = val; };
+        window.addOption = function(id) { const f = currentFormData.fields.find(f => f.id === id); f.options.push(`Nova Opção ${f.options.length+1}`); window.renderEditor(); };
+        window.updateOption = function(id, idx, val) { currentFormData.fields.find(f => f.id === id).options[idx] = val; };
+        window.removeOption = function(id, idx) { currentFormData.fields.find(f => f.id === id).options.splice(idx, 1); window.renderEditor(); };
+        window.clearFormEditor = function() { window.showConfirmModal('Apagar toda a estrutura?', () => { currentFormData.fields = []; currentFormData.rules = []; window.renderEditor(); }); };
+
+        window.renderEditor = function() {
+            const cont = document.getElementById('fields-container');
+            if(currentFormData.fields.length === 0) { cont.innerHTML = ''; document.getElementById('empty-state').classList.remove('hidden'); cont.appendChild(document.getElementById('empty-state')); return; }
+            cont.innerHTML = '';
+
+            currentFormData.fields.forEach((f, idx) => {
+                let opts = '';
+                if(f.type.includes('select')) {
+                    opts = `<div class="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100"><label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Opções</label>${f.options.map((o,i) => `<div class="flex gap-2 mb-2"><input type="text" value="${escapeHtml(o)}" oninput="window.updateOption('${f.id}', ${i}, this.value)" class="flex-1 text-xs border rounded-lg p-2 outline-none focus:border-brand-500 shadow-sm"><button onclick="window.removeOption('${f.id}', ${i})" class="text-red-500 px-2 cursor-pointer hover:bg-red-50 rounded transition"><i data-lucide="x" class="w-3.5 h-3.5"></i></button></div>`).join('')}<button onclick="window.addOption('${f.id}')" class="text-[10px] font-bold text-brand-600 mt-1 flex items-center gap-1 cursor-pointer bg-brand-50 px-2 py-1 rounded hover:bg-brand-100 transition"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar Opção</button></div>`;
+                }
+
+                // Identificador visual de que o campo possui regra atrelada a ele
+                const hasRules = currentFormData.rules && currentFormData.rules.some(r => r.targetId === f.id);
+                const logicBadge = hasRules ? `<span class="text-[9px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded border border-amber-300 ml-2" title="Possui condicional configurada"><i data-lucide="git-branch" class="w-3 h-3 inline-block"></i> Condicional Ativa</span>` : '';
+
+                cont.innerHTML += `
+                    <div class="bg-white rounded-xl border ${hasRules ? 'border-amber-300' : 'border-slate-200'} p-5 shadow-sm relative transition-all">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center">
+                                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded border border-slate-200 shadow-sm">${typeLabels[f.type]}</span>
+                                ${logicBadge}
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="window.moveField(${idx}, -1)" class="p-1.5 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-200 rounded transition cursor-pointer"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="window.moveField(${idx}, 1)" class="p-1.5 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-200 rounded transition cursor-pointer"><i data-lucide="arrow-down" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="window.removeField('${f.id}')" class="p-1.5 text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded ml-2 transition cursor-pointer"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                        <div class="space-y-2.5">
+                            <input type="text" value="${escapeHtml(f.label)}" oninput="window.updateFieldProperty('${f.id}', 'label', this.value)" class="w-full text-sm font-black border-b-2 border-slate-200 focus:border-brand-500 outline-none pb-1 text-slate-800">
+                            <input type="text" value="${escapeHtml(f.instruction)}" placeholder="Instrução auxiliar / Hint..." oninput="window.updateFieldProperty('${f.id}', 'instruction', this.value)" class="w-full text-xs font-medium border border-slate-200 rounded-lg p-2 outline-none focus:border-brand-500 shadow-sm text-slate-600">
+                            ${opts}
+                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                                <button onclick="window.openLogicModal('${f.id}')" class="text-[10px] font-bold text-brand-600 flex items-center gap-1.5 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg border border-brand-200 transition cursor-pointer shadow-sm"><i data-lucide="git-branch" class="w-3 h-3"></i> Regra Condicional</button>
+                                <label class="text-xs font-bold text-slate-600 flex items-center gap-2 cursor-pointer select-none bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 transition"><input type="checkbox" ${f.required ? 'checked' : ''} onchange="window.toggleRequired('${f.id}')" class="w-4 h-4 text-brand-600 rounded cursor-pointer"> Obrigatório</label>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            lucide.createIcons();
+        };
+
+        // ==========================================
+        // LÓGICA CONDICIONAL (IMPLEMENTAÇÃO)
+        // ==========================================
+        window.openLogicModal = function(id) { 
+            activeLogicFieldId = id; 
+            
+            // Popula gatilho (Não pode escolher a si mesmo)
+            const triggerSelect = document.getElementById('rule-trigger-select');
+            triggerSelect.innerHTML = currentFormData.fields
+                .filter(f => f.id !== id)
+                .map(f => `<option value="${f.id}">${escapeHtml(f.label)}</option>`).join('');
+            
+            if(triggerSelect.options.length === 0) {
+                triggerSelect.innerHTML = '<option value="">Sem perguntas anteriores</option>';
+            }
+
+            // Popula operadores
+            const operatorSelect = document.getElementById('rule-operator-select');
+            operatorSelect.innerHTML = Object.entries(operatorLabels)
+                .map(([val, label]) => `<option value="${val}">${label}</option>`).join('');
+                
+            // Popula alvo (Bloqueado no campo atual em que clicou)
+            const targetSelect = document.getElementById('rule-target-select');
+            const targetField = currentFormData.fields.find(f => f.id === id);
+            targetSelect.innerHTML = `<option value="${id}">${escapeHtml(targetField.label)}</option>`;
+            
+            window.onRuleTriggerChange(); 
+            window.renderRulesList(); 
+            
+            document.getElementById('logic-modal').classList.remove('hidden'); 
+        };
+
+        window.onRuleTriggerChange = function() {
+            const triggerId = document.getElementById('rule-trigger-select').value;
+            const field = currentFormData.fields.find(f => f.id === triggerId);
+            const container = document.getElementById('rule-value-container');
+            
+            if (!field) { 
+                container.innerHTML = '<input type="text" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed" disabled>'; 
+                return; 
+            }
+            
+            // Se a pergunta escolhida for de seleção, puxa as opções dela
+            if (field.type === 'single_select' || field.type === 'multi_select') {
+                container.innerHTML = `<select id="rule-value-input" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:border-brand-500 outline-none shadow-sm cursor-pointer">${field.options.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}</select>`;
+            } else {
+                container.innerHTML = `<input type="text" id="rule-value-input" placeholder="Digite o valor..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:border-brand-500 outline-none shadow-sm">`;
+            }
+        };
+
+        window.addConditionalRule = function() {
+            const triggerId = document.getElementById('rule-trigger-select').value;
+            const operator = document.getElementById('rule-operator-select').value;
+            const valueInput = document.getElementById('rule-value-input');
+            const value = valueInput ? valueInput.value : '';
+            const targetId = document.getElementById('rule-target-select').value;
+            
+            if (!triggerId || !targetId) { window.showToast('Não é possível criar regra sem um campo de origem válido.', 'error'); return; }
+            
+            const rule = { id: window.generateId(), triggerId, operator, value, targetId };
+            if (!currentFormData.rules) currentFormData.rules = [];
+            currentFormData.rules.push(rule);
+            
+            window.renderRulesList();
+            window.renderEditor(); // Atualiza a tag no editor de que existe regra
+            window.showToast('Regra de exibição salva com sucesso!');
+        };
+
+        window.renderRulesList = function() {
+            const list = document.getElementById('modal-rules-list');
+            const targetId = activeLogicFieldId; // Só mostra as regras deste campo
+            
+            if (!currentFormData.rules) currentFormData.rules = [];
+            const relevantRules = currentFormData.rules.filter(r => r.targetId === targetId);
+            
+            if (relevantRules.length === 0) {
+                list.innerHTML = '<p class="text-[10px] text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-200">Este campo sempre ficará visível por padrão. Crie regras acima para escondê-lo condicionalmente.</p>';
+                return;
+            }
+            
+            list.innerHTML = relevantRules.map(r => {
+                const trigger = currentFormData.fields.find(f => f.id === r.triggerId)?.label || 'Pergunta Excluída';
+                return `<div class="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-xl shadow-sm text-xs transition">
+                    <span class="truncate pr-3 font-medium text-slate-700">Mostrar <strong class="text-brand-600">SE</strong> <strong class="text-slate-900 border-b border-slate-300 border-dashed">${escapeHtml(trigger)}</strong> ${operatorLabels[r.operator]} <strong class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-brand-700">${escapeHtml(r.value)}</strong></span>
+                    <button onclick="window.removeRule('${r.id}')" class="text-red-500 hover:text-white hover:bg-red-500 w-8 h-8 flex items-center justify-center rounded-lg transition cursor-pointer shrink-0 shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        };
+
+        window.removeRule = function(id) {
+            currentFormData.rules = currentFormData.rules.filter(r => r.id !== id);
+            window.renderRulesList();
+            window.renderEditor();
+        };
+
+        window.closeLogicModal = () => { document.getElementById('logic-modal').classList.add('hidden'); };
+
+        // ==========================================
+        // RENDERIZAÇÃO DO FORMULÁRIO / PREVIEW
+        // ==========================================
+        window.renderPreview = function() {
+            document.getElementById('preview-title').innerText = currentFormData.title || 'Sem Título';
+            document.getElementById('preview-description').innerText = currentFormData.description || '';
+            const cont = document.getElementById('preview-fields-container');
+            
+            // Eventos acoplados para a checagem em tempo real
+            const eventHandlers = `onchange="window.evaluatePreviewRules()" oninput="window.evaluatePreviewRules()"`;
+            
+            cont.innerHTML = currentFormData.fields.map(f => {
+                let html = `<label class="block text-sm font-black text-slate-800 mb-1 leading-tight">${escapeHtml(f.label)} ${f.required?'<span class="text-red-500">*</span>':''}</label>`;
+                if(f.instruction) html += `<p class="text-[11px] font-medium text-slate-500 mb-3">${escapeHtml(f.instruction)}</p>`;
+                
+                if(f.type === 'short_text') html += `<input type="text" name="${f.id}" ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-2.5 rounded-xl outline-none focus:border-brand-500 shadow-sm">`;
+                if(f.type === 'long_text') html += `<textarea name="${f.id}" rows="3" ${eventHandlers} class="w-full text-xs font-medium border border-slate-300 p-2.5 rounded-xl outline-none focus:border-brand-500 shadow-sm resize-none"></textarea>`;
+                if(f.type === 'number') html += `<input type="number" name="${f.id}" ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-2.5 rounded-xl outline-none focus:border-brand-500 shadow-sm">`;
+                if(f.type === 'date') html += `<input type="date" name="${f.id}" ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-2.5 rounded-xl outline-none focus:border-brand-500 shadow-sm cursor-pointer">`;
+                if(f.type === 'single_select') html += `<div class="space-y-1.5">${f.options.map(o => `<label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition"><input type="radio" name="${f.id}" value="${escapeHtml(o)}" ${eventHandlers} class="w-4 h-4 text-brand-600 cursor-pointer"> ${escapeHtml(o)}</label>`).join('')}</div>`;
+                if(f.type === 'multi_select') html += `<div class="space-y-1.5">${f.options.map(o => `<label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition"><input type="checkbox" name="${f.id}" value="${escapeHtml(o)}" ${eventHandlers} class="w-4 h-4 text-brand-600 rounded cursor-pointer"> ${escapeHtml(o)}</label>`).join('')}</div>`;
+                
+                // Os containers começam bloqueados se forem alvo de regras (A função evaluate vai soltá-los)
+                return `<div id="pw-${f.id}" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300">${html}</div>`;
+            }).join('');
+            
+            // Força primeira checagem para ocultar os campos que têm regras mas não foram ativadas ainda
+            window.evaluatePreviewRules();
+        };
+
+        window.evaluatePreviewRules = function() {
+            if (!currentFormData.rules || currentFormData.rules.length === 0) return;
+            
+            const form = document.getElementById('interactive-preview-form');
+            const values = {};
+            
+            // Captura tudo o que já foi digitado/clicado até agora
+            currentFormData.fields.forEach(f => {
+                if(f.type === 'single_select') { const r = form.querySelector(`input[name="${f.id}"]:checked`); values[f.id] = r ? r.value : ''; }
+                else if(f.type === 'multi_select') { values[f.id] = Array.from(form.querySelectorAll(`input[name="${f.id}"]:checked`)).map(e=>e.value); }
+                else { const el = form.querySelector(`[name="${f.id}"]`); values[f.id] = el ? el.value : ''; }
+            });
+            
+            // Descobre quem são os "alvos" das condicionais
+            const targetFields = new Set(currentFormData.rules.map(r => r.targetId));
+            const fieldsToShow = new Set();
+            
+            currentFormData.rules.forEach(r => {
+                const triggerVal = values[r.triggerId];
+                let isMatch = false;
+                
+                if (Array.isArray(triggerVal)) {
+                     if (r.operator === 'contains' || r.operator === 'equals') isMatch = triggerVal.includes(r.value);
+                     if (r.operator === 'not_contains' || r.operator === 'not_equals') isMatch = !triggerVal.includes(r.value);
+                } else {
+                     const tValStr = String(triggerVal || '').toLowerCase();
+                     const rValStr = String(r.value || '').toLowerCase();
+                     const tValNum = parseFloat(triggerVal);
+                     const rValNum = parseFloat(r.value);
+                     
+                     switch(r.operator) {
+                         case 'equals': isMatch = tValStr === rValStr; break;
+                         case 'not_equals': isMatch = tValStr !== rValStr; break;
+                         case 'contains': isMatch = tValStr.includes(rValStr); break;
+                         case 'not_contains': isMatch = !tValStr.includes(rValStr); break;
+                         case 'greater_than': isMatch = !isNaN(tValNum) && tValNum > rValNum; break;
+                         case 'less_than': isMatch = !isNaN(tValNum) && tValNum < rValNum; break;
+                         case 'greater_or_equal': isMatch = !isNaN(tValNum) && tValNum >= rValNum; break;
+                         case 'less_or_equal': isMatch = !isNaN(tValNum) && tValNum <= rValNum; break;
+                     }
+                }
+                
+                // A REGRA AQUI É "OR": Se uma das regras disser pra mostrar, ele mostra
+                if (isMatch) fieldsToShow.add(r.targetId);
+            });
+            
+            // Oculta e exibe as perguntas na tela com animação e remove obrigatoriedade visual
+            currentFormData.fields.forEach(f => {
+                const el = document.getElementById(`pw-${f.id}`);
+                if (!el) return;
+                
+                if (targetFields.has(f.id)) {
+                    if (fieldsToShow.has(f.id)) {
+                        el.style.display = 'block';
+                        el.classList.remove('conditional-field-hidden');
+                    } else {
+                        el.style.display = 'none';
+                        el.classList.add('conditional-field-hidden');
+                    }
+                } else {
+                    el.style.display = 'block';
+                    el.classList.remove('conditional-field-hidden');
+                }
+            });
+        };
+
+        window.handleFormSubmit = async function(e) {
+            e.preventDefault();
+            const answers = {};
+            
+            currentFormData.fields.forEach(f => {
+                const elContainer = document.getElementById(`pw-${f.id}`);
+                
+                // Se a pergunta foi oculta por condicional, a resposta dela não vai para o banco
+                if (elContainer && elContainer.style.display === 'none') return;
+                
+                if(f.type === 'single_select') { const r = document.querySelector(`input[name="${f.id}"]:checked`); answers[f.label] = r ? r.value : ''; }
+                else if(f.type === 'multi_select') { answers[f.label] = Array.from(document.querySelectorAll(`input[name="${f.id}"]:checked`)).map(e=>e.value).join(', '); }
+                else { const el = document.querySelector(`[name="${f.id}"]`); answers[f.label] = el ? el.value : ''; }
+            });
+
+            const sub = { id: 's_'+Date.now(), formId: currentFormData.id, submittedAt: new Date().toISOString(), answers: answers };
+            
+            try {
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_submissions', sub.id), sub);
+                window.showToast('Resposta do formulário gravada e processada!');
+                setTimeout(() => { window.navigateTo('list'); }, 1000);
+            } catch(err) { window.showToast('Erro no envio.', 'error'); }
+        };
+
+        window.renderResponsesScreen = function() {
+            const subs = allSubmissions.filter(s => s.formId === activeFormId);
+            document.getElementById('responses-list-container').innerHTML = subs.length === 0 ? '<p class="p-8 text-center text-sm text-slate-500 font-bold bg-slate-50">Nenhum laudo / formulário preenchido ainda.</p>' : subs.map(s => `<div class="p-5 flex justify-between items-center text-xs hover:bg-slate-50 transition cursor-pointer"><span class="font-black text-slate-700">${new Date(s.submittedAt).toLocaleString('pt-BR')}</span><button onclick="window.showToast('Aba de detalhamento de resposta em breve!')" class="bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition px-4 py-2 rounded-xl font-bold shadow-sm cursor-pointer">Inspecionar Resposta</button></div>`).join('');
+        };
+
+        window.resetPreviewForm = () => { document.getElementById('interactive-preview-form').reset(); window.evaluatePreviewRules(); };
+        window.showToast = function(msg, type='success') { const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg; t.classList.remove('translate-y-20', 'opacity-0'); setTimeout(()=>t.classList.add('translate-y-20', 'opacity-0'), 3000); };
+        window.escapeHtml = (s) => (s||'').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+        // EXPORTS
+        window.exportJSON = () => window.showToast("Exportação Estrutural ativada (Em Breve)!");
+        window.exportAllFormsJSON = () => window.showToast("Backup em Massa ativado (Em Breve)!");
+        window.exportResponsesCSV = () => window.showToast("Gerador CSV em construção.");
+        window.exportResponsesJSON = () => window.showToast("Gerador JSON em construção.");
+    </script>
+</body>
+</html>

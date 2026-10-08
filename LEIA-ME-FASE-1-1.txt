@@ -1,0 +1,19 @@
+PORTAL CIJ - ASSISTÊNCIA TÉCNICA - FASE 1.1
+
+SUBSTITUA SOMENTE ESTES 3 ARQUIVOS NO GITHUB:
+1) assistencia.html
+2) assistencia.css
+3) assistencia.js
+
+NÃO ALTERE core.js.
+NÃO ALTERE serviceflow_app.html.
+NÃO ALTERE app_tecnico.html.
+
+TESTE:
+1) Abra assistencia.html no Portal.
+2) Confirme que o cabeçalho superior continua aparecendo.
+3) Confirme as abas Kanban, Integrações e Legado.
+4) Clique em Nova OS. A janela deve abrir.
+5) O botão Salvar OS deve permanecer BLOQUEADO nesta versão.
+
+Esta fase não grava OS e não altera o legado.

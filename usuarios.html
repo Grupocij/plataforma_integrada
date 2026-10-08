@@ -3,149 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciamento de Usuários - Portal Grupo CIJ</title>
+    <title>Gerenciar Usuários - Portal CIJ</title>
+    
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
     </style>
 </head>
-<body class="min-h-screen pb-12 flex flex-col">
+<body class="min-h-screen flex flex-col bg-slate-50">
 
-    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
-            <h1 class="text-2xl font-black text-[#002d72]">PORTAL GRUPO CIJ</h1>
-            <p id="login-message" class="text-xs text-slate-600 font-semibold">Verificando credenciais de Administrador...</p>
-        </div>
-    </div>
-
-    <header class="bg-[#0f172a] text-white p-4 sticky top-0 z-40 shadow-md border-b border-slate-800">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-600">Sistema</span>
-                <h1 class="text-sm font-bold">Gerenciamento de Usuários</h1>
-            </div>
-            <nav class="flex gap-4 items-center">
-                <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voltar ao Hub</a>
-                <button onclick="fazerLogout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition">Sair</button>
-            </nav>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6 flex-1 w-full">
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total de Usuários</p>
-                    <h3 id="kpiTotal" class="text-2xl font-black text-slate-900 mt-1">0</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-lg"><i class="fa-solid fa-users"></i></div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3"><i class="fa-solid fa-users-gear text-slate-800"></i> Gestão de Usuários & Acessos</h2>
+                <p class="text-sm text-slate-500 mt-1">Crie contas, defina o acesso aos módulos e configure a Visão Global de cada tela.</p>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-purple-600">Admin / Financeiro</p>
-                    <h3 id="kpiAdmins" class="text-2xl font-black text-purple-900 mt-1">0</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500 text-lg"><i class="fa-solid fa-user-shield"></i></div>
-            </div>
-            <div class="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Vendedores</p>
-                    <h3 id="kpiVendedores" class="text-2xl font-black text-blue-900 mt-1">0</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 text-lg"><i class="fa-solid fa-user-tie"></i></div>
-            </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-700">Técnicos</p>
-                    <h3 id="kpiTecnicos" class="text-2xl font-black text-slate-900 mt-1">0</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-lg"><i class="fa-solid fa-wrench"></i></div>
-            </div>
+            <button onclick="window.abrirModalUsuario()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-user-plus"></i> Novo Acesso
+            </button>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl border shadow-sm">
-            <h3 id="formTitle" class="text-base font-bold text-slate-900 flex items-center gap-2 mb-5 border-b border-slate-200 pb-3">
-                <i class="fa-solid fa-user-plus text-slate-700"></i> Cadastrar Novo Acesso
-            </h3>
-
-            <form id="formUsuario" onsubmit="salvarUsuario(event)" class="space-y-4">
-                <input type="hidden" id="edit_user_id" value="">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
-                        <input type="text" id="user_nome" required placeholder="Ex: João Silva" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-slate-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">E-mail de Acesso *</label>
-                        <input type="email" id="user_email" required placeholder="email@grupocij.com.br" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-slate-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Senha Inicial <span id="senhaAsterisco">*</span></label>
-                        <input type="text" id="user_senha" required placeholder="No mínimo 6 caracteres" minlength="6" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-medium outline-none focus:border-slate-600">
-                        <p id="senhaEditHelp" class="hidden text-[9px] text-slate-500 mt-1">Deixe em branco para não alterar a senha.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Acesso *</label>
-                        <select id="user_perfil" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl text-xs font-bold outline-none focus:border-slate-600">
-                            <option value="Admin">Admin / Financeiro (Total)</option>
-                            <option value="Vendedor">Vendedor (Comercial)</option>
-                            <option value="Técnico">Técnico (Operacional)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end pt-3 gap-2">
-                     <button type="button" id="btnCancelEdit" onclick="cancelarEdicao()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 px-6 rounded-xl transition text-xs">
-                        Cancelar
-                    </button>
-                    <button type="submit" id="btnSubmit" class="bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md text-xs flex items-center gap-2">
-                        <i class="fa-solid fa-check"></i> Criar Conta e Liberar Acesso
-                    </button>
-                </div>
-            </form>
-            <p class="text-[10px] text-slate-400 mt-3"><i class="fa-solid fa-circle-info"></i> A senha pode ser alterada pelo usuário posteriormente usando a opção "Esqueceu a senha" no momento do login.</p>
-        </div>
-
-        <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-5">
-            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
-                <i class="fa-solid fa-users text-slate-700"></i> Usuários com Acesso Ativo
-            </h3>
-
-            <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[700px] text-xs">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
-                            <th class="p-3">Nome</th>
-                            <th class="p-3">E-mail</th>
-                            <th class="p-3">Perfil</th>
-                            <th class="p-3">Data de Cadastro</th>
-                            <th class="p-3 text-center">Ações</th>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <th class="p-4">Nome do Usuário</th>
+                            <th class="p-4">E-mail (Login)</th>
+                            <th class="p-4 text-center">Perfil</th>
+                            <th class="p-4 text-center">Acesso a Módulos</th>
+                            <th class="p-4 text-center">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-200 font-medium bg-white">
-                        <!-- Conteúdo será injetado pelo JavaScript -->
+                    <tbody id="tabelaUsuarios" class="divide-y divide-slate-200 font-medium bg-white text-slate-700">
                     </tbody>
                 </table>
             </div>
         </div>
-
     </main>
 
-    <div id="toast" class="fixed bottom-5 right-5 hidden z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    <div id="modalUser" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl border border-slate-200 my-auto transform transition-all">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between rounded-t-3xl">
+                <h3 class="font-black text-lg tracking-tight flex items-center gap-2"><i class="fa-solid fa-user-shield text-blue-400"></i> Configurar Conta e Permissões</h3>
+                <button onclick="window.fecharModalUsuario()" class="text-slate-400 hover:text-white text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="userForm" onsubmit="window.salvarUsuario(event)" class="p-6 space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase">Nome Completo *</label>
+                        <input type="text" id="u_nome" required placeholder="Ex: João Silva" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-blue-600 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase">E-mail (Login) *</label>
+                        <input type="email" id="u_email" required placeholder="joao@grupocij.com.br" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-blue-600 transition">
+                    </div>
+                    <div>
+                        <label id="lbl_senha" class="block text-[11px] font-bold text-slate-600 mb-1 uppercase">Senha Inicial *</label>
+                        <input type="text" id="u_senha" required placeholder="Mínimo 6 caracteres" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-blue-600 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase">Perfil Base</label>
+                        <select id="u_perfil" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-blue-600 transition cursor-pointer">
+                            <option value="Vendedor">Vendedor</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Logística">Logística</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Administrativo">Administrativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-4 border-t border-slate-200 pt-4">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Controle de Módulos e Visão Global de Dados:</h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Marque somente os módulos que este usuário poderá abrir. O Perfil Base não libera módulos automaticamente. Master é a única exceção. O botão Visão Global controla se o usuário vê dados de toda a equipe naquele módulo.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="matriz-modulos-container">
+                        <!-- Gerado dinamicamente via JS -->
+                    </div>
+                </div>
+
+                <section class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <h4 class="font-bold text-sm text-blue-900">Opções da Central de OS</h4>
+                    <p class="text-[11px] text-blue-800 mt-1">Libere primeiro o módulo Central de OS na matriz acima. Visão Global permite consultar toda a equipe; desativada, mostra as OS criadas pelo usuário ou atribuídas a ele.</p>
+                    <div class="flex flex-wrap gap-5 mt-3 text-xs font-semibold text-blue-900">
+                        <label class="flex gap-2 items-center"><input type="checkbox" id="u_central_indicadores"> Consultar indicadores</label>
+                        <label class="flex gap-2 items-center"><input type="checkbox" id="u_central_faturamento"> Consultar valores e faturamento</label>
+                        <label class="flex gap-2 items-center"><input type="checkbox" id="u_central_exportar"> Exportar consulta em CSV</label>
+                    </div>
+                    <p class="text-[11px] text-blue-800 mt-3">Criar OS pelos cadastros exige acesso à Assistência Técnica. As permissões para aprovar, faturar ou reabrir uma OS continuam na Assistência.</p>
+                </section>
+
+<section class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+<h4 class="font-bold text-sm text-teal-900">Certificação e padrões de teste</h4>
+<p class="text-[11px] text-teal-800 mt-1">Libere os módulos na matriz acima e marque as ações autorizadas. Para o tablet compartilhado, libere preenchimento e mantenha o executante escolhido na hora do serviço.</p>
+<div class="grid md:grid-cols-2 gap-3 mt-3 text-xs font-semibold text-teal-900"><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_preencher"> Preencher e concluir serviços</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_revisar"> Editar revisão e conteúdo do PDF</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_aprovar"> Aprovar para emissão</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_emitir"> Emitir e baixar PDFs oficiais</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_enviar"> Registrar envio ao cliente</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_faturar"> Liberar faturamento</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_gerenciar_padroes"> Administrar banco de padrões</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_cert_configurar"> Configurar empresa e destinatários</label></div>
+<label class="flex gap-2 items-center text-xs mt-4"><input type="checkbox" id="u_cert_tablet"> Esta é uma conta de tablet compartilhado (não aparece na lista de executantes)</label></section>
+<section class="bg-amber-50 border border-amber-200 rounded-xl p-4"><h4 class="font-bold text-sm text-amber-900">Materiais da OS e revisão de equipamentos</h4><p class="text-[11px] text-amber-800 mt-1">Libere os módulos necessários acima e marque as ações de cada pessoa. Estoque, financeiro e revisão exigem autorização específica.</p><div class="grid md:grid-cols-2 gap-3 mt-3 text-xs font-semibold text-amber-900"><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_solicitar"> Solicitar peças na OS e preencher solicitação técnica</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_entregar"> Entregar peças ao técnico</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_receber_devolucao"> Conferir devoluções e quarentena</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_transferir"> Transferir materiais entre técnicos / OS</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_vincular_orcamento"> Revisar vínculos de peças em registros anteriores</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_faturar"> Confirmar faturamento no encerramento da OS</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_liberar_saida"> Conferir e liberar saída do equipamento</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_tratar_ocorrencias"> Resolver perdas, correções e exceções justificadas</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_gerenciar_estoque"> Cadastrar e ajustar estoque</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_revisar_parque"> Revisar temporários e converter para o parque</label><label class="flex gap-2 items-center"><input type="checkbox" id="u_mat_configurar"> Configurar prazo de conferência</label></div></section>
+                <div class="flex justify-end pt-4 mt-2 border-t border-slate-200">
+                    <button id="btnSalvar" type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-xl transition shadow-md text-sm flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-save"></i> Salvar Acessos
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
+
+    <!-- MOTOR CENTRAL DO SISTEMA -->
+    <script type="module" src="core.js?v=20261007-mat4"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+        // As mesmas credenciais oficiais
         const firebaseConfig = {
             apiKey: "AIzaSyDW05GuYDxXUCmtWfSxhfap1-l6_qkNspw",
             authDomain: "plataforma-cij.firebaseapp.com",
@@ -154,217 +137,328 @@
             messagingSenderId: "949985395100",
             appId: "1:949985395100:web:cf881e0c91c63175228859"
         };
-
-        // App Principal (Sessão do Admin atual)
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
         
-        // App Secundário (Truque para poder criar novos usuários sem deslogar o Admin)
-        const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
-        const secondaryAuth = getAuth(secondaryApp);
+        // Inicializa uma SEGUNDA instância do app apenas para criar o usuário e não deslogar o Admin
+        const appSecundaria = initializeApp(firebaseConfig, "AppCriacaoUsuarios");
+        const authSecundaria = getAuth(appSecundaria);
 
-        const appId = 'plataforma-cij';
-        const usuariosCol = collection(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes');
+        // Expõe as funções para uso global
+        window.AppAuthSecundaria = authSecundaria;
+        window.FsCreateUser = createUserWithEmailAndPassword;
+        window.FsSignOut = signOut;
+    </script>
 
-        window.listaUsuarios = [];
-        window.currentUser = null;
+    <script>
+        window.listaDeUsuarios = [];
+        let editingUserId = null;
 
-        // Verifica o Login
-        onAuthStateChanged(auth, (user) => {
-            const loginScreen = document.getElementById('login-screen');
-            if(user) {
-                // Apenas Admins devem acessar esta página (verificação básica visual, a real está na home)
-                loginScreen.classList.add('hidden');
-                window.currentUser = user;
+        const TODOS_MODULOS = [
+            { id: 'index.html', nome: 'Agenda (Página Inicial)', cat: 'Geral' },
 
-                // Fica "escutando" a coleção de usuários
-                onSnapshot(usuariosCol, (snap) => {
-                    window.listaUsuarios = [];
-                    snap.forEach(d => window.listaUsuarios.push(d.data()));
-                    atualizarKPIs();
-                    renderTable();
-                });
-            } else {
-                window.location.href = 'index.html'; // Se não tiver logado, joga pro hub
+            { id: 'suporte-mobile.html', nome: 'Suporte OSR (Mobile)', cat: 'Serviços' },
+            { id: 'assistencia.html', nome: 'Assistência Técnica', cat: 'Serviços' },
+            { id: 'certificacao.html', nome: 'Certificação de Equipamentos', cat: 'Serviços' },
+            { id: 'padroes_teste.html', nome: 'Padrões de Teste', cat: 'Serviços' },
+            { id: 'cert_alertas.html', nome: 'Alertas de Certificação', cat: 'Serviços' },
+            { id: 'central_os.html', nome: 'Central de OS', cat: 'Serviços' },
+            { id: 'app_tecnico.html', nome: 'App do Técnico', cat: 'Serviços' },
+            { id: 'parque_consulta.html', nome: 'Consulta Parque (Somente leitura)', cat: 'Serviços' },
+            { id: 'servicos_osr.html', nome: 'Gestão de OSR', cat: 'Serviços' },
+            { id: 'veiculos_mobile.html', nome: 'Veículos Mobile', cat: 'Serviços' },
+
+            { id: 'simulador.html', nome: 'Simulador Financeiro', cat: 'Comercial' },
+            { id: 'solicitacao.html', nome: 'Solicitação CIJ', cat: 'Comercial' },
+            { id: 'tabelas.html', nome: 'Documentos Oficiais', cat: 'Comercial' },
+            { id: 'ranking.html', nome: 'Ranking de Vendas', cat: 'Comercial' },
+
+            { id: 'requisicao_material.html', nome: 'Req. de Material', cat: 'Logística' },
+            { id: 'estoque_pecas.html', nome: 'Estoque de Peças', cat: 'Logística' },
+            { id: 'estoque-novos.html', nome: 'Estoque Novos', cat: 'Logística' },
+            { id: 'estoque.html', nome: 'Estoque Usados/Geral', cat: 'Logística' },
+
+            { id: 'solicitacoes-lista.html', nome: 'Lista de Solicitações', cat: 'Administrativo' },
+            { id: 'veiculos.html', nome: 'Veículos Gerencial', cat: 'Administrativo' },
+            { id: 'vendas.html', nome: 'Vendas (Saídas)', cat: 'Administrativo' },
+            { id: 'usuarios.html', nome: 'Gerenciar Usuários', cat: 'Administrativo' },
+            { id: 'central_cadastros.html', nome: 'Central de Cadastros', cat: 'Administrativo' },
+            { id: 'parque_maquinas.html', nome: 'Parque de Máquinas', cat: 'Administrativo' },
+            { id: 'formcraft_sandbox.html', nome: 'FormCraft Sandbox (Beta)', cat: 'Administrativo' },
+            { id: 'admin.html', nome: 'Painel Diretoria', cat: 'Administrativo' },
+
+            { id: 'despesas.html', nome: 'Controle de Despesas', cat: 'Financeiro' },
+            { id: 'dashboard_despesas.html', nome: 'Dashboard Gerencial', cat: 'Financeiro' },
+            { id: 'comissoes-azul.html', nome: 'Comissões Azul', cat: 'Financeiro' },
+            { id: 'comissoes_beta.html', nome: 'Gestão de Comissões Beta', cat: 'Financeiro' },
+            { id: 'comissoes-consumiveis.html', nome: 'Com. Consumíveis', cat: 'Financeiro' },
+            { id: 'comissoes-representantes.html', nome: 'Com. Representantes', cat: 'Financeiro' },
+
+            { id: 'diretoria-custos.html', nome: 'Custos & Margens', cat: 'Diretoria' }
+        ];
+
+        window.initModule = function(perfil) {
+            if (perfil !== 'Master' && perfil !== 'Administrativo') {
+                document.getElementById('login-message').innerHTML = '<span class="text-red-600 font-bold">Acesso Negado: Apenas a Administração pode gerenciar acessos.</span>';
+                window.fazerLogout();
+                return;
             }
-        });
+            
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
 
-        window.fazerLogout = () => {
-            signOut(auth).then(() => { window.location.href = 'index.html'; });
+            window.construirMatrizModulos();
+
+            const usersCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'usuarios_permissoes');
+            
+            window.fsOnSnapshot(usersCol, (snap) => {
+                window.listaDeUsuarios = [];
+                snap.forEach(d => window.listaDeUsuarios.push({ id: d.id, ...d.data() }));
+                window.renderTabelaUsuarios();
+            });
         };
 
-        // Lógica de Salvar (Cria Autenticação e Salva Permissão)
-        window.salvarUsuario = async (e) => {
+        window.construirMatrizModulos = function() {
+            const container = document.getElementById('matriz-modulos-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            TODOS_MODULOS.forEach(m => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col justify-between space-y-2 hover:bg-slate-100/60 transition";
+                card.innerHTML = `
+                    <label class="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                        <input type="checkbox" value="${m.id}" onchange="window.toggleModuloCheck(this)" class="mod-checkbox w-4 h-4 text-blue-600 rounded"> 
+                        <span class="truncate">${m.nome}</span>
+                    </label>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase">Visão Global:</span>
+                        <button type="button" id="btn_vg_${m.id.replace('.html', '')}" data-mod="${m.id}" onclick="window.toggleVisaoGlobalBtn(this)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-slate-200 text-slate-600 border-slate-300 cursor-pointer">
+                            Desativada
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        window.toggleModuloCheck = function(checkbox) {
+            const card = checkbox.closest('div.bg-slate-50');
+            const btn = card.querySelector('button');
+            if (!checkbox.checked) {
+                btn.setAttribute('data-global', 'false');
+                btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-slate-200 text-slate-600 border-slate-300 cursor-pointer";
+                btn.textContent = "Desativada";
+            }
+        };
+
+        window.toggleVisaoGlobalBtn = function(btn) {
+            const card = btn.closest('div.bg-slate-50');
+            const checkbox = card.querySelector('.mod-checkbox');
+            
+            if (!checkbox.checked) {
+                checkbox.checked = true;
+            }
+
+            const currentState = btn.getAttribute('data-global') === 'true';
+            const newState = !currentState;
+            btn.setAttribute('data-global', newState ? 'true' : 'false');
+
+            if (newState) {
+                btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-emerald-100 text-emerald-800 border-emerald-400 cursor-pointer shadow-sm";
+                btn.textContent = "Habilitada";
+            } else {
+                btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-slate-200 text-slate-600 border-slate-300 cursor-pointer";
+                btn.textContent = "Desativada";
+            }
+        };
+
+        window.renderTabelaUsuarios = function() {
+            const tbody = document.getElementById('tabelaUsuarios');
+            tbody.innerHTML = window.listaDeUsuarios.map(u => {
+                const vg = u.visaoGlobalPorTela || {};
+                let globaisAtivas = Object.keys(vg).filter(k => vg[k] === true).length;
+
+                const badgeVg = globaisAtivas > 0 ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">${globaisAtivas} Globais Ativas</span>` : `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Apenas Próprios</span>`;
+                const modulosQtd = (u.modulos || []).length;
+                
+                return `
+                <tr class="hover:bg-slate-50 border-b border-slate-100 transition">
+                    <td class="p-4 font-bold text-slate-800">${u.nome}</td>
+                    <td class="p-4 font-bold text-blue-600">${u.email}</td>
+                    <td class="p-4 text-center font-bold text-slate-600">${u.perfil}</td>
+                    <td class="p-4 text-center">
+                        <div class="font-semibold text-slate-700">${modulosQtd} de ${TODOS_MODULOS.length} Módulos</div>
+                        <div class="mt-0.5">${badgeVg}</div>
+                    </td>
+                    <td class="p-4 text-center space-x-2">
+                        <button onclick="window.editarUsuario('${u.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-bold transition cursor-pointer">Editar</button>
+                        <button onclick="window.excluirUsuario('${u.id}')" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        };
+
+        window.abrirModalUsuario = function() {
+            editingUserId = null;
+            document.getElementById('userForm').reset();
+            
+            document.getElementById('u_email').readOnly = false;
+            
+            // Habilita a senha para Novos Usuários
+            document.getElementById('u_senha').value = '';
+            document.getElementById('u_senha').readOnly = false;
+            document.getElementById('u_senha').required = true;
+            document.getElementById('lbl_senha').innerText = 'Senha Inicial *';
+            
+            document.querySelectorAll('.mod-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#matriz-modulos-container button').forEach(btn => {
+                btn.setAttribute('data-global', 'false');
+                btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-slate-200 text-slate-600 border-slate-300 cursor-pointer";
+                btn.textContent = "Desativada";
+            });
+
+            document.getElementById('modalUser').classList.remove('hidden');
+        };
+
+        window.fecharModalUsuario = function() {
+            document.getElementById('modalUser').classList.add('hidden');
+        };
+
+        window.editarUsuario = function(id) {
+            const u = window.listaDeUsuarios.find(x => x.id === id);
+            if (!u) return;
+
+            editingUserId = u.id;
+            ['solicitar','entregar','receber_devolucao','transferir','vincular_orcamento','faturar','liberar_saida','tratar_ocorrencias','gerenciar_estoque','revisar_parque','configurar'].forEach(k=>document.getElementById('u_mat_'+k).checked=Object.hasOwn(u.permissoesMateriais||{},k)?u.permissoesMateriais[k]===true:(k==='solicitar'&&u.perfil==='Técnico'));
+            ['preencher', 'revisar', 'aprovar', 'emitir', 'enviar', 'faturar', 'gerenciar_padroes', 'configurar'].forEach(k => document.getElementById('u_cert_'+k).checked = u.permissoesCertificacao?.[k] === true);
+            document.getElementById('u_cert_tablet').checked = u.contaTabletCertificacao === true;
+            document.getElementById('u_nome').value = u.nome;
+            document.getElementById('u_email').value = u.email;
+            document.getElementById('u_email').readOnly = true; 
+            document.getElementById('u_perfil').value = u.perfil;
+            ['indicadores','faturamento','exportar'].forEach(k => document.getElementById('u_central_'+k).checked = u.permissoesCentralOS?.[k] === true);
+
+            // Desabilita a senha em modo de edição (Pois o usuário já existe e troca a senha pelo "Esqueci a senha")
+            document.getElementById('u_senha').value = '********';
+            document.getElementById('u_senha').readOnly = true;
+            document.getElementById('u_senha').required = false;
+            document.getElementById('lbl_senha').innerText = 'Senha (Bloqueada)';
+
+            const vg = u.visaoGlobalPorTela || {};
+            const modulosUser = u.modulos || [];
+
+            document.querySelectorAll('.mod-checkbox').forEach(cb => {
+                const modId = cb.value;
+                cb.checked = modulosUser.includes(modId);
+
+                const card = cb.closest('div.bg-slate-50');
+                const btn = card.querySelector('button');
+                const isGlobal = vg[modId] === true;
+
+                btn.setAttribute('data-global', isGlobal ? 'true' : 'false');
+                if (isGlobal) {
+                    btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-emerald-100 text-emerald-800 border-emerald-400 cursor-pointer shadow-sm";
+                    btn.textContent = "Habilitada";
+                } else {
+                    btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition bg-slate-200 text-slate-600 border-slate-300 cursor-pointer";
+                    btn.textContent = "Desativada";
+                }
+            });
+
+            document.getElementById('modalUser').classList.remove('hidden');
+        };
+
+        window.salvarUsuario = async function(e) {
             e.preventDefault();
-            const btn = document.getElementById('btnSubmit');
-            const oldText = btn.innerHTML;
+
+            const btn = document.getElementById('btnSalvar');
+            const txtOriginal = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
             btn.disabled = true;
 
-            const editId = document.getElementById('edit_user_id').value;
-            const nome = document.getElementById('user_nome').value.trim();
-            const email = document.getElementById('user_email').value.toLowerCase().trim();
-            const senha = document.getElementById('user_senha').value;
-            const perfil = document.getElementById('user_perfil').value;
-            const id = editId || Date.now().toString(); // Usando timestamp como ID, ou o ID existente
+            const emailFormatado = document.getElementById('u_email').value.toLowerCase().trim();
+            const senhaInicial = document.getElementById('u_senha').value.trim();
+            const modulosSelecionados = [];
+            const visaoGlobalObj = {};
+            const usuarioExistente = editingUserId ? window.listaDeUsuarios.find(x => x.id === editingUserId) : null;
+            let authUid = String(usuarioExistente?.authUid || usuarioExistente?.uid || '').trim();
 
-            try {
-                // 1. Tenta criar o usuário no Firebase Auth usando o App Secundário (Apenas se houver senha e não for uma edição onde a senha ficou em branco)
-                if (senha) {
-                    try {
-                        await createUserWithEmailAndPassword(secondaryAuth, email, senha);
-                        await signOut(secondaryAuth); // Desloga imediatamente a sessão fantasma criada
-                    } catch (authErr) {
-                        // Se o e-mail já existe na base do Google, nós só prosseguimos para atualizar a permissão dele
-                        if (authErr.code === 'auth/email-already-in-use') {
-                            console.log("Usuário já tem conta criada. Atualizando apenas as permissões.");
-                        } else {
-                            throw authErr; // Se for outro erro (ex: senha fraca), bloqueia e avisa
-                        }
+            // SE FOR USUÁRIO NOVO, CRIA A CONTA NO MOTOR DE LOGIN DO GOOGLE (FIREBASE AUTH)
+            if (!editingUserId) {
+                if (senhaInicial.length < 6) {
+                    alert("A senha inicial deve ter no mínimo 6 caracteres.");
+                    btn.innerHTML = txtOriginal; btn.disabled = false;
+                    return;
+                }
+
+                try {
+                    // Cria no Motor Real
+                    const credCriacao = await window.FsCreateUser(window.AppAuthSecundaria, emailFormatado, senhaInicial);
+                    authUid = String(credCriacao?.user?.uid || '').trim();
+                    // Faz logout no motor secundário para não atrapalhar sua sessão de Administrador
+                    await window.FsSignOut(window.AppAuthSecundaria); 
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        // O e-mail já foi registrado no Firebase Auth (Talvez ele já tenha usado o App antigo)
+                        // Apenas passamos reto e atualizamos as permissões dele.
+                    } else {
+                        alert("Erro ao criar o login do usuário no servidor: " + error.message);
+                        btn.innerHTML = txtOriginal; btn.disabled = false;
+                        return;
                     }
                 }
+            }
 
-                // 2. Salva o registro de Permissão no Banco de Dados
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes', id);
-                
-                const userData = {
-                    id: id,
-                    nome: nome,
-                    email: email,
-                    perfil: perfil
-                };
-                
-                // Mantem a data de criacao se for edicao, ou adiciona se for novo
-                if (!editId) {
-                    userData.dataCriacao = new Date().toISOString();
+            // SALVA AS PERMISSÕES NO FIRESTORE
+            document.querySelectorAll('.mod-checkbox').forEach(cb => {
+                if (cb.checked) {
+                    modulosSelecionados.push(cb.value);
+                    const card = cb.closest('div.bg-slate-50');
+                    const btnVg = card.querySelector('button');
+                    const isGlobal = btnVg.getAttribute('data-global') === 'true';
+                    visaoGlobalObj[cb.value] = isGlobal;
                 } else {
-                     const existingUser = window.listaUsuarios.find(u => u.id === editId);
-                     if(existingUser && existingUser.dataCriacao) {
-                         userData.dataCriacao = existingUser.dataCriacao;
-                     }
+                    visaoGlobalObj[cb.value] = false;
                 }
-                
-                // Usando merge true para não sobrescrever dados acidentalmente se a estrutura evoluir
-                await setDoc(docRef, userData, { merge: true });
+            });
 
-                window.mostrarNotificacao(editId ? "Usuário atualizado com sucesso!" : "Usuário configurado e acesso liberado!");
-                cancelarEdicao(); // Limpa e reseta o form
+            const docId = editingUserId ? editingUserId : emailFormatado;
+            const data = {
+                ...(usuarioExistente || {}),
+                permissoesMateriais: Object.fromEntries(['solicitar', 'entregar', 'receber_devolucao', 'transferir', 'vincular_orcamento', 'faturar', 'liberar_saida', 'tratar_ocorrencias', 'gerenciar_estoque', 'revisar_parque', 'configurar'].map(k=>[k,document.getElementById('u_mat_'+k).checked])),
+                permissoesCertificacao: Object.fromEntries(['preencher', 'revisar', 'aprovar', 'emitir', 'enviar', 'faturar', 'gerenciar_padroes', 'configurar'].map(k => [k, (modulosSelecionados.includes('certificacao.html') || modulosSelecionados.includes('padroes_teste.html')) && document.getElementById('u_cert_'+k).checked])),
+                contaTabletCertificacao: document.getElementById('u_cert_tablet').checked,
+                email: emailFormatado,
+                userEmail: emailFormatado,
+                nome: document.getElementById('u_nome').value,
+                perfil: document.getElementById('u_perfil').value,
+                visaoGlobalPorTela: visaoGlobalObj,
+                modulos: modulosSelecionados,
+                permissoesCentralOS: Object.fromEntries(['indicadores','faturamento','exportar'].map(k => [k, modulosSelecionados.includes('central_os.html') && document.getElementById('u_central_'+k).checked])),
+                userId: docId,
+                authUid: authUid || '',
+                uid: authUid || usuarioExistente?.uid || '',
+                updatedAtISO: new Date().toISOString()
+            };
 
+            try {
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'usuarios_permissoes', docId), data);
+                editingUserId = null;
+                window.fecharModalUsuario();
             } catch (err) {
-                console.error(err);
-                window.mostrarNotificacao("Erro: " + err.message, true);
+                alert("Erro ao salvar configurações e permissões: " + err.message);
             } finally {
-                btn.innerHTML = oldText;
+                btn.innerHTML = txtOriginal;
                 btn.disabled = false;
             }
         };
 
-        window.editarUsuario = (id) => {
-            const user = window.listaUsuarios.find(u => u.id === id);
-            if (!user) return;
-
-            document.getElementById('edit_user_id').value = user.id;
-            document.getElementById('user_nome').value = user.nome;
-            document.getElementById('user_email').value = user.email;
-            document.getElementById('user_perfil').value = user.perfil;
-            
-            const senhaInput = document.getElementById('user_senha');
-            senhaInput.value = '';
-            senhaInput.required = false; // Senha não é obrigatória na edição
-            
-            document.getElementById('senhaAsterisco').classList.add('hidden');
-            document.getElementById('senhaEditHelp').classList.remove('hidden');
-
-            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-user-pen text-slate-700"></i> Editar Usuário';
-            const btnSubmit = document.getElementById('btnSubmit');
-            btnSubmit.innerHTML = '<i class="fa-solid fa-save"></i> Atualizar Usuário';
-            
-            document.getElementById('btnCancelEdit').classList.remove('hidden');
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-        
-        window.cancelarEdicao = () => {
-             document.getElementById('formUsuario').reset();
-             document.getElementById('edit_user_id').value = '';
-             
-             const senhaInput = document.getElementById('user_senha');
-             senhaInput.required = true;
-             
-             document.getElementById('senhaAsterisco').classList.remove('hidden');
-             document.getElementById('senhaEditHelp').classList.add('hidden');
-             
-             document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-user-plus text-slate-700"></i> Cadastrar Novo Acesso';
-             document.getElementById('btnSubmit').innerHTML = '<i class="fa-solid fa-check"></i> Criar Conta e Liberar Acesso';
-             document.getElementById('btnCancelEdit').classList.add('hidden');
-        };
-
-        window.excluirUsuario = async (id) => {
-            if(!confirm('Deseja realmente remover o acesso deste usuário? Ele não conseguirá mais entrar nos módulos.')) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'usuarios_permissoes', id));
-                window.mostrarNotificacao("Permissões removidas com sucesso.");
-            } catch(err) {
-                window.mostrarNotificacao("Erro ao excluir: " + err.message, true);
+        window.excluirUsuario = async function(id) {
+            if(confirm('Atenção: Tem certeza que deseja remover as permissões e bloquear o acesso deste usuário?')) {
+                try {
+                    await window.fsDeleteDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'usuarios_permissoes', id));
+                } catch(e) { console.error(e); }
             }
-        };
-
-        // Funções de Interface
-        function atualizarKPIs() {
-            document.getElementById('kpiTotal').innerText = window.listaUsuarios.length;
-            document.getElementById('kpiAdmins').innerText = window.listaUsuarios.filter(u => u.perfil === 'Admin').length;
-            document.getElementById('kpiTecnicos').innerText = window.listaUsuarios.filter(u => u.perfil === 'Técnico').length;
-            document.getElementById('kpiVendedores').innerText = window.listaUsuarios.filter(u => u.perfil === 'Vendedor').length;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            if(window.listaUsuarios.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500 font-medium">Nenhum usuário cadastrado.</td></tr>`;
-                return;
-            }
-
-            // Ordena alfabeticamente
-            const listaOrdenada = window.listaUsuarios.sort((a, b) => a.nome.localeCompare(b.nome));
-
-            listaOrdenada.forEach(u => {
-                let badgeClass = '';
-                if(u.perfil === 'Admin') badgeClass = 'bg-purple-100 text-purple-800 border-purple-300';
-                else if(u.perfil === 'Técnico') badgeClass = 'bg-slate-100 text-slate-800 border-slate-300';
-                else badgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
-
-                const dataFormatada = u.dataCriacao ? new Date(u.dataCriacao).toLocaleDateString('pt-BR') : '-';
-                
-                // Evita que o administrador mestre apague a si mesmo
-                const isMaster = (u.email === 'adm@grupocij.com' || u.email === 'marcos@grupocij.com');
-                const btnAcoes = isMaster 
-                    ? `<span class="text-xs text-slate-300" title="Protegido"><i class="fa-solid fa-lock"></i></span>`
-                    : `
-                        <button onclick="editarUsuario('${u.id}')" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition mr-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="excluirUsuario('${u.id}')" class="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition" title="Remover Acesso"><i class="fa-solid fa-trash"></i></button>
-                      `;
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
-                        <td class="p-3 font-bold text-slate-900">${u.nome}</td>
-                        <td class="p-3 text-slate-600">${u.email}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${badgeClass}">${u.perfil}</span></td>
-                        <td class="p-3 text-slate-500 text-[11px]">${dataFormatada}</td>
-                        <td class="p-3 text-center">${btnAcoes}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        window.mostrarNotificacao = (msg, isError = false) => {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = msg;
-            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-triangle-exclamation text-amber-400' : 'fa-solid fa-circle-check text-emerald-400';
-            t.classList.remove('hidden');
-            setTimeout(() => t.classList.add('hidden'), 3500);
         };
     </script>
 </body>

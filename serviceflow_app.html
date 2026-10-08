@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServiceFlow - Gestão Integrada de Atendimentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(15, 23, 42, 0.04)',
+                        'glow': '0 0 20px -5px rgba(37, 99, 235, 0.35)',
+                        'card-hover': '0 10px 25px -5px rgba(37, 99, 235, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html, body { height: 100vh; width: 100vw; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 800; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; font-weight: 600; }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .glass-header {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .timeline-item { position: relative; padding-left: 1.5rem; }
+        .timeline-item::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: -1.25rem; border-left: 2px solid #e2e8f0; }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-dot {
+            position: absolute; left: 0px; top: 6px; width: 10px; height: 10px; border-radius: 50%;
+            background-color: #2563eb; border: 2px solid white; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+        }
+
+        .kanban-col.drag-over { background-color: #e0f2fe !important; border-color: #0284c7 !important; }
+        .dragging { opacity: 0.5; transform: scale(0.95); cursor: grabbing !important; }
+        
+        /* Blindagem para garantir o arrasto sem travamentos */
+        .kanban-card * { pointer-events: none; }
+        .kanban-card .quick-action-btn { pointer-events: auto; cursor: pointer; }
+
+        .pulse-critical { animation: pulseRed 2s infinite; }
+        @keyframes pulseRed {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .drawer-animate { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* REGRAS BLINDADAS DE IMPRESSÃO (PDF DE ORÇAMENTO) */
+        @media screen { 
+            #print-area { display: none !important; } 
+        }
+        @media print {
+            body { background: white !important; }
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; min-height: 100%; padding: 0; background: white; z-index: 999999; }
+            #print-area * { visibility: visible !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="flex flex-col text-slate-800 antialiased selection:bg-blue-600 selection:text-white h-screen w-screen overflow-hidden bg-slate-50">
+
+    <datalist id="list-clientes"></datalist>
+    <datalist id="list-maquinas"></datalist>
+
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Sincronizando Módulos...</p>
+        </div>
+    </div>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <div id="main-content" class="flex-1 flex flex-col relative w-full h-full min-h-0 hidden">
+        
+        <!-- CABEÇALHO -->
+        <div id="module-header" class="glass-header border-b border-slate-200 shrink-0 z-30 shadow-sm relative no-print">
+            <div class="px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+                
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-500 flex items-center justify-center font-extrabold text-2xl text-white shadow-glow shrink-0">S</div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-black tracking-tight text-slate-900">ServiceFlow</h1>
+                            <span class="bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">v5.0 OS</span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-medium">Gestão Integrada de Triagem e Suporte</p>
+                    </div>
+                </div>
+
+                <div class="hidden md:flex items-center relative flex-1 max-w-sm mx-4">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="headerQuickSearch" oninput="window.syncHeaderSearch(this.value)" placeholder="Busca rápida por cliente, SN ou OS..." class="w-full pl-9 pr-8 py-2 text-sm bg-slate-100 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-medium">
+                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">F</span>
+                </div>
+
+                <nav class="flex items-center gap-1 bg-slate-100 p-1.5 rounded-xl border border-slate-200 overflow-x-auto">
+                    <button onclick="window.switchView('kanban')" class="nav-link flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-bold bg-blue-600 text-white shadow-md shadow-blue-600/20 whitespace-nowrap" id="nav-kanban"><i class="fa-solid fa-table-columns"></i><span>Kanban</span></button>
+                    <button onclick="window.switchView('pendencias')" class="nav-link flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-white whitespace-nowrap" id="nav-pendencias"><i class="fa-solid fa-inbox"></i><span>Pendências</span><span id="badge-pendencias" class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span></button>
+                    <button onclick="window.switchView('indicadores')" class="nav-link flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-white whitespace-nowrap" id="nav-indicadores"><i class="fa-solid fa-chart-line"></i><span>Indicadores</span></button>
+                </nav>
+
+                <div class="flex items-center gap-2 ml-auto">
+                    <button onclick="window.abrirModalConfigAlertas()" id="btnConfigAlertas" title="Configurar Alertas" class="bg-slate-800 hover:bg-slate-900 text-amber-400 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-all items-center gap-1.5 shadow-sm cursor-pointer flex">
+                        <i class="fa-solid fa-bell"></i><span class="hidden xl:inline">Alertas</span>
+                    </button>
+                    <button onclick="window.abrirModalAutomacao()" id="btnAutomacao" title="Configurar Automação" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-code-branch"></i><span class="hidden xl:inline">Automação</span>
+                    </button>
+                    <button onclick="window.toggleFilterPanel()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-filter text-blue-600"></i><span>Filtros</span><span id="activeFilterBadge" class="hidden w-2 h-2 rounded-full bg-blue-600"></span>
+                    </button>
+                    <button onclick="window.abrirModalOS()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-black shadow-md transition-all flex items-center gap-2 cursor-pointer ml-2">
+                        <i class="fa-solid fa-plus"></i><span class="hidden sm:inline">Nova O.S.</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAINEL DE FILTROS -->
+            <div id="filterPanel" class="bg-white border-b border-slate-200 px-4 lg:px-6 py-4 shadow-md hidden transition-all absolute w-full z-20 top-[76px] no-print">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Busca Geral</label><div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i><input type="text" id="filterSearch" oninput="window.applyFilters()" placeholder="Pesquisar..." class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"></div></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente</label><input type="text" id="filterClient" oninput="window.applyFilters()" placeholder="Nome..." class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nº Série</label><input type="text" id="filterSerial" oninput="window.applyFilters()" placeholder="SN-..." class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono font-bold"></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Data Inicial</label><input type="date" id="filterDateStart" onchange="window.applyFilters()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Data Final</label><input type="date" id="filterDateEnd" onchange="window.applyFilters()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"></div>
+                    <div class="flex gap-2">
+                        <button onclick="window.resetFilters()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-eraser text-slate-500"></i> Limpar Filtros</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 pt-3 border-t border-slate-100">
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status Kanban</label><select id="filterStatus" onchange="window.applyFilters()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none cursor-pointer font-bold text-slate-700"><option value="ALL">Todos</option><option value="ENTRADA">Suporte Remoto</option><option value="TRIAGEM">Triagem Técnica</option><option value="ORCAMENTO">Orçamentos</option><option value="AGENDAMENTO">Agendamento / Execução</option><option value="CONCLUIDO">Finalizados</option></select></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Modalidade</label><select id="filterType" onchange="window.applyFilters()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none cursor-pointer font-bold text-slate-700"><option value="ALL">Todas</option><option value="REMOTO">Somente Remoto</option><option value="PRESENCIAL">Requer Visita Presencial</option></select></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Responsável</label><select id="filterTech" onchange="window.applyFilters()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none cursor-pointer font-bold text-slate-700"><option value="ALL">Todos os Responsáveis</option></select></div>
+                </div>
+            </div>
+
+            <!-- ÁREA DE RENDERIZAÇÃO DAS VISÕES - BLINDAGEM MÁXIMA DE ROLAGEM -->
+            <div class="flex-1 min-h-0 flex flex-col relative w-full overflow-hidden no-print">
+                <div class="px-4 py-2 bg-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0 border-b border-slate-200">
+                    <span class="hidden sm:inline-flex items-center gap-1.5 font-bold"><i class="fa-solid fa-lightbulb text-amber-500"></i> Clique num cartão para abrir a O.S. Arraste os cartões no Kanban para mudar o status.</span>
+                    <div class="flex items-center gap-4 ml-auto text-[10px] font-mono font-bold"><span>[ESC] Fechar Modais</span></div>
+                </div>
+
+                <!-- VISÃO 1: KANBAN COM SCROLL -->
+                <div id="view-kanban" class="flex-1 min-h-0 flex-col overflow-x-auto overflow-y-hidden p-4 view-section bg-slate-100 w-full flex">
+                    <div id="kanban-grid" class="flex-1 min-h-0 flex gap-4 h-full w-max min-w-full pb-2"></div>
+                </div>
+
+                <!-- VISÃO 2: PENDÊNCIAS COM SCROLL -->
+                <div id="view-pendencias" class="flex-1 min-h-0 flex-col overflow-y-auto p-4 md:p-8 view-section bg-slate-50 w-full hidden">
+                    <div class="max-w-5xl mx-auto space-y-4">
+                        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm flex items-center justify-between">
+                            <div><h3 class="text-base font-black text-slate-900">Fila Ativa de Atendimentos</h3><p class="text-sm text-slate-500 mt-1">Chamados pendentes de ação que requerem a sua atenção.</p></div>
+                            <span id="pendenciasCountTag" class="bg-blue-50 text-blue-700 border border-blue-200 text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">0 itens</span>
+                        </div>
+                        <div id="pendenciasList" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- VISÃO 3: INDICADORES -->
+                <div id="view-indicadores" class="flex-1 min-h-0 flex-col overflow-y-auto p-4 md:p-8 view-section bg-slate-50 w-full hidden">
+                    <div class="max-w-6xl mx-auto space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="statsGrid"></div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Distribuição Operacional do Kanban</h3>
+                            <div id="indicadoresBarList" class="space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GIGANTE E BLINDADO: NOVA O.S. (5 ABAS) -->
+    <div id="modal-os" class="fixed inset-0 z-[9999] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden relative">
+            
+            <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-sm flex items-center gap-2"><i class="fa-solid fa-file-invoice text-blue-400 text-base"></i> <span id="titulo-modal-os">Ordem de Serviço</span></h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.imprimirOS()" class="px-4 py-2 text-xs font-bold bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white flex items-center justify-center transition gap-2 shadow-sm" title="Exportar Orçamento em PDF"><i class="fa-solid fa-print"></i> Imprimir Orçamento</button>
+                    <button onclick="window.fecharModalOS()" class="text-slate-400 hover:text-white transition cursor-pointer p-1 ml-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+            </div>
+                
+            <div class="px-5 pt-4 bg-slate-50 border-b border-slate-200 shrink-0">
+                <div class="flex gap-6 text-xs sm:text-sm font-bold overflow-x-auto custom-scrollbar">
+                    <button type="button" onclick="window.mudarAbaOS('aba1')" id="btn-aba1" class="tab-active pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-building text-blue-600"></i> Dados Básicos</button>
+                    <button type="button" onclick="window.mudarAbaOS('aba2')" id="btn-aba2" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-print"></i> Equipamentos <span id="badge-equip-count" class="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-inner">0</span></button>
+                    <button type="button" onclick="window.mudarAbaOS('aba3')" id="btn-aba3" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-sack-dollar text-emerald-600"></i> Orçamentos <span id="badge-orc-count" class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-inner">0</span></button>
+                    <button type="button" onclick="window.mudarAbaOS('aba4')" id="btn-aba4" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-list-check text-orange-600"></i> Laudos / Forms</button>
+                    <button type="button" onclick="window.mudarAbaOS('aba5')" id="btn-aba5" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-clock-rotate-left text-purple-600"></i> Histórico</button>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 min-h-0 bg-white">
+                <form id="form-nova-os" onsubmit="event.preventDefault();" class="h-full">
+                    <input type="hidden" id="os-id-oculto" value="">
+                    
+                    <!-- ABA 1: DADOS BÁSICOS -->
+                    <div id="aba1" class="space-y-4 max-w-4xl mx-auto block">
+                        <div>
+                            <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">Cliente *</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="os-cliente" list="list-clientes" required oninput="window.preencherCardCliente(this.value)" placeholder="Digite o nome do cliente..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 text-sm font-black rounded-xl outline-none focus:border-blue-600 transition shadow-sm text-slate-900">
+                            </div>
+                            
+                            <div id="card-cliente-info" class="hidden mt-3 bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center shadow-sm">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1"><i class="fa-solid fa-address-card mr-1"></i> Dados do Cadastro Oficial</p>
+                                    <p id="card-end" class="text-xs font-bold text-slate-700"><i class="fa-solid fa-location-dot w-4 text-blue-400"></i> <span id="card-end-txt"></span></p>
+                                    <p id="card-tel" class="text-xs font-bold text-slate-700"><i class="fa-solid fa-phone w-4 text-blue-400"></i> <span id="card-tel-txt"></span></p>
+                                    <p id="card-con" class="text-xs font-bold text-slate-700"><i class="fa-solid fa-user w-4 text-blue-400"></i> Contato: <span id="card-con-txt" class="text-blue-900"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Solicitante</label><input type="text" id="os-solicitante" placeholder="Quem pediu?" class="w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 p-2.5 rounded-xl outline-none focus:border-blue-600 shadow-sm"></div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Atendimento *</label>
+                                <select id="os-tipo" class="w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 p-2.5 rounded-xl outline-none focus:border-blue-600 cursor-pointer shadow-sm">
+                                    <option value="Externo">Externo (No Cliente)</option><option value="Interno">Interno (Laboratório)</option><option value="Remoto">Remoto (Online)</option>
+                                </select>
+                            </div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Agendamento *</label><input type="date" id="os-data" required class="w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 p-2.5 rounded-xl outline-none focus:border-blue-600 cursor-pointer shadow-sm"></div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Técnico Designado *</label>
+                                <select id="os-tecnico" required class="w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 p-2.5 rounded-xl outline-none focus:border-blue-600 cursor-pointer shadow-sm"></select>
+                            </div>
+                            <div class="sm:col-span-2 lg:col-span-4"><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Observações / Rota</label><textarea id="os-obs" rows="2" placeholder="Ex: Falar com portaria..." class="w-full bg-white border border-slate-300 text-xs font-medium text-slate-700 p-2.5 rounded-xl outline-none focus:border-blue-600 resize-none shadow-sm"></textarea></div>
+                        </div>
+
+                        <div class="flex justify-end pt-4">
+                            <button type="button" onclick="window.validarAba1EAvancar()" class="bg-slate-900 hover:bg-black text-white font-black px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition cursor-pointer">Avançar para Equipamentos <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ABA 2: EQUIPAMENTOS -->
+                    <div id="aba2" class="hidden space-y-4 max-w-5xl mx-auto">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div>
+                                <h4 class="text-sm font-black text-slate-900 flex items-center gap-2"><i class="fa-solid fa-server text-blue-600"></i> Equipamentos</h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5 font-medium">Adicione as máquinas e defina formulários.</p>
+                            </div>
+                            <button type="button" onclick="window.adicionarEquipamentoNaOS()" class="w-full sm:w-auto bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm border border-blue-300 cursor-pointer">
+                                <i class="fa-solid fa-plus"></i> Add Máquina
+                            </button>
+                        </div>
+
+                        <div id="container-equipamentos-os" class="space-y-4 pb-8"></div>
+
+                        <div class="flex justify-between pt-4 border-t border-slate-200">
+                            <button type="button" onclick="window.mudarAbaOS('aba1')" class="text-slate-600 hover:text-slate-900 font-bold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+                            <button type="button" onclick="window.mudarAbaOS('aba3')" class="bg-slate-900 hover:bg-black text-white font-black px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition cursor-pointer">Avançar para Orçamentos <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ABA 3: ORÇAMENTOS -->
+                    <div id="aba3" class="hidden space-y-4 max-w-5xl mx-auto">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                            <div>
+                                <h4 class="text-sm font-black text-emerald-900 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-emerald-600"></i> Orçamentos</h4>
+                                <p class="text-[11px] text-emerald-700 mt-0.5 font-medium">Crie propostas comerciais vinculadas às máquinas.</p>
+                            </div>
+                            <button type="button" onclick="window.adicionarOrcamentoNaOS()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer">
+                                <i class="fa-solid fa-plus"></i> Novo Orçamento
+                            </button>
+                        </div>
+
+                        <div id="container-orcamentos-os" class="space-y-4 min-h-[200px]"></div>
+                        
+                        <div class="bg-slate-900 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-center text-white mt-6 shadow-xl relative overflow-hidden">
+                            <div class="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl"></div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-300 z-10">Total Geral Aprovado:</span>
+                            <span id="valor-total-geral-os" class="text-2xl font-black text-emerald-400 z-10 mt-1 sm:mt-0">R$ 0,00</span>
+                        </div>
+
+                        <div class="flex justify-between pt-4 border-t border-slate-200 mt-4">
+                            <button type="button" onclick="window.mudarAbaOS('aba2')" class="text-slate-600 hover:text-slate-900 font-bold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+                            <button type="button" onclick="window.mudarAbaOS('aba4')" class="bg-slate-900 hover:bg-black text-white font-black px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition cursor-pointer">Avançar p/ Laudos <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ABA 4: FORMULÁRIOS -->
+                    <div id="aba4" class="hidden space-y-4 max-w-5xl mx-auto">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 bg-orange-50 p-4 rounded-xl border border-orange-200">
+                            <div>
+                                <h4 class="text-sm font-black text-orange-900 flex items-center gap-2"><i class="fa-solid fa-list-check text-orange-600"></i> Formulários e Laudos</h4>
+                                <p class="text-[11px] text-orange-700 mt-0.5 font-medium">Preencha os laudos técnicos exigidos para cada equipamento.</p>
+                            </div>
+                        </div>
+
+                        <div id="lista-formularios-os" class="space-y-3">
+                            <!-- Injetado pelo renderizarAbaFormularios -->
+                        </div>
+
+                        <div class="flex justify-start pt-4 border-t border-slate-200 mt-4">
+                            <button type="button" onclick="window.mudarAbaOS('aba3')" class="text-slate-600 hover:text-slate-900 font-bold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar p/ Orçamentos</button>
+                        </div>
+                    </div>
+
+                    <!-- ABA 5: HISTÓRICO E TIMELINE (MIGRAÇÃO DA TELA INUTIL) -->
+                    <div id="aba5" class="hidden space-y-4 max-w-5xl mx-auto">
+                        <div class="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200"><i class="fa-solid fa-list-check text-blue-600 mr-2"></i> Log de Eventos e Anotações</h3>
+                            
+                            <div id="timeline-container" class="space-y-4 mb-6">
+                                <!-- Injetado via JS -->
+                            </div>
+                            
+                            <div class="pt-4 border-t border-slate-200">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Adicionar Nota Interna</label>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <input type="text" id="quickNoteInput" onkeydown="if(event.key==='Enter') { event.preventDefault(); window.addQuickNote(); }" class="flex-1 border border-slate-300 rounded-xl py-2.5 px-4 focus:outline-none focus:border-blue-600 text-sm font-medium shadow-sm transition" placeholder="Escreva um recado para a equipe...">
+                                    <button type="button" onclick="window.addQuickNote()" class="bg-slate-900 hover:bg-black text-white px-6 py-2.5 rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-paper-plane"></i> Registrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-slate-50 border-t border-slate-200 px-5 py-4 shrink-0 flex justify-end gap-2.5">
+                <button type="button" onclick="window.fecharModalOS()" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Cancelar / Fechar</button>
+                <button type="button" onclick="window.salvarOS()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer hover:-translate-y-0.5"><i class="fa-solid fa-cloud-arrow-up"></i> Salvar OS</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL PREENCHIMENTO DE LAUDO (FORMCRAFT NATIVO) -->
+    <div id="modal-formcraft" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99999] flex justify-center hidden opacity-0 transition-opacity duration-300 py-4 px-2 overflow-y-auto no-print">
+        <div class="bg-slate-50 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col transform scale-95 transition-transform duration-300 my-auto h-auto max-h-full" id="modal-formcraft-content">
+            <div class="bg-slate-900 text-white rounded-t-2xl px-5 py-4 flex justify-between items-center shrink-0 sticky top-0 z-10 border-b border-slate-800">
+                <div>
+                    <h2 id="fc-titulo" class="text-sm font-black tracking-tight">Carregando Laudo...</h2>
+                    <p id="fc-maquina" class="text-[10px] text-blue-300 font-medium flex items-center gap-1"><i class="fa-solid fa-server"></i> Vinculado à máquina</p>
+                </div>
+                <button onclick="window.fecharModalFormCraft()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 bg-slate-50 overflow-y-auto custom-scrollbar" id="fc-perguntas-container"></div>
+            <div class="p-4 border-t border-slate-200 bg-white rounded-b-2xl flex justify-between items-center shrink-0 sticky bottom-0 z-10">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-shield-halved mr-1"></i> FormCraft Pro</span>
+                <button onclick="window.salvarRespostasFormCraft()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-check"></i> Salvar Laudo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DELETAR TICKET KANBAN -->
+    <div id="modal-delete-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 border border-slate-200 space-y-5 text-center my-auto">
+            <div class="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-3xl shadow-inner border border-rose-200"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <h3 class="text-lg font-black text-slate-900">Excluir Chamado / O.S.?</h3>
+                <p class="text-sm text-slate-500 mt-2 font-medium">Esta ação não pode ser desfeita. Apagar o registro <span id="deleteTicketTargetId" class="font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded"></span>?</p>
+            </div>
+            <div class="flex gap-3 pt-3">
+                <button onclick="window.closeDeleteModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl cursor-pointer transition">Cancelar</button>
+                <button onclick="window.executeDeleteTicket()" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white text-sm font-black rounded-xl shadow-md cursor-pointer transition flex items-center justify-center gap-2"><i class="fa-solid fa-trash"></i> Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Configurações de Alertas -->
+    <div id="modal-config-alertas" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 flex flex-col my-auto max-h-[90vh]">
+            <div class="px-5 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 class="text-sm font-black flex items-center gap-2"><i class="fa-solid fa-robot text-amber-400"></i> Automação de Alertas do Kanban</h3>
+                <button onclick="window.fecharModalConfigAlertas()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto min-h-0 flex-1 custom-scrollbar bg-slate-50 space-y-4">
+                <p class="text-xs font-medium text-slate-600 bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-inner"><i class="fa-solid fa-circle-info text-blue-500 mr-1"></i> Determine quem deve ser notificado no portal quando um chamado / OS entrar nas colunas abaixo.</p>
+                <div id="config-alertas-container" class="space-y-3"></div>
+            </div>
+            <div class="px-5 py-3 border-t border-slate-200 bg-white flex justify-end gap-3 shrink-0 shadow-inner">
+                <button onclick="window.fecharModalConfigAlertas()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar</button>
+                <button onclick="window.salvarConfigAlertas()" class="px-6 py-2.5 bg-slate-900 hover:bg-black text-white font-black rounded-xl text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> Salvar Regras</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Configurações de Automação (Mapeamento OS -> Kanban) -->
+    <div id="modal-config-automacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 flex flex-col my-auto max-h-[90vh]">
+            <div class="px-6 py-5 bg-indigo-900 text-white flex justify-between items-center shrink-0">
+                <h3 class="text-base font-black flex items-center gap-2"><i class="fa-solid fa-code-branch text-indigo-300"></i> Mapeamento de Fases (OS -> Kanban)</h3>
+                <button onclick="window.fecharModalAutomacao()" class="text-indigo-200 hover:text-white transition-colors cursor-pointer p-1"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto min-h-0 flex-1 custom-scrollbar bg-slate-50 space-y-5">
+                <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl shadow-inner">
+                    <p class="text-sm font-bold text-indigo-900 mb-1"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> Como funciona a Automação?</p>
+                    <p class="text-xs text-indigo-700 font-medium">O App do Técnico permite escolher a <strong>"Etapa Atual"</strong> do equipamento (1 a 10). O painel do escritório trabalha com as <strong>"Colunas Visuais"</strong> do Kanban. Defina abaixo para qual coluna o cartão da OS deve pular automaticamente quando o técnico salvar o atendimento no celular.</p>
+                </div>
+                <div id="automacao-container" class="space-y-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 bg-white flex justify-end gap-3 shrink-0 shadow-inner">
+                <button onclick="window.fecharModalAutomacao()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition cursor-pointer">Cancelar</button>
+                <button onclick="window.salvarConfigAutomacao()" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-sm transition cursor-pointer shadow-lg flex items-center gap-2"><i class="fa-solid fa-floppy-disk"></i> Salvar Integração</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOASTS -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-[99999] flex flex-col gap-3 pointer-events-none no-print"></div>
+
+    <!-- ÁREA DE IMPRESSÃO INVISÍVEL -->
+    <div id="print-area"></div>
+
+    <script type="module" src="core.js"></script>
+    <script type="module">
+        import { runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        window.FirebaseRunTransaction = runTransaction;
+    </script>
+
+    <script>
+        window.usersList = [];
+        window.tickets = [];
+        window.currentTicketId = null;
+        window.pendingDeleteTicketId = null;
+        window.draggedTicketId = null;
+        window.isDraggingCard = false;
+        window.currentUserStr = '';
+        
+        window.alertSettings = {
+            'ENTRADA': {equipes:[], individuos:[]}, 'TRIAGEM': {equipes:[], individuos:[]}, 'ORCAMENTO': {equipes:[], individuos:[]}, 'AGENDAMENTO': {equipes:[], individuos:[]}, 'CONCLUIDO': {equipes:[], individuos:[]}
+        };
+        
+        window.kanbanMapping = {};
+
+        window.dbClientes = [];
+        window.dbMaquinas = [];
+        window.parqueMaquinas = [];
+        window.dbForms = [];
+        window.formcraftTemplates = [];
+        window.formcraftSubmissions = [];
+        
+        window.contadorEquips = 0;
+        window.contadorOrcs = 0;
+
+        window.maquinaIdxAtual = null;
+        window.formReqIdxAtual = null;
+        window.formAtual = null;
+
+        window.filters = { search: '', client: '', serial: '', dateStart: '', dateEnd: '', status: 'ALL', type: 'ALL', tech: 'ALL' };
+
+        const STATUSES = {
+            'ENTRADA': { label: 'Suporte Remoto / Entrada', color: 'bg-blue-50 text-blue-900 border-blue-200', badgeDot: 'bg-blue-600' },
+            'TRIAGEM': { label: 'Triagem / Diagnóstico', color: 'bg-amber-50 text-amber-900 border-amber-200', badgeDot: 'bg-amber-500' },
+            'ORCAMENTO': { label: 'Orçamentos / Faturamento', color: 'bg-purple-50 text-purple-900 border-purple-200', badgeDot: 'bg-purple-600' },
+            'AGENDAMENTO': { label: 'Agendamento / Execução', color: 'bg-cyan-50 text-cyan-900 border-cyan-200', badgeDot: 'bg-cyan-600' },
+            'CONCLUIDO': { label: 'Finalizados (Checkout)', color: 'bg-emerald-50 text-emerald-900 border-emerald-200', badgeDot: 'bg-emerald-600' }
+        };
+
+        const ETAPAS_SERVICO = [
+            { nome: '1. Abertura da OS', cor: 'text-slate-600 bg-slate-100 border-slate-300' },
+            { nome: '2. Check-list de Entrada', cor: 'text-sky-700 bg-sky-50 border-sky-300' },
+            { nome: '3. Diagnóstico Técnico', cor: 'text-indigo-700 bg-indigo-50 border-indigo-300' },
+            { nome: '4. Elaboração de Orçamento', cor: 'text-purple-700 bg-purple-50 border-purple-300' },
+            { nome: '5. Aprovação do Cliente', cor: 'text-amber-700 bg-amber-50 border-amber-300' },
+            { nome: '6. Execução do Serviço', cor: 'text-rose-700 bg-rose-50 border-rose-300' },
+            { nome: '7. Faturamento', cor: 'text-teal-700 bg-teal-50 border-teal-300' },
+            { nome: '8. Check-out / Finalização', cor: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+            { nome: '9. Expedição / Devolução', cor: 'text-blue-700 bg-blue-50 border-blue-300' },
+            { nome: '10. Pós-Venda', cor: 'text-emerald-800 bg-emerald-100 border-emerald-400' }
+        ];
+
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
+
+            window.currentUserStr = window.nomeUsuarioLogado || window.currentUser?.email || 'Técnico';
+
+            if (perfil === 'Master' || perfil === 'Administrativo' || perfil === 'Admin') {
+                const btnConfig = document.getElementById('btnConfigAlertas');
+                if (btnConfig) btnConfig.classList.remove('hidden');
+            }
+
+            window.fsOnSnapshot(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'config', 'kanban_mapping'), snap => {
+                if(snap.exists()) { window.kanbanMapping = snap.data().mapping || {}; }
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_forms'), snap => {
+                window.dbForms = []; window.formcraftTemplates = [];
+                snap.forEach(d => { window.formcraftTemplates.push(d.data()); window.dbForms.push(d.data().title); });
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_submissions'), snap => {
+                window.formcraftSubmissions = [];
+                snap.forEach(d => window.formcraftSubmissions.push(d.data()));
+                if(!document.getElementById('modal-os').classList.contains('hidden')) { window.renderizarAbaFormularios(); }
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'usuarios_permissoes'), snap => {
+                window.usersList = []; let htmlTec = '<option value="">Selecione...</option>';
+                snap.forEach(d => { const u = d.data(); window.usersList.push(u); htmlTec += `<option value="${u.nome}">${u.nome}</option>`; });
+                document.getElementById('os-tecnico').innerHTML = htmlTec; window.populateTechSelects?.();
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'cadastros_clientes'), snap => {
+                window.dbClientes = []; let html = '';
+                snap.forEach(d => {
+                    const c = d.data(); window.dbClientes.push(c);
+                    const n = c.fantasia || c.razao_social || ''; if(n) html += `<option value="${n}">`;
+                });
+                document.getElementById('list-clientes').innerHTML = html;
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'cadastros_equipamentos'), snap => {
+                window.dbMaquinas = []; snap.forEach(d => window.dbMaquinas.push(d.data()));
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'parque_maquinas'), snap => {
+                window.parqueMaquinas = []; snap.forEach(d => window.parqueMaquinas.push(d.data()));
+            });
+
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr'), snap => {
+                window.tickets = [];
+                snap.forEach(dSnap => {
+                    const d = dSnap.data();
+                    let tStatus = d.status || (d.conclusao === 'Resolvido' ? 'CONCLUIDO' : 'ENTRADA');
+                    
+                    window.tickets.push({
+                        id: d.osr || d.id || dSnap.id, createdAt: new Date(d.timestamp || Date.now()).toISOString(), status: tStatus,
+                        client: { name: d.cliente || '', city: d.cidade || '', contact: d.contato || '', phone: d.telefone || '' },
+                        equipment: { model: d.maquina || '', serial: d.serial || '' },
+                        request: { problem: d.defeito || '', procedures: d.solucao || '', materiais: d.pecas || '', isPresencial: d.conclusao === 'Marcar atendimento' },
+                        urgency: d.urgencia === 'CRITICA' || d.urgencia === 'CRITICAL' ? 'CRITICAL' : 'NORMAL',
+                        fotoBase64: d.fotoBase64 || null, assignee: d.tecnico_kanban || d.tecnico || window.currentUserStr, nextAction: d.nextAction || 'Triagem / Atendimento',
+                        history: d.history || [], triage: d.triage || null, quote: d.quote || null, schedule: d.schedule || null, timestampOriginal: d.timestamp || Date.now(),
+                        equipamentosOS: d.equipamentosOS || d.equipamentos || [], orcamentosOS: d.orcamentosOS || d.orcamentos || [],
+                        solicitanteOS: d.solicitanteOS || d.solicitante || '', tipoAtendimentoOS: d.tipoAtendimentoOS || d.tipoAtendimento || '',
+                        dataAgendamentoOS: d.dataAgendamentoOS || d.dataAgendamento || '', observacoesOS: d.observacoesOS || d.observacoes || '', tecnicoOS: d.tecnicoOS || d.tecnico || ''
+                    });
+                });
+                window.tickets.sort((a,b) => b.timestampOriginal - a.timestampOriginal);
+                window.applyFilters();
+            });
+
+            window.fsOnSnapshot(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'config', 'notificacoes_serviceflow'), snap => {
+                if(snap.exists()) { window.alertSettings = snap.data(); }
+            });
+        };
+
+        window.showToast = function(msg, tipo = 'success') {
+            const t = document.createElement('div');
+            t.className = `px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-white text-sm font-bold transform transition-all duration-300 translate-x-full opacity-0 ${tipo === 'success' ? 'bg-emerald-600' : tipo === 'error' ? 'bg-red-600' : 'bg-amber-500'}`;
+            t.innerHTML = `<i class="fa-solid ${tipo === 'success' ? 'fa-check-circle' : tipo === 'error' ? 'fa-circle-xmark' : 'fa-triangle-exclamation'} text-lg"></i> <span>${msg}</span>`;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => { t.classList.remove('translate-x-full', 'opacity-0'); }, 10);
+            setTimeout(() => { t.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
+        };
+
+        window.switchView = function(view) {
+            ['kanban', 'pendencias', 'indicadores'].forEach(v => {
+                const el = document.getElementById('view-' + v);
+                if(el) {
+                    if(v === view) { el.classList.remove('hidden'); el.classList.add('flex'); } 
+                    else { el.classList.add('hidden'); el.classList.remove('flex'); }
+                }
+                const nav = document.getElementById('nav-' + v);
+                if(nav) {
+                    if(v === view) nav.className = "nav-link flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-bold bg-blue-600 text-white shadow-md shadow-blue-600/20 whitespace-nowrap";
+                    else nav.className = "nav-link flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-white whitespace-nowrap";
+                }
+            });
+            if(view === 'kanban') window.renderKanban();
+        };
+
+        window.syncHeaderSearch = function(v) { document.getElementById('filterSearch').value = v; window.applyFilters(); };
+        window.toggleFilterPanel = function() {
+            const fp = document.getElementById('filterPanel');
+            if(fp.classList.contains('hidden')) { fp.classList.remove('hidden'); } else { fp.classList.add('hidden'); }
+        };
+
+        window.resetFilters = function() {
+            document.getElementById('filterSearch').value = ''; document.getElementById('headerQuickSearch').value = '';
+            document.getElementById('filterClient').value = ''; document.getElementById('filterSerial').value = '';
+            document.getElementById('filterDateStart').value = ''; document.getElementById('filterDateEnd').value = '';
+            document.getElementById('filterStatus').value = 'ALL'; document.getElementById('filterType').value = 'ALL'; document.getElementById('filterTech').value = 'ALL';
+            window.applyFilters();
+        };
+
+        window.applyFilters = function() {
+            window.filters.search = document.getElementById('filterSearch').value.toLowerCase();
+            window.filters.client = document.getElementById('filterClient').value.toLowerCase();
+            window.filters.serial = document.getElementById('filterSerial').value.toLowerCase();
+            window.filters.dateStart = document.getElementById('filterDateStart').value;
+            window.filters.dateEnd = document.getElementById('filterDateEnd').value;
+            window.filters.status = document.getElementById('filterStatus').value;
+            window.filters.type = document.getElementById('filterType').value;
+            window.filters.tech = document.getElementById('filterTech').value;
+            
+            const aF = Object.values(window.filters).some(v => v !== '' && v !== 'ALL');
+            if(aF) document.getElementById('activeFilterBadge').classList.remove('hidden');
+            else document.getElementById('activeFilterBadge').classList.add('hidden');
+            
+            window.renderKanban();
+            window.renderPendencias();
+            window.renderIndicadores();
+            
+            const pCount = window.tickets.filter(t => t.status !== 'CONCLUIDO').length;
+            const bPend = document.getElementById('badge-pendencias');
+            if(bPend) { bPend.innerText = pCount; if(pCount > 0) bPend.classList.remove('hidden'); else bPend.classList.add('hidden'); }
+        };
+
+        window.filterTicketByCriteria = function(t) {
+            if(window.filters.status !== 'ALL' && t.status !== window.filters.status) return false;
+            if(window.filters.type === 'REMOTO' && t.request.isPresencial) return false;
+            if(window.filters.type === 'PRESENCIAL' && !t.request.isPresencial) return false;
+            
+            const nTech = (t.assignee || t.tecnicoOS || '').toLowerCase();
+            if(window.filters.tech !== 'ALL' && nTech !== window.filters.tech.toLowerCase()) return false;
+            
+            const nCli = (t.client.name || t.clienteOS || '').toLowerCase();
+            if(window.filters.client && !nCli.includes(window.filters.client)) return false;
+            
+            const sT = window.filters.search;
+            if(sT) {
+                const bId = t.id.toLowerCase().includes(sT);
+                const bCli = nCli.includes(sT);
+                let bSn = false;
+                if(t.equipment.serial && t.equipment.serial.toLowerCase().includes(sT)) bSn = true;
+                if(t.equipamentosOS) { t.equipamentosOS.forEach(eq => { if(eq.maquina.toLowerCase().includes(sT)) bSn = true; }); }
+                if(!bId && !bCli && !bSn) return false;
+            }
+            
+            const eqSnStr = (t.equipment.serial || '').toLowerCase();
+            let hasSn = eqSnStr.includes(window.filters.serial);
+            if(t.equipamentosOS && window.filters.serial) { t.equipamentosOS.forEach(eq => { if(eq.maquina.toLowerCase().includes(window.filters.serial)) hasSn = true; }); }
+            if(window.filters.serial && !hasSn) return false;
+            
+            if(window.filters.dateStart || window.filters.dateEnd) {
+                const tD = new Date(t.timestampOriginal).toISOString().split('T')[0];
+                if(window.filters.dateStart && tD < window.filters.dateStart) return false;
+                if(window.filters.dateEnd && tD > window.filters.dateEnd) return false;
+            }
+            return true;
+        };
+
+        window.renderKanban = function() {
+            const cont = document.getElementById('kanban-grid');
+            if(!cont) return;
+            cont.innerHTML = '';
+            
+            Object.keys(STATUSES).forEach(colKey => {
+                const cDef = STATUSES[colKey];
+                const cDiv = document.createElement('div');
+                cDiv.className = 'kanban-col flex flex-col bg-slate-200/60 border border-slate-300/60 rounded-2xl h-full shadow-sm transition-colors w-[320px] min-w-[320px] shrink-0 overflow-hidden relative';
+                
+                cDiv.addEventListener('dragover', e => { 
+                    e.preventDefault(); 
+                    if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                    e.currentTarget.classList.add('drag-over'); 
+                });
+                cDiv.addEventListener('dragleave', e => {
+                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                        e.currentTarget.classList.remove('drag-over');
+                    }
+                });
+                cDiv.addEventListener('drop', e => {
+                    e.preventDefault(); 
+                    e.currentTarget.classList.remove('drag-over');
+                    if(!window.draggedTicketId) return;
+                    
+                    const t = window.tickets.find(x => x.id === window.draggedTicketId);
+                    if(t && t.status !== colKey) {
+                        t.status = colKey;
+                        if(!t.history) t.history = [];
+                        t.history.push({ date: new Date().toISOString(), user: window.currentUserStr, type: 'system', text: `Movido para ${STATUSES[colKey].label}`});
+                        window.renderKanban(); 
+                        window.saveTicketToDB(t);
+                    }
+                    window.draggedTicketId = null;
+                });
+
+                let tks = window.tickets.filter(t => t.status === colKey && window.filterTicketByCriteria(t));
+                
+                cDiv.innerHTML = `
+                    <div class="p-3.5 border-b border-slate-300/80 flex items-center justify-between shrink-0 ${cDef.color} rounded-t-2xl shadow-sm z-10">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full ${cDef.badgeDot} shadow-inner"></span>
+                            <span class="font-black text-xs tracking-wider uppercase whitespace-nowrap">${cDef.label}</span>
+                        </div>
+                        <span class="bg-white border border-slate-300 text-slate-800 font-black text-[10px] px-2.5 py-0.5 rounded-full shadow-sm">${tks.length}</span>
+                    </div>`;
+                
+                const cardsCont = document.createElement('div');
+                cardsCont.className = 'flex-1 min-h-0 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-slate-200/30';
+                
+                tks.forEach(t => {
+                    const isCritical = t.urgency === 'CRITICAL';
+                    const card = document.createElement('div');
+                    card.className = `kanban-card bg-white hover:bg-blue-50/30 p-4 rounded-xl border ${isCritical ? 'border-red-400 pulse-critical ring-1 ring-red-300' : 'border-slate-300 hover:border-blue-400'} shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group flex flex-col justify-between relative`;
+                    card.draggable = true; 
+                    
+                    card.addEventListener('dragstart', (e) => { 
+                        window.draggedTicketId = t.id; 
+                        window.isDraggingCard = true;
+                        if(e.dataTransfer) { 
+                            e.dataTransfer.effectAllowed = 'move'; 
+                            e.dataTransfer.setData('text/plain', t.id); 
+                        }
+                        requestAnimationFrame(() => e.target.classList.add('dragging')); 
+                    }); 
+                    card.addEventListener('dragend', (e) => {
+                        e.target.classList.remove('dragging');
+                        window.draggedTicketId = null;
+                        setTimeout(() => window.isDraggingCard = false, 100);
+                    });
+                    
+                    card.onclick = (e) => { 
+                        if(window.isDraggingCard) return;
+                        if(!e.target.closest('.quick-action-btn')) window.abrirModalOS(t.id); 
+                    };
+
+                    const nomeCliente = t.client?.name || t.clienteOS || 'Cliente Indefinido';
+                    const nomeTecnico = t.assignee || t.tecnicoOS || 'Pendente';
+                    const iniTecnico = nomeTecnico.substring(0,1).toUpperCase();
+
+                    let textMaquinas = '';
+                    let arrayEquips = t.equipamentosOS || [];
+                    if(arrayEquips.length === 0 && t.equipment?.model) {
+                        arrayEquips = [{maquina: `[SN: ${t.equipment.serial||'S/N'}] ${t.equipment.model}`, defeito: t.request?.problem||''}];
+                    }
+
+                    if (arrayEquips.length > 1) {
+                        textMaquinas = `<i class="fa-solid fa-server text-blue-500 mr-1.5"></i> <span class="font-bold text-slate-700">${arrayEquips.length} Equipamentos</span>`;
+                    } else if (arrayEquips.length === 1) {
+                        const mStr = arrayEquips[0].maquina || 'Equipamento Indefinido';
+                        textMaquinas = `<i class="fa-solid fa-print text-slate-400 mr-1.5"></i> <span class="font-bold text-slate-700 truncate max-w-[180px] inline-block align-bottom">${mStr}</span>`;
+                    } else {
+                        textMaquinas = `<i class="fa-solid fa-print text-slate-400 mr-1.5"></i> <span class="font-bold text-slate-700 truncate max-w-[120px] inline-block align-bottom">Sem Equipamento</span>`;
+                    }
+
+                    let qA = '';
+                    if (t.status === 'CONCLUIDO') qA = `<div class="mt-3 pt-3 border-t border-slate-100 flex gap-2 pointer-events-auto"><button onclick="event.stopPropagation(); window.reopenTicketToTriage('${t.id}')" class="quick-action-btn flex-1 bg-slate-100 hover:bg-slate-800 hover:text-white text-slate-700 text-[10px] py-1.5 rounded-lg font-bold border border-slate-300 transition-all flex items-center justify-center gap-1.5 shadow-sm"><i class="fa-solid fa-rotate-left"></i> Reabrir Chamado</button></div>`;
+
+                    const urgBadge = isCritical ? `<span class="text-[9px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200 shadow-sm ml-2 flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> Urgente</span>` : '';
+
+                    card.innerHTML = `
+                        <div class="pointer-events-none">
+                            <div class="flex justify-between items-center mb-2.5">
+                                <div class="flex items-center">
+                                    <span class="text-[10px] font-mono font-black text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-300 shadow-sm">${t.id}</span>
+                                    ${urgBadge}
+                                </div>
+                                <div class="flex gap-1.5 items-center">
+                                    <span class="text-[9px] text-slate-400 font-bold bg-white px-1.5 py-0.5 rounded border border-slate-100"><i class="fa-regular fa-clock"></i> ${window.formatElapsedTime(t.timestampOriginal)}</span>
+                                </div>
+                            </div>
+                            <h4 class="font-black text-slate-900 text-sm mb-1.5 truncate transition-colors">${nomeCliente}</h4>
+                            
+                            <div class="flex items-center justify-between text-[10px] font-medium text-slate-500 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <span class="flex items-center w-full">${textMaquinas}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 pointer-events-none">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-[9px] font-black border border-blue-200 shadow-sm">${iniTecnico}</div>
+                                    <span class="text-[10px] font-bold text-slate-700 truncate max-w-[120px]">${nomeTecnico}</span>
+                                </div>
+                            </div>
+                            ${qA}
+                        </div>
+                        <button onclick="event.stopPropagation(); window.confirmDeleteTicket('${t.id}')" class="quick-action-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-600 p-1 rounded transition-all cursor-pointer"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    `;
+                    cardsCont.appendChild(card);
+                });
+                cDiv.appendChild(cardsCont);
+                cont.appendChild(cDiv);
+            });
+        };
+
+        window.renderPendencias = function() {
+            const cont = document.getElementById('pendenciasList');
+            if(!cont) return;
+            const ativos = window.tickets.filter(t => t.status !== 'CONCLUIDO' && window.filterTicketByCriteria(t));
+            const cTag = document.getElementById('pendenciasCountTag');
+            if(cTag) cTag.innerText = `${ativos.length} itens`;
+
+            if(ativos.length === 0) {
+                cont.innerHTML = `<div class="text-center py-10 opacity-60"><i class="fa-solid fa-inbox text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-500">Nenhuma pendência encontrada.</p></div>`;
+                return;
+            }
+
+            cont.innerHTML = ativos.map(t => {
+                const isCritical = t.urgency === 'CRITICAL';
+                const sColor = STATUSES[t.status]?.color || 'bg-slate-50 text-slate-900 border-slate-200';
+                const sLabel = STATUSES[t.status]?.label || t.status;
+                const pText = t.request?.problem || t.defeito || (t.equipamentosOS && t.equipamentosOS.length > 0 ? t.equipamentosOS[0].defeito : 'Sem descrição');
+
+                return `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition hover:border-blue-300 cursor-pointer" onclick="window.abrirModalOS('${t.id}')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full ${isCritical ? 'bg-red-100 text-red-600 pulse-critical' : 'bg-blue-100 text-blue-600'} flex items-center justify-center text-lg shrink-0"><i class="fa-solid ${isCritical ? 'fa-triangle-exclamation' : 'fa-clipboard-list'}"></i></div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">${t.id}</span>
+                                <span class="text-[10px] font-bold text-slate-400"><i class="fa-regular fa-clock"></i> ${window.formatElapsedTime(t.timestampOriginal)}</span>
+                            </div>
+                            <h4 class="text-sm font-black text-slate-800">${t.client?.name || t.clienteOS || 'Sem Nome'}</h4>
+                            <p class="text-xs font-medium text-slate-500 mt-0.5 truncate max-w-md">${pText}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+                        <span class="text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg border ${sColor}">${sLabel}</span>
+                        <button onclick="event.stopPropagation(); window.abrirModalOS('${t.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-file-invoice"></i> Tratar O.S.</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        };
+
+        window.renderIndicadores = function() {
+            const grid = document.getElementById('statsGrid');
+            const bar = document.getElementById('indicadoresBarList');
+            if(!grid || !bar) return;
+
+            const tks = window.tickets.filter(t => window.filterTicketByCriteria(t));
+            const total = tks.length;
+            const concluidos = tks.filter(t => t.status === 'CONCLUIDO').length;
+            const emAndamento = tks.filter(t => t.status !== 'CONCLUIDO' && t.status !== 'ENTRADA').length;
+            const entrada = tks.filter(t => t.status === 'ENTRADA').length;
+
+            grid.innerHTML = `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Filtrado</p><p class="text-2xl font-black text-slate-800">${total}</p></div>
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 text-xl"><i class="fa-solid fa-layer-group"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Fila de Entrada</p><p class="text-2xl font-black text-blue-700">${entrada}</p></div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl"><i class="fa-solid fa-inbox"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Em Andamento</p><p class="text-2xl font-black text-amber-700">${emAndamento}</p></div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-xl"><i class="fa-solid fa-spinner"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Finalizados</p><p class="text-2xl font-black text-emerald-700">${concluidos}</p></div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-xl"><i class="fa-solid fa-check-double"></i></div>
+                </div>
+            `;
+
+            let barHtml = '';
+            Object.keys(STATUSES).forEach(colKey => {
+                const count = tks.filter(t => t.status === colKey).length;
+                const perc = total === 0 ? 0 : Math.round((count / total) * 100);
+                
+                let barColor = 'bg-slate-500';
+                if(colKey === 'ENTRADA') barColor = 'bg-blue-500';
+                if(colKey === 'TRIAGEM') barColor = 'bg-amber-500';
+                if(colKey === 'ORCAMENTO') barColor = 'bg-purple-500';
+                if(colKey === 'AGENDAMENTO') barColor = 'bg-cyan-500';
+                if(colKey === 'CONCLUIDO') barColor = 'bg-emerald-500';
+
+                barHtml += `
+                <div>
+                    <div class="flex justify-between items-center text-xs font-bold text-slate-700 mb-1.5">
+                        <span class="uppercase tracking-wider">${STATUSES[colKey].label}</span>
+                        <span>${count} (${perc}%)</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div class="${barColor} h-2.5 rounded-full transition-all duration-1000" style="width: ${perc}%"></div>
+                    </div>
+                </div>
+                `;
+            });
+            bar.innerHTML = barHtml;
+        };
+
+        window.formatElapsedTime = function(ts) {
+            const h = Math.floor((Date.now() - ts) / 3600000);
+            if (h < 1) return 'Agora';
+            if (h < 24) return `${h}h atrás`;
+            return `${Math.floor(h/24)}d atrás`;
+        };
+
+        window.saveTicketToDB = async function(t) {
+            try { await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', t.id), t, {merge: true}); } catch(e){}
+        };
+
+        // --- SISTEMA DE ABAS DO MODAL OS GIGANTE ---
+        window.mudarAbaOS = function(aba) {
+            ['aba1', 'aba2', 'aba3', 'aba4', 'aba5'].forEach(a => {
+                const el = document.getElementById(a); if(el) { el.classList.add('hidden'); el.classList.remove('block'); }
+                const btn = document.getElementById('btn-' + a); if(btn) btn.className = "tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer";
+            });
+            const elAtivo = document.getElementById(aba); if(elAtivo) { elAtivo.classList.remove('hidden'); elAtivo.classList.add('block'); }
+            const btnAtivo = document.getElementById('btn-' + aba); if(btnAtivo) btnAtivo.className = "tab-active pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer text-blue-600";
+            if (aba === 'aba4') { window.renderizarAbaFormularios(); }
+        };
+
+        window.abrirModalOS = function(idEdit = null) {
+            document.getElementById('form-nova-os').reset();
+            document.getElementById('os-id-oculto').value = '';
+            document.getElementById('card-cliente-info').classList.add('hidden');
+            document.getElementById('container-equipamentos-os').innerHTML = '';
+            document.getElementById('container-orcamentos-os').innerHTML = '<div id="orcamentos-vazio" class="text-center py-10 border-2 border-dashed border-slate-300 rounded-3xl bg-slate-50"><i class="fa-solid fa-file-invoice-dollar text-3xl text-slate-300 mb-3"></i><p class="text-xs font-bold text-slate-500">Nenhum orçamento adicionado nesta O.S.</p></div>';
+            document.getElementById('valor-total-geral-os').innerText = 'R$ 0,00';
+            window.contadorEquips = 0; window.contadorOrcs = 0;
+
+            if (idEdit) {
+                const osIdStr = String(idEdit).trim();
+                const os = window.tickets.find(x => String(x.id).trim() === osIdStr);
+                if(os) {
+                    window.osAtual = os;
+                    window.currentTicketId = os.id;
+                    document.getElementById('titulo-modal-os').innerText = `Editando OS: ${os.id}`;
+                    document.getElementById('os-id-oculto').value = os.id;
+                    document.getElementById('os-cliente').value = os.client?.name || os.clienteOS || '';
+                    window.preencherCardCliente(os.client?.name || os.clienteOS || '');
+                    document.getElementById('os-solicitante').value = os.solicitanteOS || '';
+                    document.getElementById('os-tipo').value = os.tipoAtendimentoOS || 'Interno';
+                    document.getElementById('os-data').value = os.dataAgendamentoOS || '';
+                    document.getElementById('os-tecnico').value = os.tecnicoOS || os.assignee || '';
+                    document.getElementById('os-obs').value = os.observacoesOS || '';
+
+                    let eqs = os.equipamentosOS || [];
+                    if(eqs.length === 0 && os.equipment && os.equipment.model) eqs = [{maquina: `[SN: ${os.equipment.serial}] ${os.equipment.model}`, defeito: os.request.problem}];
+                    
+                    if(eqs.length > 0) eqs.forEach(maq => window.adicionarEquipamentoNaOS(maq));
+                    else window.adicionarEquipamentoNaOS();
+
+                    if(os.orcamentosOS && os.orcamentosOS.length > 0) { document.getElementById('orcamentos-vazio')?.remove(); os.orcamentosOS.forEach(orc => window.adicionarOrcamentoNaOS(orc)); }
+                    
+                    window.renderTimeline(os);
+                }
+            } else {
+                window.osAtual = null;
+                window.currentTicketId = null;
+                document.getElementById('titulo-modal-os').innerText = 'Nova Ordem de Serviço';
+                document.getElementById('os-data').value = new Date().toISOString().split('T')[0];
+                window.adicionarEquipamentoNaOS(); 
+                const cont = document.getElementById('timeline-container'); if(cont) cont.innerHTML = '<p class="text-xs text-slate-500 italic bg-white p-3 rounded-xl border border-slate-200">Salve a OS para iniciar o histórico.</p>';
+            }
+
+            window.atualizarContadorBadge('badge-equip-count', 'container-equipamentos-os'); window.atualizarContadorBadge('badge-orc-count', 'container-orcamentos-os');
+            window.mudarAbaOS('aba1');
+            document.getElementById('modal-os').classList.remove('hidden');
+        };
+
+        window.fecharModalOS = () => document.getElementById('modal-os').classList.add('hidden');
+
+        window.preencherCardCliente = function(nome) {
+            const cli = window.dbClientes.find(c => c.fantasia === nome || c.razao_social === nome);
+            const card = document.getElementById('card-cliente-info');
+            const dlMaq = document.getElementById('list-maquinas');
+            if(dlMaq) dlMaq.innerHTML = '';
+
+            if (cli) {
+                document.getElementById('card-end-txt').innerText = cli.endereco ? `${cli.endereco}, ${cli.cidade || ''}` : 'Sem endereço cadastrado';
+                let contatoStr = cli.contato || ''; let telStr = cli.telefone || '';
+                if(cli.contatos && cli.contatos.length > 0) { contatoStr = cli.contatos[0].nome; telStr = cli.contatos[0].telefone; }
+                
+                document.getElementById('card-tel-txt').innerText = telStr || '-'; document.getElementById('card-con-txt').innerText = contatoStr || '-';
+                card.classList.remove('hidden');
+
+                if(dlMaq) {
+                    const maqsDoCli = window.parqueMaquinas.filter(m => m.cliente_atual === cli.fantasia || m.cliente_atual === cli.razao_social);
+                    maqsDoCli.forEach(m => dlMaq.innerHTML += `<option value="[SN: ${m.serial}] ${m.modelo}">`);
+                }
+            } else { card.classList.add('hidden'); }
+        };
+
+        window.addFormularioToMachine = function(btn) {
+            const select = btn.previousElementSibling;
+            const val = select.value;
+            if(!val) return;
+            const container = btn.closest('div.relative.z-10').querySelector('.list-forms-machine');
+            
+            container.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-between items-center bg-blue-50/50 p-2 rounded-lg border border-blue-100 text-[10px]" data-form="${val}">
+                    <span class="font-bold text-blue-800"><i class="fa-regular fa-file-lines mr-1 text-blue-500"></i> ${val}</span>
+                    <button type="button" onclick="this.parentElement.remove(); window.renderizarAbaFormularios();" class="text-red-400 hover:text-red-600 px-2"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `);
+            select.value = ''; window.renderizarAbaFormularios();
+        };
+
+        window.adicionarEquipamentoNaOS = function(dadosSalvos = null) {
+            window.contadorEquips++;
+            const container = document.getElementById('container-equipamentos-os');
+            const formsOptions = window.dbForms.map(f => `<option value="${f}">${f}</option>`).join('');
+            const etapasOptions = ETAPAS_SERVICO.map(e => `<option value="${e.nome}" data-cor="${e.cor}">${e.nome}</option>`).join('');
+
+            let formsHtml = '';
+            if (dadosSalvos && dadosSalvos.formulariosExigidos) {
+                dadosSalvos.formulariosExigidos.forEach(f => {
+                    formsHtml += `<div class="flex justify-between items-center bg-blue-50/50 p-2 rounded-lg border border-blue-100 text-[10px]" data-form="${f}"><span class="font-bold text-blue-800"><i class="fa-regular fa-file-lines mr-1 text-blue-500"></i> ${f}</span><button type="button" onclick="this.parentElement.remove(); window.renderizarAbaFormularios();" class="text-red-400 hover:text-red-600 px-2"><i class="fa-solid fa-xmark"></i></button></div>`;
+                });
+            } else if (dadosSalvos && dadosSalvos.formulario) {
+                 formsHtml += `<div class="flex justify-between items-center bg-blue-50/50 p-2 rounded-lg border border-blue-100 text-[10px]" data-form="${dadosSalvos.formulario}"><span class="font-bold text-blue-800"><i class="fa-regular fa-file-lines mr-1 text-blue-500"></i> ${dadosSalvos.formulario}</span><button type="button" onclick="this.parentElement.remove(); window.renderizarAbaFormularios();" class="text-red-400 hover:text-red-600 px-2"><i class="fa-solid fa-xmark"></i></button></div>`;
+            }
+
+            const cardHtml = `
+                <div id="equip-card-${window.contadorEquips}" class="equip-card bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative transition hover:border-blue-300">
+                    <div class="absolute -left-3 -top-3 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-black shadow-lg border-2 border-white z-50">${window.contadorEquips}</div>
+                    <button type="button" onclick="document.getElementById('equip-card-${window.contadorEquips}').remove(); window.atualizarContadorBadge('badge-equip-count', 'container-equipamentos-os');" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition cursor-pointer shadow-sm z-50"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2">
+                        <div class="space-y-3">
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1"><i class="fa-solid fa-print text-blue-500"></i> Modelo / SN *</label><input type="text" list="list-maquinas" class="inp-maquina w-full px-3 py-2.5 bg-slate-50 border border-slate-300 text-xs font-black text-slate-900 rounded-xl outline-none focus:border-blue-600 focus:bg-white transition shadow-inner" placeholder="Ex: [SN: 1234] Datador..." value="${dadosSalvos ? (dadosSalvos.maquina||'').replace(/"/g, '&quot;') : ''}"></div>
+                            <div><label class="block text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Defeito Relatado *</label><textarea rows="2" class="inp-defeito w-full bg-rose-50/50 border border-rose-200 text-xs text-slate-800 font-medium p-2.5 rounded-xl outline-none focus:border-rose-400 focus:bg-white resize-none shadow-sm" placeholder="O que o cliente informou?">${dadosSalvos ? (dadosSalvos.defeito||'').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea></div>
+                            <div><label class="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1"><i class="fa-solid fa-wrench"></i> Serviço Realizado</label><textarea rows="2" class="inp-servico w-full bg-emerald-50/50 border border-emerald-200 text-xs text-slate-800 font-medium p-2.5 rounded-xl outline-none focus:border-emerald-400 focus:bg-white resize-none shadow-sm" placeholder="O que o técnico fez?">${dadosSalvos ? (dadosSalvos.servico||'').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea></div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1"><i class="fa-regular fa-clock"></i> Início (Técnico)</label><input type="time" class="inp-hora-inicio w-full bg-white border border-slate-300 text-xs font-bold text-slate-700 p-2 rounded-lg outline-none focus:border-blue-600 shadow-sm" value="${dadosSalvos && dadosSalvos.horaInicio ? dadosSalvos.horaInicio : ''}"></div>
+                                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200"><label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1"><i class="fa-solid fa-flag-checkered"></i> Fim (Técnico)</label><input type="time" class="inp-hora-fim w-full bg-white border border-slate-300 text-xs font-bold text-slate-700 p-2 rounded-lg outline-none focus:border-blue-600 shadow-sm" value="${dadosSalvos && dadosSalvos.horaFim ? dadosSalvos.horaFim : ''}"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-center shadow-inner relative overflow-hidden">
+                            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-blue-100 rounded-full blur-2xl opacity-50"></div>
+                            
+                            <div class="relative z-10 pt-2 border-t border-slate-200">
+                                <label class="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-2"><i class="fa-solid fa-clipboard-list text-blue-600 text-sm align-middle mr-1"></i> Check-lists / Formulários</label>
+                                <div class="space-y-1.5 mb-2 list-forms-machine">${formsHtml}</div>
+                                <div class="flex gap-2">
+                                    <select class="w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 p-2 rounded-xl cursor-pointer shadow-sm focus:outline-none focus:border-blue-600 transition"><option value="">-- Escolher Laudo --</option>${formsOptions}</select>
+                                    <button type="button" onclick="window.addFormularioToMachine(this)" class="bg-blue-100 text-blue-700 px-3 rounded-xl text-[10px] font-bold hover:bg-blue-200 transition whitespace-nowrap shadow-sm">+ Add</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-slate-200 relative z-10">
+                                <label class="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-stairs text-amber-500 text-sm align-middle mr-1"></i> Etapa Atual do Serviço</label>
+                                <select onchange="window.mudarCorEtapa(this)" class="inp-etapa etapa-color w-full border text-xs font-black p-2.5 rounded-xl cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition ${ETAPAS_SERVICO[0].cor}">${etapasOptions}</select>
+                            </div>
+                            <input type="hidden" class="inp-pecas-utilizadas" value='${dadosSalvos && dadosSalvos.pecasUtilizadas ? JSON.stringify(dadosSalvos.pecasUtilizadas).replace(/'/g, "&#39;") : "[]"}'>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            if (dadosSalvos) {
+                const cardNode = document.getElementById(`equip-card-${window.contadorEquips}`);
+                const selectEtapa = cardNode.querySelector('.inp-etapa');
+                selectEtapa.value = dadosSalvos.etapa || ETAPAS_SERVICO[0].nome;
+                window.mudarCorEtapa(selectEtapa); 
+            }
+            window.atualizarContadorBadge('badge-equip-count', 'container-equipamentos-os');
+        };
+
+        window.mudarCorEtapa = function(s) { const cor = s.options[s.selectedIndex].getAttribute('data-cor'); s.className = `inp-etapa etapa-color w-full border text-xs font-black p-2.5 rounded-xl cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition ${cor}`; };
+        
+        window.validarAba1EAvancar = function() {
+            const cli = document.getElementById('os-cliente').value.trim();
+            if(!cli) { window.showToast('Preencha o cliente para avançar.', 'warning'); document.getElementById('os-cliente').focus(); return; }
+            window.mudarAbaOS('aba2');
+        };
+
+        window.adicionarOrcamentoNaOS = function(dadosSalvos = null) {
+            window.contadorOrcs++;
+            if (document.getElementById('orcamentos-vazio')) document.getElementById('orcamentos-vazio').remove();
+            
+            const container = document.getElementById('container-orcamentos-os');
+            const maqValues = Array.from(document.querySelectorAll('.inp-maquina')).map(inp => inp.value).filter(val => val !== '');
+            let opcoesAlvo = '<option value="Geral da OS">Orçamento Geral da O.S.</option>';
+            maqValues.forEach(maq => { opcoesAlvo += `<option value="${maq.replace(/"/g, '&quot;')}">${maq}</option>`; });
+
+            let itensHtml = '';
+            if (dadosSalvos && dadosSalvos.itens && dadosSalvos.itens.length > 0) {
+                dadosSalvos.itens.forEach(item => { itensHtml += window.gerarLinhaItemOrcamento(window.contadorOrcs, item.desc, item.qtd, item.unit); });
+            } else { itensHtml = window.gerarLinhaItemOrcamento(window.contadorOrcs, '', 1, 0); }
+
+            const sMoQtd = dadosSalvos ? (dadosSalvos.mo_qtd || 1) : 1; const sMoUnit = dadosSalvos ? (dadosSalvos.mo_unit || '') : '';
+            const sDeslQtd = dadosSalvos ? (dadosSalvos.desl_qtd || 1) : 1; const sDeslUnit = dadosSalvos ? (dadosSalvos.desl_unit || '') : '';
+
+            const cardHtml = `
+                <div id="orc-card-${window.contadorOrcs}" class="orc-card bg-white border-2 border-emerald-300 rounded-2xl p-5 shadow-sm relative mb-4">
+                    <button type="button" onclick="document.getElementById('orc-card-${window.contadorOrcs}').remove(); window.atualizarContadorBadge('badge-orc-count', 'container-orcamentos-os'); window.calcularTotalGeralOS();" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition cursor-pointer shadow-sm z-50"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    
+                    <div class="mb-4 pr-12">
+                        <label class="block text-[10px] font-black text-emerald-800 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-bullseye"></i> Máquina Vinculada</label>
+                        <select class="inp-orc-alvo w-full md:w-1/2 bg-emerald-50 border border-emerald-300 text-xs font-black p-2.5 rounded-xl text-emerald-900 shadow-sm focus:outline-none focus:border-emerald-600 cursor-pointer">${opcoesAlvo}</select>
+                    </div>
+                    
+                    <div class="border border-slate-200 rounded-xl overflow-hidden mb-4 shadow-sm">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-black uppercase text-[9px] tracking-wider">
+                                <tr><th class="p-2 w-1/2">Peça Trocada</th><th class="p-2 w-16 text-center">Qtd</th><th class="p-2 w-28 text-right">Val. Unitário</th><th class="p-2 w-28 text-right">Subtotal</th><th class="p-2 w-10 text-center"><i class="fa-solid fa-gear"></i></th></tr>
+                            </thead>
+                            <tbody id="tbody-itens-orc-${window.contadorOrcs}" class="divide-y divide-slate-100 bg-white">${itensHtml}</tbody>
+                        </table>
+                        <div class="bg-slate-50 p-2.5 flex justify-between items-center border-t border-slate-200">
+                            <button type="button" onclick="window.addProdutoOrcamento(${window.contadorOrcs})" class="text-[10px] font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition cursor-pointer shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Add Peça</button>
+                            <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Peças: <span id="sub-prod-${window.contadorOrcs}" class="text-slate-900 text-xs ml-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-inner">R$ 0,00</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
+                        <h5 class="text-[10px] font-black uppercase text-slate-500 border-b border-slate-200 pb-1.5"><i class="fa-solid fa-toolbox mr-1"></i> Serviços e Deslocamento</h5>
+                        
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-12 sm:col-span-5"><label class="block text-[10px] font-bold text-slate-700">Mão de Obra</label></div>
+                            <div class="col-span-6 sm:col-span-2 relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">h</span><input type="number" step="0.5" class="inp-orc-mo-qtd w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 text-center p-2 pl-6 rounded-lg outline-none focus:border-emerald-500 shadow-sm" value="${sMoQtd}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"></div>
+                            <div class="col-span-6 sm:col-span-2 relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">R$/h</span><input type="number" step="0.01" class="inp-orc-mo-unit w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 text-right p-2 pl-9 rounded-lg outline-none focus:border-emerald-500 shadow-sm" value="${sMoUnit}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"></div>
+                            <div class="col-span-12 sm:col-span-3 text-right font-black text-slate-900 text-xs bg-white border border-slate-200 p-2 rounded-lg shadow-inner" id="sub-mo-${window.contadorOrcs}">R$ 0,00</div>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-12 sm:col-span-5"><label class="block text-[10px] font-bold text-slate-700">Deslocamento</label></div>
+                            <div class="col-span-6 sm:col-span-2 relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">Km</span><input type="number" step="1" class="inp-orc-desl-qtd w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 text-center p-2 pl-6 rounded-lg outline-none focus:border-emerald-500 shadow-sm" value="${sDeslQtd}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"></div>
+                            <div class="col-span-6 sm:col-span-2 relative"><span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">R$/Km</span><input type="number" step="0.01" class="inp-orc-desl-unit w-full bg-white border border-slate-300 text-xs font-bold text-slate-800 text-right p-2 pl-10 rounded-lg outline-none focus:border-emerald-500 shadow-sm" value="${sDeslUnit}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"></div>
+                            <div class="col-span-12 sm:col-span-3 text-right font-black text-slate-900 text-xs bg-white border border-slate-200 p-2 rounded-lg shadow-inner" id="sub-desl-${window.contadorOrcs}">R$ 0,00</div>
+                        </div>
+
+                        <div class="mt-3 pt-2 border-t border-slate-200">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Observações do Orçamento</label>
+                            <input type="text" class="inp-orc-obs w-full bg-white border border-slate-300 text-xs font-medium p-2 rounded-lg outline-none focus:border-emerald-500 shadow-sm" placeholder="Ex: Pagamento faturado em 28 dias..." value="${dadosSalvos ? (dadosSalvos.obs||'').replace(/"/g, '&quot;') : ''}">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-emerald-200 flex justify-end">
+                        <div class="bg-emerald-100 border border-emerald-400 px-4 py-2 rounded-xl flex items-center shadow-sm">
+                            <span class="text-[10px] font-black text-emerald-900 uppercase tracking-widest mr-3">Total do Orçamento:</span>
+                            <span id="total-card-${window.contadorOrcs}" class="text-lg font-black text-emerald-700">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            if (dadosSalvos) document.getElementById(`orc-card-${window.contadorOrcs}`).querySelector('.inp-orc-alvo').value = dadosSalvos.alvo || 'Geral da OS';
+            window.calcularTotaisCard(window.contadorOrcs); window.atualizarContadorBadge('badge-orc-count', 'container-orcamentos-os');
+        };
+
+        window.gerarLinhaItemOrcamento = function(id, d, q, u) { 
+            return `<tr class="item-produto"><td class="p-1.5"><input type="text" class="inp-item-desc w-full text-xs font-bold text-slate-800 p-1.5 bg-white border border-slate-300 rounded-lg focus:border-emerald-500 outline-none shadow-sm" placeholder="Ex: Filtro Inkjet" value="${(d||'').replace(/"/g, '&quot;')}"></td><td class="p-1.5"><input type="number" class="inp-item-qtd w-full text-xs font-bold text-slate-800 p-1.5 bg-white border border-slate-300 rounded-lg focus:border-emerald-500 outline-none text-center shadow-sm" value="${q}" oninput="window.calcularTotaisCard(${id})"></td><td class="p-1.5"><input type="number" class="inp-item-unit w-full text-xs font-bold text-slate-800 p-1.5 bg-white border border-slate-300 rounded-lg focus:border-emerald-500 outline-none text-right shadow-sm" value="${u}" oninput="window.calcularTotaisCard(${id})"></td><td class="p-1.5 text-right font-black text-emerald-700 item-subtotal text-xs align-middle">R$ 0,00</td><td class="p-1.5 text-center align-middle"><button type="button" onclick="this.closest('tr').remove(); window.calcularTotaisCard(${id});" class="w-6 h-6 rounded-md bg-slate-100 text-slate-400 hover:bg-red-100 hover:text-red-600 transition flex items-center justify-center cursor-pointer shadow-sm mx-auto"><i class="fa-solid fa-xmark text-[10px]"></i></button></td></tr>`; 
+        };
+        window.addProdutoOrcamento = function(id) { document.getElementById(`tbody-itens-orc-${id}`).insertAdjacentHTML('beforeend', window.gerarLinhaItemOrcamento(id, '', 1, 0)); window.calcularTotaisCard(id); };
+        window.formatarMoeda = function(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+
+        window.calcularTotaisCard = function(id) {
+            const card = document.getElementById(`orc-card-${id}`); if(!card) return;
+            let subP = 0;
+            card.querySelectorAll('.item-produto').forEach(r => { const q = parseFloat(r.querySelector('.inp-item-qtd').value)||0; const u = parseFloat(r.querySelector('.inp-item-unit').value)||0; const sub = q*u; r.querySelector('.item-subtotal').innerText = window.formatarMoeda(sub); subP += sub; });
+            document.getElementById(`sub-prod-${id}`).innerText = window.formatarMoeda(subP);
+            const mo = (parseFloat(card.querySelector('.inp-orc-mo-qtd').value)||0) * (parseFloat(card.querySelector('.inp-orc-mo-unit').value)||0); document.getElementById(`sub-mo-${id}`).innerText = window.formatarMoeda(mo);
+            const ds = (parseFloat(card.querySelector('.inp-orc-desl-qtd').value)||0) * (parseFloat(card.querySelector('.inp-orc-desl-unit').value)||0); document.getElementById(`sub-desl-${id}`).innerText = window.formatarMoeda(ds);
+            const tot = subP + mo + ds; document.getElementById(`total-card-${id}`).innerText = window.formatarMoeda(tot); card.setAttribute('data-total', tot); window.calcularTotalGeralOS();
+        };
+
+        window.calcularTotalGeralOS = function() { let t = 0; document.querySelectorAll('.orc-card').forEach(c => { t += parseFloat(c.getAttribute('data-total'))||0; }); document.getElementById('valor-total-geral-os').innerText = window.formatarMoeda(t); };
+        window.atualizarContadorBadge = function(idB, idC) { document.getElementById(idB).innerText = document.getElementById(idC).children.length; };
+
+        // --- FORMCRAFT NATIVO DENTRO DA O.S. ---
+        window.renderizarAbaFormularios = function() {
+            const container = document.getElementById('lista-formularios-os');
+            if(!container) return;
+            let html = '';
+            
+            const equipCards = document.querySelectorAll('.equip-card');
+            equipCards.forEach((c, index) => {
+                const maq = c.querySelector('.inp-maquina').value;
+                const formsNodes = c.querySelectorAll('.list-forms-machine > div');
+                
+                formsNodes.forEach((fNode, fIdx) => {
+                    const formTitle = fNode.getAttribute('data-form');
+                    
+                    const osId = document.getElementById('os-id-oculto').value || 'nova-os';
+                    const idSubEsperado = `${osId}_${index}_${fIdx}`; 
+                    const subSalva = window.formcraftSubmissions?.find(s => s.id === idSubEsperado);
+                    
+                    const btnClass = subSalva ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" : "bg-blue-600 text-white hover:bg-blue-700 shadow-md";
+                    const btnLabel = subSalva ? "Ver / Editar Laudo" : "Preencher Laudo";
+                    const badge = subSalva ? `<span class="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">PREENCHIDO</span>` : `<span class="bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">PENDENTE</span>`;
+
+                    html += `
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex justify-between items-center">
+                        <div>
+                            ${badge}
+                            <h4 class="text-sm font-black text-slate-800 mt-1 uppercase">${formTitle}</h4>
+                            <p class="text-[10px] font-medium text-slate-500 mt-0.5"><i class="fa-solid fa-paperclip mr-1 text-slate-400"></i> Vinculado à: ${maq || 'Máquina S/N'}</p>
+                        </div>
+                        <button onclick="window.abrirPreenchimentoFormCraft(${index}, ${fIdx}, '${formTitle}', '${maq.replace(/'/g, "\\'")}')" class="px-5 py-2.5 rounded-xl text-xs font-bold border transition ${btnClass} cursor-pointer">${btnLabel}</button>
+                    </div>`;
+                });
+            });
+
+            container.innerHTML = html || `<div class="text-center py-10 opacity-60"><i class="fa-solid fa-file-lines text-4xl text-slate-400 mb-3"></i><p class="text-xs font-bold text-slate-600">Nenhum formulário exigido pelas máquinas.</p></div>`;
+        };
+
+        window.abrirPreenchimentoFormCraft = function(mIdx, fIdx, fTitle, maqName) {
+            window.maquinaIdxAtual = mIdx;
+            window.formReqIdxAtual = fIdx;
+            const formTemplate = window.formcraftTemplates?.find(f => f.title === fTitle);
+            
+            if(!formTemplate) { window.showToast("Formulário não encontrado no Sandbox.", "error"); return; }
+            window.formAtual = JSON.parse(JSON.stringify(formTemplate));
+
+            document.getElementById('fc-titulo').innerText = formTemplate.title;
+            document.getElementById('fc-maquina').innerHTML = `<i class="fa-solid fa-server"></i> Vinculado à: ${maqName || 'Máquina S/N'}`;
+
+            const cont = document.getElementById('fc-perguntas-container');
+            cont.innerHTML = window.formAtual.fields.map(f => {
+                let html = `<label class="block text-xs font-bold text-slate-800 mb-1">${f.label} ${f.required?'<span class="text-red-500">*</span>':''}</label>`;
+                if(f.instruction) html += `<p class="text-[10px] text-slate-500 mb-2">${f.instruction}</p>`;
+                
+                let val = '';
+                const osIdToMatch = window.osAtual ? (window.osAtual.osr || window.osAtual.id) : (document.getElementById('os-id-oculto').value || 'nova-os');
+                const idSubEsperado = `${osIdToMatch}_${mIdx}_${fIdx}`;
+                const sub = window.formcraftSubmissions.find(s => s.id === idSubEsperado);
+                if(sub && sub.answers) val = sub.answers[f.label] || '';
+                
+                const eventHandlers = `onchange="window.evaluatePreviewRules()" oninput="window.evaluatePreviewRules()"`;
+                
+                if(f.type === 'short_text') html += `<input type="text" name="${f.id}" value="${this.escapeHtml(val)}" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-3 rounded-xl outline-none focus:border-blue-500 shadow-sm bg-white">`;
+                if(f.type === 'long_text') html += `<textarea name="${f.id}" rows="3" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-medium border border-slate-300 p-3 rounded-xl outline-none focus:border-blue-500 shadow-sm bg-white resize-none">${this.escapeHtml(val)}</textarea>`;
+                if(f.type === 'number') html += `<input type="number" name="${f.id}" value="${this.escapeHtml(val)}" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-3 rounded-xl outline-none focus:border-blue-500 shadow-sm bg-white">`;
+                if(f.type === 'date') html += `<input type="date" name="${f.id}" value="${this.escapeHtml(val)}" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-3 rounded-xl outline-none focus:border-blue-500 shadow-sm bg-white cursor-pointer">`;
+                
+                if(f.type === 'single_select') {
+                    html += `<div class="space-y-2">${f.options.map(o => `<label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 p-2.5 rounded-lg border border-slate-200 active:bg-blue-50 transition"><input type="radio" name="${f.id}" value="${this.escapeHtml(o)}" ${val === o ? 'checked' : ''} ${f.required?'required':''} ${eventHandlers} class="w-4 h-4 text-blue-600 cursor-pointer"> ${this.escapeHtml(o)}</label>`).join('')}</div>`;
+                }
+                if(f.type === 'multi_select') {
+                    const valArr = Array.isArray(val) ? val : (val.split ? val.split(', ') : []);
+                    html += `<div class="space-y-2">${f.options.map(o => `<label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 p-2.5 rounded-lg border border-slate-200 active:bg-blue-50 transition"><input type="checkbox" name="${f.id}" value="${this.escapeHtml(o)}" ${valArr.includes(o) ? 'checked' : ''} ${eventHandlers} class="w-4 h-4 text-blue-600 rounded cursor-pointer"> ${this.escapeHtml(o)}</label>`).join('')}</div>`;
+                }
+                
+                return `<div id="pw-${f.id}" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300">${html}</div>`;
+            }).join('');
+            
+            this.evaluatePreviewRules();
+            
+            const modal = document.getElementById('modal-preencher-form');
+            const content = document.getElementById('modal-form-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('translate-y-full'); }, 10);
+        };
+
+        window.evaluatePreviewRules = function() {
+            const formObj = window.formAtual;
+            if (!formObj || !formObj.rules || formObj.rules.length === 0) return;
+            
+            const form = document.getElementById('interactive-preview-form');
+            const values = {};
+            
+            formObj.fields.forEach(f => {
+                if(f.type === 'single_select') { const r = form.querySelector(`input[name="${f.id}"]:checked`); values[f.id] = r ? r.value : ''; }
+                else if(f.type === 'multi_select') { values[f.id] = Array.from(form.querySelectorAll(`input[name="${f.id}"]:checked`)).map(e=>e.value); }
+                else { const el = form.querySelector(`[name="${f.id}"]`); values[f.id] = el ? el.value : ''; }
+            });
+            
+            const targetFields = new Set(formObj.rules.map(r => r.targetId));
+            const fieldsToShow = new Set();
+            
+            formObj.rules.forEach(r => {
+                const triggerVal = values[r.triggerId];
+                let isMatch = false;
+                
+                if (Array.isArray(triggerVal)) {
+                     if (r.operator === 'contains' || r.operator === 'equals') isMatch = triggerVal.includes(r.value);
+                     if (r.operator === 'not_contains' || r.operator === 'not_equals') isMatch = !triggerVal.includes(r.value);
+                } else {
+                     const tValStr = String(triggerVal || '').toLowerCase();
+                     const rValStr = String(r.value || '').toLowerCase();
+                     const tValNum = parseFloat(triggerVal);
+                     const rValNum = parseFloat(r.value);
+                     
+                     switch(r.operator) {
+                         case 'equals': isMatch = tValStr === rValStr; break;
+                         case 'not_equals': isMatch = tValStr !== rValStr; break;
+                         case 'contains': isMatch = tValStr.includes(rValStr); break;
+                         case 'not_contains': isMatch = !tValStr.includes(rValStr); break;
+                         case 'greater_than': isMatch = !isNaN(tValNum) && tValNum > rValNum; break;
+                         case 'less_than': isMatch = !isNaN(tValNum) && tValNum < rValNum; break;
+                         case 'greater_or_equal': isMatch = !isNaN(tValNum) && tValNum >= rValNum; break;
+                         case 'less_or_equal': isMatch = !isNaN(tValNum) && tValNum <= rValNum; break;
+                     }
+                }
+                if (isMatch) fieldsToShow.add(r.targetId);
+            });
+            
+            formObj.fields.forEach(f => {
+                const el = document.getElementById(`pw-${f.id}`);
+                if (!el) return;
+                
+                if (targetFields.has(f.id)) {
+                    if (fieldsToShow.has(f.id)) {
+                        el.style.display = 'block';
+                        const inp = el.querySelector(`[name="${f.id}"]`);
+                        if(inp && f.required) inp.required = true;
+                    } else {
+                        el.style.display = 'none';
+                        const inps = el.querySelectorAll(`[name="${f.id}"]`);
+                        inps.forEach(i => i.required = false);
+                    }
+                }
+            });
+        };
+
+        window.salvarRespostasFormCraft = async function() {
+            const osIdToSave = document.getElementById('os-id-oculto').value;
+            if(!osIdToSave || osIdToSave === 'nova-os') {
+                window.showToast("Salve a O.S. primeiro para gerar o número antes de preencher o formulário.", "warning");
+                return;
+            }
+
+            const answers = {};
+            window.formAtual.fields.forEach(f => {
+                const wrapper = document.getElementById(`pw-${f.id}`);
+                if(wrapper.style.display === 'none') return;
+                if(f.type === 'single_select') { const r = document.querySelector(`input[name="${f.id}"]:checked`); answers[f.label] = r ? r.value : ''; }
+                else if(f.type === 'multi_select') { answers[f.label] = Array.from(document.querySelectorAll(`input[name="${f.id}"]:checked`)).map(e=>e.value).join(', '); }
+                else { const el = document.querySelector(`[name="${f.id}"]`); answers[f.label] = el ? el.value : ''; }
+            });
+
+            const subId = `${osIdToSave}_${window.maquinaIdxAtual}_${window.formReqIdxAtual}`;
+            const sub = { 
+                id: subId, formId: window.formAtual.id, osId: osIdToSave,
+                submittedAt: new Date().toISOString(), answers: answers, tecnico: window.currentUserStr
+            };
+            
+            const cleanSub = JSON.parse(JSON.stringify(sub));
+            window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_submissions', sub.id), cleanSub).catch(err => console.error("Sync Form Error: ", err));
+            
+            const idx = window.formcraftSubmissions.findIndex(s => s.id === sub.id);
+            if(idx !== -1) window.formcraftSubmissions[idx] = sub; else window.formcraftSubmissions.push(sub);
+            
+            if(window.osAtual) {
+                try { await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', osIdToSave), window.osAtual, {merge:true}); } catch(e){}
+            }
+            
+            window.showToast("Laudo Salvo com Sucesso!", "success");
+            window.fecharModalFormCraft();
+            window.renderizarAbaFormularios();
+        };
+
+        window.fecharModalFormCraft = function() {
+            const modal = document.getElementById('modal-preencher-form');
+            const content = document.getElementById('modal-form-content');
+            modal.classList.add('opacity-0'); content.classList.add('translate-y-full');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+
+        // --- IMPRESSÃO DE ORÇAMENTO COM LAYOUT OTIMIZADO ---
+        window.imprimirOrcamento = function() {
+            const osId = document.getElementById('os-id-oculto').value;
+            if(!osId) { window.showToast("Salve a O.S. antes de imprimir o orçamento.", "warning"); return; }
+            const cliente = document.getElementById('os-cliente').value;
+            const tecnico = document.getElementById('os-tecnico').value;
+            const data = document.getElementById('os-data').value;
+            
+            let orcamentosHtml = '';
+            const orcCards = document.querySelectorAll('.orc-card');
+            
+            if (orcCards.length === 0) {
+                window.showToast("Não há orçamentos nesta O.S. para imprimir.", "warning"); return;
+            }
+
+            orcCards.forEach(c => {
+                const alvoSelect = c.querySelector('.inp-orc-alvo');
+                const alvo = alvoSelect.options[alvoSelect.selectedIndex].text;
+                let itensHtml = '';
+                
+                c.querySelectorAll('.item-produto').forEach(r => {
+                    const desc = r.querySelector('.inp-item-desc').value || '-';
+                    const qtd = r.querySelector('.inp-item-qtd').value || '0';
+                    const unit = r.querySelector('.inp-item-unit').value || '0';
+                    const sub = r.querySelector('.item-subtotal').innerText || 'R$ 0,00';
+                    itensHtml += `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 8px;">${desc}</td><td style="padding: 10px 8px; text-align: center;">${qtd}</td><td style="padding: 10px 8px; text-align: right;">R$ ${parseFloat(unit).toFixed(2).replace('.',',')}</td><td style="padding: 10px 8px; text-align: right; font-weight: bold; color: #0f172a;">${sub}</td></tr>`;
+                });
+                
+                const moQtd = c.querySelector('.inp-orc-mo-qtd').value || '0';
+                const moUnit = c.querySelector('.inp-orc-mo-unit').value || '0';
+                const moSub = c.querySelector('[id^="sub-mo-"]').innerText || 'R$ 0,00';
+                
+                const deslQtd = c.querySelector('.inp-orc-desl-qtd').value || '0';
+                const deslUnit = c.querySelector('.inp-orc-desl-unit').value || '0';
+                const deslSub = c.querySelector('[id^="sub-desl-"]').innerText || 'R$ 0,00';
+                
+                const totalObj = c.querySelector('[id^="total-card-"]').innerText || 'R$ 0,00';
+                const obs = c.querySelector('.inp-orc-obs').value || '';
+
+                orcamentosHtml += `
+                    <div style="margin-bottom: 30px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; page-break-inside: avoid;">
+                        <div style="background: #f1f5f9; padding: 12px 15px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #cbd5e1; font-size: 14px;">Equipamento / Alvo: ${alvo}</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <thead style="background: #f8fafc; text-transform: uppercase; font-size: 11px; color: #64748b; border-bottom: 2px solid #e2e8f0;">
+                                <tr><th style="padding: 10px 8px; text-align: left;">Descrição da Peça</th><th style="padding: 10px 8px;">Qtd</th><th style="padding: 10px 8px; text-align: right;">Val. Unitário</th><th style="padding: 10px 8px; text-align: right;">Subtotal</th></tr>
+                            </thead>
+                            <tbody>${itensHtml}</tbody>
+                        </table>
+                        <div style="padding: 15px; background: #fdfdfd; border-top: 1px solid #e2e8f0; font-size: 13px; color: #334155;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Mão de Obra Técnica (${moQtd}h x R$ ${parseFloat(moUnit).toFixed(2).replace('.',',')})</span><strong style="color: #0f172a;">${moSub}</strong></div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><span>Taxa de Deslocamento (${deslQtd}km x R$ ${parseFloat(deslUnit).toFixed(2).replace('.',',')})</span><strong style="color: #0f172a;">${deslSub}</strong></div>
+                            ${obs ? `<p style="font-size: 12px; color: #64748b; margin: 0 0 15px 0; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;"><strong>Observações:</strong> ${obs}</p>` : ''}
+                            <div style="display: flex; justify-content: flex-end; font-size: 16px; color: #047857; font-weight: 900; padding-top: 10px; border-top: 1px dashed #cbd5e1;">Total deste Item: ${totalObj}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const totalGeral = document.getElementById('valor-total-geral-os').innerText || 'R$ 0,00';
+            const printArea = document.getElementById('print-area');
+            
+            printArea.innerHTML = `
+                <div style="font-family: Arial, sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 20px;">
+                    <div style="border-bottom: 3px solid #1d4ed8; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 style="color: #1e3a8a; margin: 0; font-size: 26px; text-transform: uppercase; font-weight: 900;">GRUPO CIJ</h2>
+                            <h3 style="color: #3b82f6; margin: 5px 0 0 0; font-size: 16px;">Proposta Comercial / Orçamento</h3>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 18px; font-weight: bold; color: #0f172a;">${osId}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #64748b;">Emissão: ${data ? data.split('-').reverse().join('/') : '--'}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; border: 1px solid #e2e8f0;">
+                        <div><span style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 2px;">Cliente Solicitante</span><strong style="font-size: 15px;">${cliente || 'Não informado'}</strong></div>
+                        <div><span style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 2px;">Técnico / Consultor</span><strong style="font-size: 15px;">${tecnico || 'Não atribuído'}</strong></div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        ${orcamentosHtml}
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 20px; background: #0f172a; color: white; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+                        <span style="font-size: 15px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Total Geral da Proposta</span>
+                        <span style="font-size: 28px; font-weight: 900; color: #34d399;">${totalGeral}</span>
+                    </div>
+
+                    <div style="margin-top: 80px; text-align: center; page-break-inside: avoid;">
+                        <div style="width: 400px; border-top: 1px solid #475569; margin: 0 auto; padding-top: 10px;">
+                            <p style="font-size: 13px; margin: 0; font-weight: bold; color: #334155;">De acordo - Assinatura do Cliente</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => { window.print(); }, 300);
+        };
+
+        window.enviarWhatsAppOS = function() {
+            const osId = document.getElementById('os-id-oculto').value;
+            if(!osId) { window.showToast("Salve a O.S. antes de enviar.", "warning"); return; }
+            const cliente = document.getElementById('os-cliente').value;
+            const tecnico = document.getElementById('os-tecnico').value;
+            const data = document.getElementById('os-data').value;
+            const qtdEq = document.querySelectorAll('.equip-card').length;
+
+            const text = `*Ordem de Serviço CIJ: ${osId}*\n\n*Cliente:* ${cliente || 'N/A'}\n*Técnico:* ${tecnico || 'N/A'}\n*Data:* ${data ? data.split('-').reverse().join('/') : 'N/A'}\n\n*Equipamentos:* ${qtdEq}\n\n_Acompanhe seu chamado pelo aplicativo CIJ._`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        };
+
+        // --- SALVAMENTO INTEGRADO DA O.S. NA NUVEM ---
+        window.salvarOS = async function() {
+            const cliente = document.getElementById('os-cliente').value.trim();
+            if (!cliente) { window.showToast("Preencha o Cliente Oficial!", 'warning'); window.mudarAbaOS('aba1'); return; }
+
+            const equipCards = document.querySelectorAll('.equip-card');
+            if (equipCards.length === 0) { window.showToast("Adicione pelo menos um equipamento/máquina!", 'warning'); window.mudarAbaOS('aba2'); return; }
+
+            let maqOk = true;
+            const arrayEquips = [];
+            
+            equipCards.forEach(c => {
+                const mq = c.querySelector('.inp-maquina').value.trim(); const df = c.querySelector('.inp-defeito').value.trim();
+                if(!mq || !df) maqOk = false;
+                
+                const forms = Array.from(c.querySelectorAll('.list-forms-machine > div')).map(el => el.getAttribute('data-form'));
+
+                arrayEquips.push({
+                    maquina: mq, defeito: df, servico: c.querySelector('.inp-servico').value, horaInicio: c.querySelector('.inp-hora-inicio').value, horaFim: c.querySelector('.inp-hora-fim').value,
+                    formulariosExigidos: forms, etapa: c.querySelector('.inp-etapa').value, pecasUtilizadas: JSON.parse(c.querySelector('.inp-pecas-utilizadas')?.value || "[]")
+                });
+            });
+
+            if(!maqOk) { window.showToast("A Máquina e o Defeito são obrigatórios em todos equipamentos!", 'warning'); window.mudarAbaOS('aba2'); return; }
+
+            for(let i=0; i<arrayEquips.length; i++) {
+                let eq = arrayEquips[i];
+                let sn = ''; let mod = eq.maquina;
+                const match = eq.maquina.match(/^\[SN: (.*?)\] (.*)$/);
+                if (match) { sn = match[1].trim(); mod = match[2].trim(); }
+
+                const maqNoParque = window.parqueMaquinas.find(m => 
+                    (sn && m.serial && m.serial.toLowerCase() === sn.toLowerCase()) || 
+                    (!sn && m.modelo && m.modelo.toLowerCase() === mod.toLowerCase() && m.cliente_atual && m.cliente_atual.toLowerCase() === cliente.toLowerCase())
+                );
+
+                if (!maqNoParque || (maqNoParque.cliente_atual && maqNoParque.cliente_atual.toLowerCase() !== cliente.toLowerCase())) {
+                    if (confirm(`Alerta Inteligente CIJ:\nA máquina "${mod}" ${sn ? '(SN: '+sn+') ' : ''}ainda não consta no Parque de Máquinas oficial do cliente "${cliente}".\n\nDeseja vinculá-la permanentemente agora?`)) {
+                        const pmId = maqNoParque ? maqNoParque.id : 'pm_' + Date.now() + Math.floor(Math.random()*1000);
+                        const pmData = maqNoParque ? { ...maqNoParque, cliente_atual: cliente.toUpperCase(), status: 'Ativo do Cliente' } : {
+                            id: pmId, serial: sn.toUpperCase(), modelo: mod.toUpperCase(), cliente_atual: cliente.toUpperCase(), data_instalacao: new Date().toISOString().split('T')[0], status: 'Ativo do Cliente', observacoes: 'Vinculado via Geração de O.S.', historico_transferencias: [], cadastrado_por: window.currentUserStr, timestamp: Date.now()
+                        };
+
+                        if(maqNoParque) {
+                            if(!pmData.historico_transferencias) pmData.historico_transferencias = [];
+                            pmData.historico_transferencias.push({
+                                 id_log: 'tr_' + Date.now(), data: new Date().toISOString().split('T')[0], cliente_antigo: maqNoParque.cliente_atual, cliente_novo: cliente.toUpperCase(), motivo: 'Correção de Vínculo via Abertura de O.S.', responsavel: window.currentUserStr, timestamp: Date.now()
+                            });
+                        }
+                        try { await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'parque_maquinas', pmId), pmData); window.showToast('Máquina vinculada ao Parque Oficial!', 'success'); } catch(err) { console.error(err); }
+                    }
+                }
+            }
+
+            const arrayOrcs = [];
+            document.querySelectorAll('.orc-card').forEach(c => {
+                const itens = [];
+                c.querySelectorAll('.item-produto').forEach(r => { const d = r.querySelector('.inp-item-desc').value.trim(); if(d) itens.push({desc: d, qtd: parseFloat(r.querySelector('.inp-item-qtd').value)||0, unit: parseFloat(r.querySelector('.inp-item-unit').value)||0}); });
+                arrayOrcs.push({
+                    alvo: c.querySelector('.inp-orc-alvo').value, itens: itens,
+                    mo_qtd: parseFloat(c.querySelector('.inp-orc-mo-qtd').value)||0, mo_unit: parseFloat(c.querySelector('.inp-orc-mo-unit').value)||0,
+                    desl_qtd: parseFloat(c.querySelector('.inp-orc-desl-qtd').value)||0, desl_unit: parseFloat(c.querySelector('.inp-orc-desl-unit').value)||0,
+                    obs: c.querySelector('.inp-orc-obs').value.trim(), total: parseFloat(c.getAttribute('data-total'))||0
+                });
+            });
+
+            const idOculto = document.getElementById('os-id-oculto').value;
+            const dataAgendada = document.getElementById('os-data').value;
+            const tecnicoDesignado = document.getElementById('os-tecnico').value;
+            
+            let lowestStageNum = 10;
+            let lowestStageName = ETAPAS_SERVICO[9].nome;
+
+            arrayEquips.forEach(m => {
+                const numMatch = (m.etapa || '').match(/^(\d+)/);
+                if(numMatch) {
+                    const num = parseInt(numMatch[1]);
+                    if(num < lowestStageNum) { lowestStageNum = num; lowestStageName = m.etapa; }
+                }
+            });
+
+            const targetKanbanStatus = window.kanbanMapping[lowestStageName] || 'ENTRADA';
+            
+            const existingOs = window.osAtual || null;
+
+            const payload = {
+                clienteOS: cliente, cliente: cliente, 
+                solicitanteOS: document.getElementById('os-solicitante').value.trim(), tipoAtendimentoOS: document.getElementById('os-tipo').value, dataAgendamentoOS: dataAgendada, tecnicoOS: tecnicoDesignado, tecnico_kanban: tecnicoDesignado, tecnico: tecnicoDesignado, observacoesOS: document.getElementById('os-obs').value.trim(),
+                equipamentosOS: arrayEquips, orcamentosOS: arrayOrcs, status: targetKanbanStatus, history: existingOs ? existingOs.history || [] : []
+            };
+
+            try {
+                if (idOculto) {
+                    await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', idOculto), payload, {merge: true});
+                } else {
+                    const counterRef = window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'counters', 'osr');
+                    const osIdSalva = await window.FirebaseRunTransaction(window.AppDB, async (transaction) => {
+                        const cDoc = await transaction.get(counterRef);
+                        let cur = cDoc.exists() ? cDoc.data().current : 1000;
+                        transaction.set(counterRef, { current: cur + 1 }, { merge: true });
+                        return `OS-${new Date().getFullYear()}-${cur + 1}`;
+                    });
+                    payload.osr = osIdSalva;
+                    payload.timestamp = Date.now();
+                    
+                    payload.cidade = ''; payload.contato = ''; payload.telefone = ''; 
+                    payload.maquina = arrayEquips[0].maquina; payload.serial = ''; payload.defeito = arrayEquips[0].defeito; 
+                    payload.solucao = ''; payload.pecas = ''; payload.urgencia = 'NORMAL'; payload.conclusao = ''; 
+                    
+                    await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', osIdSalva), payload);
+                }
+
+                window.fecharModalOS(); window.showToast('Ordem de Serviço salva com sucesso! O cartão foi movido no Kanban.', 'success');
+            } catch(e) { window.showToast('Erro fatal ao salvar a OS no servidor.', 'error'); console.error(e); }
+        };
+
+        // --- SISTEMA DE TIMELINE & NOTAS ---
+        window.renderTimeline = function(t) {
+            const cont = document.getElementById('timeline-container');
+            if(!cont) return;
+            cont.innerHTML = '';
+            if(!t) return;
+            
+            const evOpen = { date: t.createdAt || new Date().toISOString(), user: t.assignee || t.tecnicoOS || 'Sistema', type: 'system', text: 'Chamado aberto no sistema.' };
+            const hist = [evOpen, ...(t.history || [])]; 
+            hist.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            hist.forEach(ev => {
+                const icon = ev.type === 'system' ? '<i class="fa-solid fa-gear text-slate-400 text-xs"></i>' : '<i class="fa-solid fa-comment-dots text-blue-500 text-xs"></i>';
+                const bg = ev.type === 'system' ? 'bg-slate-100 border-slate-200' : 'bg-blue-50 border-blue-200';
+                
+                cont.innerHTML += `
+                    <div class="timeline-item">
+                        <div class="timeline-dot flex items-center justify-center">${icon}</div>
+                        <div class="${bg} p-3 rounded-xl border shadow-sm ml-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-xs text-slate-800">${ev.user}</span>
+                                <span class="text-[10px] text-slate-400 font-bold">${new Date(ev.date).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium">${ev.text}</p>
+                        </div>
+                    </div>`;
+            });
+        };
+
+        window.addQuickNote = function() {
+            const inp = document.getElementById('quickNoteInput'); 
+            const txt = inp.value.trim();
+            if(!txt || !window.osAtual || (!window.osAtual.id && !window.osAtual.osr)) return;
+            
+            const t = window.osAtual;
+            if(!t.history) t.history = [];
+            t.history.push({ date: new Date().toISOString(), user: window.currentUserStr, type: 'note', text: txt });
+            
+            const docId = t.osr || t.id;
+            window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', docId), { history: t.history }, { merge: true }).catch(e=>console.log(e));
+            
+            inp.value = ''; 
+            window.renderTimeline(t);
+        };
+
+        document.addEventListener('keydown', e => { 
+            if(e.key === 'Escape') { window.fecharModalOS(); window.fecharModalFormCraft(); } 
+        });
+    </script>
+</body>
+</html>

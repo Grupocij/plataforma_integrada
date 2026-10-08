@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Estoque de Peças - Portal CIJ</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{brand:{50:'#f0f7ff',100:'#e0effe',500:'#0284c7',600:'#0369a1',700:'#075985',900:'#0c4a6e'}}}}}
+</script>
+<style>
+*{box-sizing:border-box} body{font-family:Inter,sans-serif;color:#1e293b;background:#f8fafc}
+.stock-scroll::-webkit-scrollbar{width:6px;height:6px}.stock-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.stock-card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.stock-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:36px;padding:.48rem .72rem;border-radius:.7rem;font-size:.68rem;font-weight:800;transition:.15s}
+.stock-btn-primary{background:#0284c7;color:white}.stock-btn-primary:hover{background:#0369a1}
+.stock-btn-dark{background:#0f172a;color:white}.stock-btn-light{background:#fff;border:1px solid #cbd5e1;color:#334155}
+.stock-btn-danger{background:#fff1f2;border:1px solid #fecdd3;color:#be123c}
+.stock-input{width:100%;height:36px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:.7rem;padding:.45rem .65rem;font-size:.72rem;outline:none}
+.stock-input:focus{background:#fff;border-color:#0284c7;box-shadow:0 0 0 3px rgba(2,132,199,.09)}
+.stock-label{display:block;font-size:.58rem;font-weight:800;color:#64748b;margin-bottom:.25rem}
+.stock-pill{display:inline-flex;align-items:center;border-radius:999px;padding:.22rem .52rem;font-size:.58rem;font-weight:800}
+.stock-modal{position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,.68);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:.7rem}
+.stock-modal.hidden{display:none}.stock-modal-card{width:min(900px,97vw);max-height:94vh;overflow:auto;background:#fff;border-radius:1.2rem;border:1px solid #e2e8f0;box-shadow:0 25px 70px rgba(15,23,42,.3)}
+.stock-table th{background:#f1f5f9;color:#475569;font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;padding:.55rem .65rem;text-align:left;position:sticky;top:0;z-index:2}
+.stock-table td{font-size:.69rem;padding:.55rem .65rem;border-top:1px solid #f1f5f9;vertical-align:middle}
+.stock-side-btn{width:100%;display:flex;align-items:center;gap:.7rem;padding:.62rem .75rem;border-radius:.75rem;font-size:.7rem;font-weight:800;color:#475569}
+.stock-side-btn.active{background:#0284c7;color:#fff}.stock-side-btn:not(.active):hover{background:#f1f5f9;color:#0f172a}
+.stock-kpi{padding:.72rem .8rem}.stock-kpi p{font-size:.54rem;font-weight:900;color:#94a3b8;text-transform:uppercase}.stock-kpi h3{font-size:1.25rem;font-weight:900;margin-top:.05rem}
+.stock-pager{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.55rem .7rem;border-top:1px solid #e2e8f0;background:#fff;flex-wrap:wrap}
+.stock-pager-info,.stock-pager-page,.stock-pager-size{font-size:.62rem;color:#64748b;font-weight:700}
+.stock-pager-controls{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}.stock-pager button:disabled{opacity:.35}
+.photo-thumb{width:42px;height:42px;object-fit:cover;border-radius:.55rem;border:1px solid #e2e8f0}
+.map-shelf{border:1px solid #cbd5e1;border-radius:.8rem;background:#fff;padding:.65rem}.map-box{min-width:100px;border:1px solid #bae6fd;background:#f0f9ff;border-radius:.6rem;padding:.45rem}
+@media(max-width:767px){
+ .stock-shell{padding:.45rem!important}.stock-layout{display:block!important}.stock-sidebar{position:static!important;width:100%!important;margin-bottom:.55rem}.stock-side-nav{display:flex;overflow-x:auto;gap:.25rem}.stock-side-btn{width:auto;white-space:nowrap;min-height:42px}
+ .stock-pager{align-items:flex-start;flex-direction:column}.stock-pager-controls{width:100%;justify-content:space-between}
+}
+</style>
+</head>
+<body class="h-full overflow-hidden">
+
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto stock-scroll">
+<div class="stock-shell max-w-[1500px] w-full mx-auto p-2 md:p-3 space-y-2.5">
+
+  <section class="stock-card px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <div><div class="text-[9px] font-black text-sky-700 uppercase tracking-wider">Logística</div><h1 class="text-base font-black leading-tight">Estoque de Peças</h1><p class="text-[10px] text-slate-500">Gestão inteligente, endereçamento físico, fotos e movimentações.</p></div>
+    </div>
+    <div class="flex flex-wrap gap-1.5">
+      <button onclick="openImportModal()" class="stock-btn stock-btn-light"><i class="fa-solid fa-file-import"></i> Importar</button>
+      <button onclick="exportToExcel()" class="stock-btn stock-btn-light"><i class="fa-solid fa-file-excel text-emerald-700"></i> Exportar</button>
+      <button onclick="openItemModal()" class="stock-btn stock-btn-primary"><i class="fa-solid fa-plus"></i> Novo item</button>
+    </div>
+  </section>
+
+  <div class="stock-layout grid md:grid-cols-[190px_1fr] gap-2.5">
+    <aside class="stock-sidebar">
+      <div class="stock-card p-2 md:sticky md:top-2">
+        <div class="stock-side-nav space-y-1">
+          <button id="nav-dashboard" onclick="switchMainTab('dashboard')" class="stock-side-btn active"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+          <button id="nav-addresses" onclick="switchMainTab('addresses')" class="stock-side-btn"><i class="fa-solid fa-location-dot"></i> Endereçamento</button>
+          <button id="nav-movements" onclick="switchMainTab('movements')" class="stock-side-btn"><i class="fa-solid fa-right-left"></i> Movimentações</button>
+          <button id="nav-settings" onclick="switchMainTab('settings')" class="stock-side-btn"><i class="fa-solid fa-gear"></i> Configurações</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="min-w-0 space-y-2.5">
+      <!-- DASHBOARD -->
+      <div id="section-dashboard" class="space-y-2.5">
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-2">
+          <div class="stock-card stock-kpi"><p>Quantidade total</p><h3 id="dash-total-qty">0</h3><span id="dash-total-skus" class="text-[10px] text-slate-500">0 itens</span></div>
+          <div class="stock-card stock-kpi"><p>Peças novas</p><h3 id="dash-new-qty" class="text-emerald-600">0</h3><span id="dash-new-skus" class="text-[10px] text-emerald-700">0 SKUs</span></div>
+          <div class="stock-card stock-kpi"><p>Usadas / testadas</p><h3 id="dash-used-qty" class="text-amber-600">0</h3><span id="dash-used-skus" class="text-[10px] text-amber-700">0 SKUs</span></div>
+          <div class="stock-card stock-kpi"><p>Estoque baixo</p><h3 id="dash-low" class="text-rose-600">0</h3><span class="text-[10px] text-rose-600">Abaixo ou no mínimo</span></div>
+        </div>
+        <div class="grid xl:grid-cols-3 gap-2.5">
+          <div class="stock-card p-3"><div class="font-black text-xs mb-2"><i class="fa-solid fa-chart-pie text-sky-600 mr-1"></i> Distribuição por condição</div><div class="h-44"><canvas id="conditionChart"></canvas></div></div>
+          <div class="stock-card p-3 xl:col-span-2"><div class="font-black text-xs mb-2"><i class="fa-solid fa-chart-column text-sky-600 mr-1"></i> Quantidade por marca</div><div class="h-44"><canvas id="brandChart"></canvas></div></div>
+        </div>
+        <div class="grid xl:grid-cols-2 gap-2.5">
+          <div class="stock-card p-3"><div class="font-black text-xs mb-2"><i class="fa-solid fa-triangle-exclamation text-rose-500 mr-1"></i> Estoque baixo / crítico</div><div id="dash-low-list" class="divide-y max-h-52 overflow-y-auto stock-scroll"></div></div>
+          <div class="stock-card p-3"><div class="font-black text-xs mb-2"><i class="fa-solid fa-clock-rotate-left text-sky-600 mr-1"></i> Últimas movimentações</div><div id="dash-movements" class="divide-y max-h-52 overflow-y-auto stock-scroll"></div></div>
+        </div>
+      </div>
+
+      <!-- ENDEREÇAMENTO -->
+      <div id="section-addresses" class="hidden space-y-2.5">
+        <div class="stock-card p-2.5">
+          <div class="flex flex-wrap justify-between gap-2 mb-2 pb-2 border-b">
+            <div class="flex gap-1.5"><button id="sub-table" onclick="switchAddressSubTab('table')" class="stock-btn stock-btn-primary"><i class="fa-solid fa-table-list"></i> Tabela</button><button id="sub-map" onclick="switchAddressSubTab('visual')" class="stock-btn stock-btn-light"><i class="fa-solid fa-cubes"></i> Mapa físico</button></div>
+            <div class="text-[10px] text-slate-500 font-bold self-center">Total filtrado: <span id="filtered-count" class="text-sky-700">0</span></div>
+          </div>
+          <div class="grid sm:grid-cols-2 xl:grid-cols-6 gap-2">
+            <input id="filter-description" oninput="inventoryFilterChanged()" class="stock-input xl:col-span-2" placeholder="Descrição ou código">
+            <select id="filter-brand" onchange="inventoryFilterChanged()" class="stock-input"><option value="">Todas marcas</option></select>
+            <select id="filter-condition" onchange="inventoryFilterChanged()" class="stock-input"><option value="">Todas condições</option></select>
+            <select id="filter-category" onchange="inventoryFilterChanged()" class="stock-input"><option value="">Todas categorias</option></select>
+            <select id="filter-cabinet" onchange="inventoryFilterChanged()" class="stock-input"><option value="">Todos armários</option></select>
+          </div>
+        </div>
+        <div id="address-table-view" class="stock-card overflow-hidden">
+          <div class="overflow-auto stock-scroll max-h-[58vh]">
+            <table class="stock-table w-full min-w-[1100px]"><thead><tr><th>Fotos</th><th>Endereço</th><th>Código</th><th>Descrição</th><th>Marca</th><th>Condição</th><th>Categoria</th><th class="text-center">QTD</th><th class="text-center">Ações</th></tr></thead><tbody id="inventory-body"></tbody></table>
+          </div>
+          <div id="inventory-pager" class="stock-pager"></div>
+        </div>
+        <div id="address-visual-view" class="hidden stock-card p-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><div class="font-black text-xs">Mapa de alocação</div><div class="text-[10px] text-slate-500">Armário → prateleira → caixa/gaveta</div></div><select id="visual-cabinet" onchange="renderVisualMap()" class="stock-input !w-44"></select></div>
+          <div id="visual-map" class="bg-slate-50 border rounded-xl p-3 min-h-72 space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- MOVIMENTAÇÕES -->
+      <div id="section-movements" class="hidden space-y-2.5">
+        <div class="stock-card p-2.5 flex flex-col md:flex-row gap-2 md:items-center">
+          <select id="mov-filter-type" onchange="movementFilterChanged()" class="stock-input md:w-44"><option value="">Todos tipos</option><option>Entrada</option><option>Novo Cadastro</option><option>Ajuste</option></select>
+          <input id="mov-filter-search" oninput="movementFilterChanged()" class="stock-input flex-1" placeholder="Buscar item, código, motivo ou referência">
+          <button onclick="openMovementModal()" class="stock-btn stock-btn-dark"><i class="fa-solid fa-plus-minus"></i> Registrar</button>
+        </div>
+        <div class="stock-card overflow-hidden"><div class="overflow-auto stock-scroll max-h-[62vh]"><table class="stock-table w-full min-w-[1050px]"><thead><tr><th>Data</th><th>Tipo</th><th>Código</th><th>Item</th><th>QTD</th><th>Endereço</th><th>Motivo / referência</th><th>Usuário</th></tr></thead><tbody id="movements-body"></tbody></table></div><div id="movements-pager" class="stock-pager"></div></div>
+      </div>
+
+      <!-- CONFIGURAÇÕES -->
+      <div id="section-settings" class="hidden space-y-2.5">
+        <div class="stock-card p-3"><div class="font-black text-sm">Configurações do estoque</div><p class="text-[10px] text-slate-500 mt-1">As listas são compartilhadas entre todos os usuários autorizados.</p></div>
+        <div class="grid xl:grid-cols-2 gap-2.5">
+          <div class="stock-card p-3"><h3 class="font-black text-xs mb-2">Marcas / fabricantes</h3><form onsubmit="addSettingValue(event,'brands','setting-brand')" class="flex gap-2"><input id="setting-brand" class="stock-input" placeholder="Nova marca"><button class="stock-btn stock-btn-primary">Adicionar</button></form><div id="settings-brands" class="mt-3 space-y-1 max-h-52 overflow-y-auto stock-scroll"></div></div>
+          <div class="stock-card p-3"><h3 class="font-black text-xs mb-2">Categorias</h3><form onsubmit="addSettingValue(event,'categories','setting-category')" class="flex gap-2"><input id="setting-category" class="stock-input" placeholder="Nova categoria"><button class="stock-btn stock-btn-primary">Adicionar</button></form><div id="settings-categories" class="mt-3 space-y-1 max-h-52 overflow-y-auto stock-scroll"></div></div>
+          <div class="stock-card p-3"><h3 class="font-black text-xs mb-2">Condições</h3><form onsubmit="addSettingValue(event,'conditions','setting-condition')" class="flex gap-2"><input id="setting-condition" class="stock-input" placeholder="Nova condição"><button class="stock-btn stock-btn-primary">Adicionar</button></form><div id="settings-conditions" class="mt-3 space-y-1 max-h-52 overflow-y-auto stock-scroll"></div></div>
+          <div class="stock-card p-3"><h3 class="font-black text-xs mb-2">Armários</h3><form onsubmit="addSettingValue(event,'cabinets','setting-cabinet',true)" class="flex gap-2"><input id="setting-cabinet" class="stock-input" placeholder="Ex.: A01"><button class="stock-btn stock-btn-primary">Adicionar</button></form><div id="settings-cabinets" class="mt-3 space-y-1 max-h-52 overflow-y-auto stock-scroll"></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</main>
+
+<!-- ITEM -->
+<div id="item-modal" class="stock-modal hidden"><div class="stock-modal-card"><form onsubmit="saveItem(event)">
+<div class="p-4 border-b flex justify-between"><div><span class="stock-pill bg-sky-50 text-sky-700">PEÇA</span><h2 id="item-modal-title" class="text-lg font-black mt-1">Novo item</h2></div><button type="button" onclick="closeModal('item-modal')" class="stock-btn stock-btn-light !w-9 !px-0"><i class="fa-solid fa-xmark"></i></button></div>
+<div class="p-4 space-y-3"><input id="item-id" type="hidden">
+<div class="grid md:grid-cols-2 gap-3"><label><span class="stock-label">Código / SKU *</span><input id="item-code" class="stock-input" required></label><label><span class="stock-label">Descrição *</span><input id="item-name" class="stock-input" required></label></div>
+<div class="grid md:grid-cols-3 gap-3"><label><span class="stock-label">Marca *</span><select id="item-brand" class="stock-input" required></select></label><label><span class="stock-label">Condição *</span><select id="item-condition" class="stock-input" required></select></label><label><span class="stock-label">Categoria *</span><select id="item-category" class="stock-input" required></select></label></div>
+<div class="grid md:grid-cols-3 gap-3"><label><span class="stock-label">Armário *</span><select id="item-cabinet" class="stock-input" required onchange="updateAddressPreview()"></select></label><label><span class="stock-label">Prateleira *</span><input id="item-shelf" class="stock-input uppercase" placeholder="P01" required oninput="updateAddressPreview()"></label><label><span class="stock-label">Caixa / Gaveta *</span><input id="item-box" class="stock-input uppercase" placeholder="G01" required oninput="updateAddressPreview()"></label></div>
+<div class="rounded-xl border bg-slate-50 p-2.5 text-xs">Endereço completo: <b id="address-preview" class="text-sky-700">A01-P01-G01</b></div>
+<div class="grid md:grid-cols-2 gap-3"><label><span class="stock-label">Saldo total sob controle *</span><input id="item-qty" type="number" min="0" step="1" class="stock-input" required><span class="text-[10px] text-slate-500">Inclui entregas novas ainda sem faturamento. Confira o disponível na lista.</span></label><label><span class="stock-label">Estoque mínimo *</span><input id="item-min" type="number" min="0" step="1" class="stock-input" required></label></div>
+<label><span class="stock-label">Observações</span><textarea id="item-notes" class="stock-input !h-20"></textarea></label>
+<div class="stock-card p-3 bg-slate-50"><div class="flex justify-between gap-2 items-center"><div><div class="font-black text-xs">Fotos</div><div class="text-[10px] text-slate-500">Até 8 fotos por peça, 5 MB por arquivo.</div></div><label class="stock-btn stock-btn-light cursor-pointer"><i class="fa-solid fa-camera"></i> Adicionar<input id="item-photo-input" type="file" accept="image/*" multiple class="hidden" onchange="handleItemPhotos(this.files)"></label></div><div id="item-photo-grid" class="grid grid-cols-4 sm:grid-cols-8 gap-2 mt-3"></div></div>
+</div>
+<div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button type="button" onclick="closeModal('item-modal')" class="stock-btn stock-btn-light">Cancelar</button><button id="btn-save-item" class="stock-btn stock-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Salvar item</button></div></form></div></div>
+
+<!-- MOVIMENTO -->
+<div id="movement-modal" class="stock-modal hidden"><div class="stock-modal-card max-w-xl"><form onsubmit="saveMovement(event)">
+<div class="p-4 border-b flex justify-between"><div><span class="stock-pill bg-amber-50 text-amber-700">MOVIMENTAÇÃO</span><h2 class="text-lg font-black mt-1">Entrada / saída</h2></div><button type="button" onclick="closeModal('movement-modal')" class="stock-btn stock-btn-light !w-9 !px-0"><i class="fa-solid fa-xmark"></i></button></div>
+<div class="p-4 space-y-3"><label><span class="stock-label">Item *</span><select id="mov-item-id" class="stock-input" required></select></label><div class="grid grid-cols-2 gap-3"><label><span class="stock-label">Tipo *</span><select id="mov-type" class="stock-input"><option>Entrada</option><option>Ajuste</option></select></label><label><span class="stock-label">Quantidade / saldo *</span><input id="mov-qty" type="number" min="0" step="1" value="1" class="stock-input" required></label></div><label><span class="stock-label">Motivo *</span><input id="mov-reason" class="stock-input" required placeholder="Compra, OS, inventário, retorno técnico..."></label><label><span class="stock-label">Referência</span><input id="mov-reference" class="stock-input" placeholder="OS, NF, requisição..."></label></div>
+<div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button type="button" onclick="closeModal('movement-modal')" class="stock-btn stock-btn-light">Cancelar</button><button class="stock-btn stock-btn-dark">Registrar</button></div></form></div></div>
+
+<!-- GALERIA -->
+<div id="gallery-modal" class="stock-modal hidden"><div class="stock-modal-card max-w-2xl"><div class="p-4 border-b flex justify-between"><div><span class="stock-pill bg-slate-100 text-slate-700">GALERIA</span><h2 id="gallery-title" class="text-lg font-black mt-1">Fotos</h2></div><button onclick="closeModal('gallery-modal')" class="stock-btn stock-btn-light !w-9 !px-0"><i class="fa-solid fa-xmark"></i></button></div><div class="p-4"><div id="gallery-main" class="h-72 border rounded-xl bg-slate-50 flex items-center justify-center overflow-hidden"></div><div id="gallery-thumbs" class="flex gap-2 overflow-x-auto mt-3 stock-scroll"></div></div></div></div>
+
+<!-- LOCALIZADOR -->
+<div id="locator-modal" class="stock-modal hidden"><div class="stock-modal-card max-w-lg"><div class="p-4 border-b flex justify-between"><div><span class="stock-pill bg-sky-50 text-sky-700">LOCALIZADOR</span><h2 id="locator-address" class="text-xl font-black mt-1">A01-P01-G01</h2><p id="locator-name" class="text-xs text-slate-500 mt-1"></p></div><button onclick="closeModal('locator-modal')" class="stock-btn stock-btn-light !w-9 !px-0"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 grid grid-cols-3 gap-3 text-center"><div class="stock-card p-3"><div class="stock-label">Armário</div><div id="loc-cab" class="font-black text-lg"></div></div><div class="stock-card p-3"><div class="stock-label">Prateleira</div><div id="loc-shelf" class="font-black text-lg"></div></div><div class="stock-card p-3"><div class="stock-label">Caixa</div><div id="loc-box" class="font-black text-lg"></div></div></div></div></div>
+
+<!-- IMPORTAÇÃO -->
+<div id="import-modal" class="stock-modal hidden"><div class="stock-modal-card max-w-2xl"><div class="p-4 border-b flex justify-between"><div><span class="stock-pill bg-emerald-50 text-emerald-700">EXCEL</span><h2 class="text-lg font-black mt-1">Importar estoque</h2></div><button onclick="closeModal('import-modal')" class="stock-btn stock-btn-light !w-9 !px-0"><i class="fa-solid fa-xmark"></i></button></div>
+<div class="p-4 space-y-3"><div class="rounded-xl border bg-slate-50 p-3 text-xs">Colunas aceitas: Código, Nome/Descrição, Marca, Categoria, Armário, Prateleira, Caixa/Gaveta, Condição, Quantidade, Estoque Mínimo e Observações. Códigos já existentes na mesma condição são ignorados por segurança.</div><input id="import-file" type="file" accept=".xlsx,.xls" class="stock-input !h-auto" onchange="handleImportFile(this.files[0])"><div id="import-summary" class="text-xs text-slate-500"></div><button onclick="downloadSampleTemplate()" class="stock-btn stock-btn-light"><i class="fa-solid fa-download"></i> Baixar modelo</button></div>
+<div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button onclick="closeModal('import-modal')" class="stock-btn stock-btn-light">Cancelar</button><button id="btn-confirm-import" onclick="confirmImport()" class="stock-btn stock-btn-primary" disabled>Importar itens</button></div></div></div>
+
+<div id="toast-container" class="fixed right-4 bottom-4 z-[12000] space-y-2 pointer-events-none"></div>
+
+<script>
+const SROOT=['artifacts','plataforma-cij','public','data'];
+const DEFAULTS={
+ brands:['Hitachi','Domino','Videojet','Markem-Imaje','Linx','Outras'],
+ conditions:['Novos','Usados','Aguardando teste'],
+ categories:['Filtros','Placas / Eletrônica','Bombas / Motores','Canhões / Bicos','Insumos','Diversos'],
+ cabinets:['A01','A02','A03']
+};
+window.STOCK={items:[],movements:[],settings:structuredClone(DEFAULTS),tab:'dashboard',sub:'table',page:1,pageSize:10,movPage:1,movPageSize:10,itemImages:[],pendingFiles:[],galleryItem:null,galleryIndex:0,imported:[],charts:{condition:null,brand:null}};
+
+function sCol(n){return window.fsCollection(window.AppDB,...SROOT,n)}
+function sDoc(n,id){return window.fsDoc(window.AppDB,...SROOT,n,id)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase()}
+function fmt(d){if(!d)return'-';const x=new Date(d);return isNaN(x)?String(d):x.toLocaleString('pt-BR')}
+function active(x){return x&&x.is_deleted!==true&&x.ativo!==false}
+function imageUrl(img){return typeof img==='string'?img:(img?.url||'')}
+function imagePath(img){return typeof img==='string'?'':(img?.path||'')}
+function canonical(raw,id){
+ return {
+  ...raw,id:id||raw.id,
+  code:String(raw.code||raw.codigo||raw.sku||'').toUpperCase(),
+  name:raw.name||raw.nome||raw.descricao||'',
+  brand:raw.brand||raw.marca||raw.fabricante||'Outras',
+  category:raw.category||raw.categoria||'Diversos',
+  cabinet:String(raw.cabinet||raw.armario||'A01').toUpperCase(),
+  shelf:String(raw.shelf||raw.prateleira||'P01').toUpperCase(),
+  box:String(raw.box||raw.caixa||raw.gaveta||'G01').toUpperCase(),
+  condition:raw.condition||raw.condicao||'Novos',
+  quantity:Number(raw.estoqueAtual??raw.quantity??0),unidade:raw.unidade||raw.unit||'UN',controleSerie:raw.controleSerie===true,
+  updatedAtISO:raw.updatedAtISO||'',materiaisReservado:Number(raw.materiaisReservado||0),
+  minQty:Number(raw.minQty??raw.estoqueMinimo??0),
+  notes:raw.notes||raw.observacoes||'',
+  images:Array.isArray(raw.images)?raw.images:(raw.fotoURL?[{url:raw.fotoURL,path:raw.fotoStoragePath||''}]:[])
+ }
+}
+function dbPayload(i){
+ const now=new Date().toISOString(),first=(i.images||[])[0];
+ return {...i,
+  codigo:i.code,sku:i.code,nome:i.name,descricao:i.name,marca:i.brand,fabricante:i.brand,categoria:i.category,
+  armario:i.cabinet,prateleira:i.shelf,caixa:i.box,condicao:i.condition,
+  estoqueAtual:Number(i.quantity||0),estoqueMinimo:Number(i.minQty||0),observacoes:i.notes||'',
+  fotoURL:imageUrl(first),fotoStoragePath:imagePath(first),ativo:true,is_deleted:false,materialTipo:'PECA',
+  updatedAtISO:now,atualizado_em:now,atualizado_por:window.nomeUsuarioLogado||window.currentUser?.email||'',schemaEstoque:3
+ }
+}
+function movementPayload(m){
+ return {...m,materialTipo:'PECA',materialId:m.itemId,materialNome:m.itemName,codigo:m.itemCode,tipoMovimento:m.type,quantidade:m.quantity,endereco:m.address,motivo:m.reason,createdAtISO:m.date,usuario:m.user||'',
+  condicao:m.condition||m.condicao||'',referencia:m.reference||m.referencia||'',requisicaoId:m.requisicaoId||'',os:m.os||'',osId:m.osId||'',
+  origemModulo:m.origemModulo||'ESTOQUE_PECAS',saldoAnterior:m.saldoAnterior??null,saldoPosterior:m.saldoPosterior??null}
+}
+function toast(msg,type='info'){const b=document.createElement('div');b.className=`pointer-events-auto rounded-xl shadow-xl px-4 py-3 text-xs font-bold text-white ${type==='error'?'bg-rose-600':type==='success'?'bg-emerald-600':'bg-slate-800'}`;b.textContent=msg;document.getElementById('toast-container').appendChild(b);setTimeout(()=>b.remove(),3300)}
+function closeModal(id){document.getElementById(id)?.classList.add('hidden')}
+
+window.initModule=function(){
+ document.getElementById('login-screen')?.classList.add('hidden');document.getElementById('main-content')?.classList.remove('hidden');
+ window.fsOnSnapshot(sCol('cadastros_pecas'),snap=>{STOCK.items=[];snap.forEach(d=>{const x=canonical(d.data(),d.id);if(x.is_deleted!==true)STOCK.items.push(x)});STOCK.items.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));refreshAll()},e=>console.error('[Estoque] peças',e));
+ window.fsOnSnapshot(sCol('estoque_movimentacoes'),snap=>{STOCK.movements=[];snap.forEach(d=>{const r={id:d.id,...d.data()};if((r.materialTipo||'PECA')==='PECA'&&r.is_deleted!==true)STOCK.movements.push({id:r.id,date:r.date||r.createdAtISO,type:r.type||r.tipoMovimento,itemId:r.itemId||r.materialId,itemCode:r.itemCode||r.codigo||'',itemName:r.itemName||r.materialNome||'',quantity:Number(r.quantity??r.quantidade??0),address:r.address||r.endereco||'',reason:r.reason||r.motivo||'',reference:r.reference||r.referencia||[r.os,r.requisicaoId].filter(Boolean).join(' · '),user:r.user||r.usuario||'',condition:r.condition||r.condicao||'',requisicaoId:r.requisicaoId||'',os:r.os||'',origemModulo:r.origemModulo||'',saldoAnterior:r.saldoAnterior,saldoPosterior:r.saldoPosterior})});STOCK.movements.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));refreshAll()},e=>console.error('[Estoque] movimentos',e));
+ window.fsOnSnapshot(sCol('estoque_configuracoes'),snap=>{let found=false;snap.forEach(d=>{if(d.id==='listas'){const x=d.data();STOCK.settings={brands:x.brands||DEFAULTS.brands,conditions:x.conditions||DEFAULTS.conditions,categories:x.categories||DEFAULTS.categories,cabinets:x.cabinets||DEFAULTS.cabinets};found=true}});populateDropdowns();renderSettings();if(!found&&window.MaterialOS?.can('gerenciar_estoque'))saveSettings(false)},e=>console.error('[Estoque] config',e));
+ switchMainTab('dashboard');
+};
+
+function applyStockPermissions(){const allowed=window.MaterialOS?.can('gerenciar_estoque')===true;document.querySelectorAll('button[onclick]').forEach(button=>{if(/^(openItemModal|openMovementModal|openQuickMove|deleteItem|openImportModal|addSettingValue|removeSettingValue)/.test(button.getAttribute('onclick')||'')){button.disabled=!allowed;button.style.opacity=allowed?'':'0.45';}});}
+function refreshAll(){populateDropdowns();renderDashboard();renderInventory();renderMovements();renderSettings();renderVisualMap();applyStockPermissions()}
+function switchMainTab(tab){STOCK.tab=tab;['dashboard','addresses','movements','settings'].forEach(x=>{document.getElementById('section-'+x)?.classList.toggle('hidden',x!==tab);document.getElementById('nav-'+x)?.classList.toggle('active',x===tab)});if(tab==='dashboard')renderDashboard();if(tab==='addresses')renderInventory();if(tab==='movements')renderMovements();if(tab==='settings')renderSettings()}
+function switchAddressSubTab(sub){STOCK.sub=sub;document.getElementById('address-table-view').classList.toggle('hidden',sub!=='table');document.getElementById('address-visual-view').classList.toggle('hidden',sub!=='visual');document.getElementById('sub-table').className='stock-btn '+(sub==='table'?'stock-btn-primary':'stock-btn-light');document.getElementById('sub-map').className='stock-btn '+(sub==='visual'?'stock-btn-primary':'stock-btn-light');if(sub==='visual')renderVisualMap()}
+function populateDropdowns(){
+ const fill=(id,arr,first)=>{const el=document.getElementById(id);if(!el)return;const v=el.value;el.innerHTML=`<option value="">${first}</option>`+arr.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if([...el.options].some(o=>o.value===v))el.value=v};
+ fill('filter-brand',STOCK.settings.brands,'Todas marcas');fill('filter-condition',STOCK.settings.conditions,'Todas condições');fill('filter-category',STOCK.settings.categories,'Todas categorias');fill('filter-cabinet',STOCK.settings.cabinets,'Todos armários');
+ fill('item-brand',STOCK.settings.brands,'Selecione...');fill('item-condition',STOCK.settings.conditions,'Selecione...');fill('item-category',STOCK.settings.categories,'Selecione...');fill('item-cabinet',STOCK.settings.cabinets,'Selecione...');
+ const vc=document.getElementById('visual-cabinet');if(vc){const v=vc.value;vc.innerHTML=STOCK.settings.cabinets.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if([...vc.options].some(o=>o.value===v))vc.value=v}
+ const mi=document.getElementById('mov-item-id');if(mi){const v=mi.value;mi.innerHTML=STOCK.items.filter(active).map(i=>`<option value="${i.id}">${esc(i.code)} · ${esc(i.name)} (Atual: ${i.quantity})</option>`).join('');if([...mi.options].some(o=>o.value===v))mi.value=v}
+}
+function inventoryFilterChanged(){STOCK.page=1;renderInventory()}
+function filteredItems(){const q=(document.getElementById('filter-description')?.value||'').toLowerCase().trim(),brand=document.getElementById('filter-brand')?.value||'',cond=document.getElementById('filter-condition')?.value||'',cat=document.getElementById('filter-category')?.value||'',cab=document.getElementById('filter-cabinet')?.value||'';return STOCK.items.filter(active).filter(i=>(!q||i.name.toLowerCase().includes(q)||i.code.toLowerCase().includes(q))&&(!brand||i.brand===brand)&&(!cond||i.condition===cond)&&(!cat||i.category===cat)&&(!cab||i.cabinet===cab))}
+function paginate(rows,page,size){const pages=Math.max(1,Math.ceil(rows.length/size)),p=Math.max(1,Math.min(page,pages)),start=(p-1)*size,end=Math.min(start+size,rows.length);return {rows:rows.slice(start,end),pages,page:p,start,end,total:rows.length}}
+function pagerHtml(kind,p){const size=kind==='inventory'?STOCK.pageSize:STOCK.movPageSize;return `<div class="stock-pager-info">Mostrando <b>${p.total?p.start+1:0}</b>–<b>${p.end}</b> de <b>${p.total}</b></div><div class="stock-pager-controls"><label class="stock-pager-size">Exibir <select class="stock-input !w-auto !h-8 !py-1" onchange="setPageSize('${kind}',this.value)">${[10,25,50,100,250].map(n=>`<option ${n===size?'selected':''}>${n}</option>`).join('')}</select></label><button class="stock-btn stock-btn-light !min-h-8 !py-1" ${p.page<=1?'disabled':''} onclick="changePage('${kind}',${p.page-1})"><i class="fa-solid fa-chevron-left"></i></button><span class="stock-pager-page">Página <b>${p.page}</b> de <b>${p.pages}</b></span><button class="stock-btn stock-btn-light !min-h-8 !py-1" ${p.page>=p.pages?'disabled':''} onclick="changePage('${kind}',${p.page+1})"><i class="fa-solid fa-chevron-right"></i></button></div>`}
+function setPageSize(kind,v){if(kind==='inventory'){STOCK.pageSize=Number(v);STOCK.page=1;renderInventory()}else{STOCK.movPageSize=Number(v);STOCK.movPage=1;renderMovements()}}
+function changePage(kind,p){if(kind==='inventory'){STOCK.page=p;renderInventory()}else{STOCK.movPage=p;renderMovements()}}
+
+function renderInventory(){
+ const all=filteredItems(),pg=paginate(all,STOCK.page,STOCK.pageSize);STOCK.page=pg.page;document.getElementById('filtered-count').textContent=all.length;
+ const tb=document.getElementById('inventory-body');if(!tb)return;
+ tb.innerHTML=pg.rows.length?pg.rows.map(i=>{const low=i.quantity<=i.minQty,imgs=i.images||[],first=imageUrl(imgs[0]),cond=norm(i.condition).includes('novo')?'bg-emerald-100 text-emerald-800':norm(i.condition).includes('usado')?'bg-amber-100 text-amber-800':'bg-blue-100 text-blue-800';return `<tr>
+ <td class="text-center"><button onclick="openGallery('${i.id}')" class="relative">${first?`<img src="${esc(first)}" class="photo-thumb">`:`<span class="photo-thumb inline-flex items-center justify-center bg-slate-100 text-slate-400"><i class="fa-solid fa-camera"></i></span>`}${imgs.length>1?`<span class="absolute -top-1 -right-1 bg-sky-700 text-white rounded-full text-[8px] px-1">+${imgs.length-1}</span>`:''}</button></td>
+ <td><button onclick="openLocator('${esc(i.cabinet)}','${esc(i.shelf)}','${esc(i.box)}','${esc(i.name).replace(/'/g,"\\'")}')" class="font-black text-sky-700 hover:underline"><i class="fa-solid fa-location-dot mr-1"></i>${esc(i.cabinet)}-${esc(i.shelf)}-${esc(i.box)}</button></td>
+ <td class="font-mono font-black">${esc(i.code)}</td><td><b>${esc(i.name)}</b>${i.notes?`<div class="text-[9px] italic text-slate-400 max-w-xs truncate">${esc(i.notes)}</div>`:''}</td><td>${esc(i.brand)}</td><td><span class="stock-pill ${cond}">${esc(i.condition)}</span></td><td>${esc(i.category)}</td>
+ <td class="text-center"><span class="stock-pill ${low?'bg-rose-100 text-rose-700':'bg-slate-100 text-slate-700'}">${i.quantity}</span><div class="text-[9px] text-slate-500 mt-1">Bloqueado / fora do estoque: ${i.materiaisReservado||0}<br>Disponível: ${Math.max(0,i.quantity-(i.materiaisReservado||0))}</div>${low?'<div class="text-[8px] text-rose-600 font-bold mt-1">BAIXO</div>':''}</td>
+ <td class="text-center whitespace-nowrap"><button onclick="openQuickMove('${i.id}')" class="stock-btn stock-btn-light !min-h-8 !px-2"><i class="fa-solid fa-right-left"></i></button> <button onclick="openItemModal('${i.id}')" class="stock-btn stock-btn-light !min-h-8 !px-2"><i class="fa-solid fa-pen"></i></button> <button onclick="deleteItem('${i.id}')" class="stock-btn stock-btn-danger !min-h-8 !px-2"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join(''):'<tr><td colspan="9" class="text-center text-slate-400 py-10">Nenhum item encontrado.</td></tr>';
+ document.getElementById('inventory-pager').innerHTML=pagerHtml('inventory',pg);
+}
+
+function renderVisualMap(){
+ const cab=document.getElementById('visual-cabinet')?.value||STOCK.settings.cabinets[0]||'A01',items=STOCK.items.filter(i=>active(i)&&i.cabinet===cab),box=document.getElementById('visual-map');if(!box)return;
+ const shelves={};items.forEach(i=>{(shelves[i.shelf]??=[]).push(i)});
+ box.innerHTML=Object.keys(shelves).length?Object.keys(shelves).sort().map(s=>`<div class="map-shelf"><div class="font-black text-xs mb-2"><i class="fa-solid fa-layer-group text-sky-600 mr-1"></i>${esc(s)}</div><div class="flex flex-wrap gap-2">${shelves[s].sort((a,b)=>a.box.localeCompare(b.box)).map(i=>`<button onclick="openLocator('${esc(i.cabinet)}','${esc(i.shelf)}','${esc(i.box)}','${esc(i.name).replace(/'/g,"\\'")}')" class="map-box text-left"><div class="font-black text-sky-700 text-[10px]">${esc(i.box)}</div><div class="text-[9px] font-bold mt-1">${esc(i.code)}</div><div class="text-[9px] text-slate-500 truncate">${esc(i.name)}</div><div class="text-[9px] mt-1">QTD: <b>${i.quantity}</b></div></button>`).join('')}</div></div>`).join(''):`<div class="text-center text-slate-400 py-12 text-xs">Nenhum item no armário ${esc(cab)}.</div>`;
+}
+
+function renderDashboard(){
+ const rows=STOCK.items.filter(active);let total=0,nq=0,uq=0,ns=0,us=0;const low=[],byCond={},byBrand={};
+ rows.forEach(i=>{total+=i.quantity;byCond[i.condition]=(byCond[i.condition]||0)+i.quantity;byBrand[i.brand]=(byBrand[i.brand]||0)+i.quantity;if(norm(i.condition).includes('novo')){nq+=i.quantity;ns++}else if(norm(i.condition).includes('usado')){uq+=i.quantity;us++}if(i.quantity<=i.minQty)low.push(i)});
+ document.getElementById('dash-total-qty').textContent=total;document.getElementById('dash-total-skus').textContent=`${rows.length} itens cadastrados`;document.getElementById('dash-new-qty').textContent=nq;document.getElementById('dash-new-skus').textContent=`${ns} SKUs novos`;document.getElementById('dash-used-qty').textContent=uq;document.getElementById('dash-used-skus').textContent=`${us} SKUs usados`;document.getElementById('dash-low').textContent=low.length;
+ document.getElementById('dash-low-list').innerHTML=low.length?low.sort((a,b)=>(a.quantity-a.minQty)-(b.quantity-b.minQty)).slice(0,20).map(i=>`<div class="py-2 flex justify-between gap-2"><div><b class="text-[10px]">${esc(i.code)} · ${esc(i.name)}</b><div class="text-[9px] text-slate-400">${esc(i.cabinet)}-${esc(i.shelf)}-${esc(i.box)}</div></div><span class="stock-pill bg-rose-100 text-rose-700">${i.quantity} / min ${i.minQty}</span></div>`).join(''):'<div class="text-xs text-slate-400 py-5 text-center">Nenhum item abaixo do mínimo.</div>';
+ document.getElementById('dash-movements').innerHTML=STOCK.movements.slice(0,15).map(m=>`<div class="py-2"><div class="flex justify-between gap-2"><b class="text-[10px]">${esc(m.type)} · ${esc(m.itemCode)}</b><span class="text-[9px] text-slate-400">${esc(fmt(m.date))}</span></div><div class="text-[9px] text-slate-500">${esc(m.itemName)} · QTD ${m.quantity} · ${esc(m.reason||'-')}</div></div>`).join('')||'<div class="text-xs text-slate-400 py-5 text-center">Sem movimentações.</div>';
+ if(window.Chart){if(STOCK.charts.condition)STOCK.charts.condition.destroy();if(STOCK.charts.brand)STOCK.charts.brand.destroy();
+  STOCK.charts.condition=new Chart(document.getElementById('conditionChart'),{type:'doughnut',data:{labels:Object.keys(byCond),datasets:[{data:Object.values(byCond)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}}}}});
+  const entries=Object.entries(byBrand).sort((a,b)=>b[1]-a[1]).slice(0,12);STOCK.charts.brand=new Chart(document.getElementById('brandChart'),{type:'bar',data:{labels:entries.map(x=>x[0]),datasets:[{label:'Quantidade',data:entries.map(x=>x[1])}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:9}}}}}});
+ }
+}
+
+function movementFilterChanged(){STOCK.movPage=1;renderMovements()}
+function renderMovements(){
+ const type=document.getElementById('mov-filter-type')?.value||'',q=(document.getElementById('mov-filter-search')?.value||'').toLowerCase(),all=STOCK.movements.filter(m=>(!type||m.type===type)&&(!q||JSON.stringify(m).toLowerCase().includes(q))),pg=paginate(all,STOCK.movPage,STOCK.movPageSize);STOCK.movPage=pg.page;
+ const tb=document.getElementById('movements-body');if(!tb)return;
+ tb.innerHTML=pg.rows.length?pg.rows.map(m=>`<tr><td>${esc(fmt(m.date))}</td><td><span class="stock-pill ${m.type==='Entrada'?'bg-emerald-100 text-emerald-800':m.type==='Saída'?'bg-rose-100 text-rose-800':'bg-slate-100 text-slate-700'}">${esc(m.type)}</span></td><td class="font-mono font-bold">${esc(m.itemCode)}</td><td>${esc(m.itemName)}${m.condition?`<div class="text-[9px] text-slate-400">${esc(m.condition)}</div>`:''}</td><td><b>${m.quantity}</b></td><td>${esc(m.address||'-')}</td><td>${esc(m.reason||'-')}${m.reference?`<div class="text-[9px] text-sky-700 font-bold">${esc(m.reference)}</div>`:''}${m.saldoAnterior!=null&&m.saldoPosterior!=null?`<div class="text-[9px] text-slate-400">Saldo: ${esc(m.saldoAnterior)} → ${esc(m.saldoPosterior)}</div>`:''}${m.origemModulo?`<div class="text-[8px] text-slate-400">${esc(m.origemModulo)}</div>`:''}</td><td>${esc(m.user||'-')}</td></tr>`).join(''):'<tr><td colspan="8" class="text-center text-slate-400 py-10">Nenhuma movimentação.</td></tr>';
+ document.getElementById('movements-pager').innerHTML=pagerHtml('movements',pg)
+}
+
+function openItemModal(id=null){
+ populateDropdowns();const item=id?STOCK.items.find(x=>x.id===id):null;STOCK.itemImages=item?(item.images||[]).map(x=>typeof x==='string'?{url:x,path:''}:{...x}):[];STOCK.pendingFiles=[];
+ document.getElementById('item-modal-title').textContent=item?'Editar peça':'Cadastrar nova peça';document.getElementById('item-id').value=item?.id||'';document.getElementById('item-code').value=item?.code||'';document.getElementById('item-name').value=item?.name||'';document.getElementById('item-brand').value=item?.brand||'';document.getElementById('item-condition').value=item?.condition||'';document.getElementById('item-category').value=item?.category||'';document.getElementById('item-cabinet').value=item?.cabinet||STOCK.settings.cabinets[0]||'';document.getElementById('item-shelf').value=item?.shelf||'P01';document.getElementById('item-box').value=item?.box||'G01';document.getElementById('item-qty').value=item?.quantity??1;document.getElementById('item-min').value=item?.minQty??2;document.getElementById('item-notes').value=item?.notes||'';updateAddressPreview();renderItemPhotoGrid();document.getElementById('item-modal').classList.remove('hidden')
+}
+function updateAddressPreview(){document.getElementById('address-preview').textContent=`${(document.getElementById('item-cabinet').value||'A01').toUpperCase()}-${(document.getElementById('item-shelf').value||'P01').toUpperCase()}-${(document.getElementById('item-box').value||'G01').toUpperCase()}`}
+function handleItemPhotos(files){for(const f of [...files]){if(STOCK.itemImages.length+STOCK.pendingFiles.length>=8){toast('Limite de 8 fotos por item.','error');break}if(!f.type.startsWith('image/')||f.size>5*1024*1024){toast(`Arquivo inválido: ${f.name}`,'error');continue}STOCK.pendingFiles.push({file:f,preview:URL.createObjectURL(f)});renderItemPhotoGrid()}document.getElementById('item-photo-input').value=''}
+function renderItemPhotoGrid(){const all=[...STOCK.itemImages.map((x,i)=>({type:'saved',i,url:imageUrl(x)})),...STOCK.pendingFiles.map((x,i)=>({type:'new',i,url:x.preview}))];document.getElementById('item-photo-grid').innerHTML=all.length?all.map(x=>`<div class="relative"><img src="${esc(x.url)}" class="w-full aspect-square object-cover rounded-lg border"><button type="button" onclick="removeItemPhoto('${x.type}',${x.i})" class="absolute top-0.5 right-0.5 bg-rose-600 text-white rounded-full w-5 h-5 text-[9px]"><i class="fa-solid fa-xmark"></i></button></div>`).join(''):'<div class="col-span-full text-[10px] text-slate-400 italic">Nenhuma foto cadastrada.</div>'}
+async function removeItemPhoto(type,i){if(type==='new'){URL.revokeObjectURL(STOCK.pendingFiles[i]?.preview||'');STOCK.pendingFiles.splice(i,1)}else{const img=STOCK.itemImages[i];if(imagePath(img)&&window.fbDeleteObject){try{await window.fbDeleteObject(window.fbStorageRef(window.AppStorage,imagePath(img)))}catch(e){console.warn(e)}}STOCK.itemImages.splice(i,1)}renderItemPhotoGrid()}
+
+async function saveItem(e){
+ e.preventDefault();const btn=document.getElementById('btn-save-item'),id=document.getElementById('item-id').value||('peca_'+Date.now()),old=STOCK.items.find(x=>x.id===id),code=document.getElementById('item-code').value.trim().toUpperCase(),condition=document.getElementById('item-condition').value,dup=STOCK.items.find(x=>x.id!==id&&active(x)&&x.code===code&&x.condition===condition);if(dup){toast('Já existe este código na mesma condição.','error');return}
+ const quantity=Number(document.getElementById('item-qty').value||0),item={...(old||{}),id,code,name:document.getElementById('item-name').value.trim(),brand:document.getElementById('item-brand').value,condition,category:document.getElementById('item-category').value,cabinet:document.getElementById('item-cabinet').value.toUpperCase(),shelf:document.getElementById('item-shelf').value.trim().toUpperCase(),box:document.getElementById('item-box').value.trim().toUpperCase(),quantity,minQty:Number(document.getElementById('item-min').value||0),notes:document.getElementById('item-notes').value.trim(),unidade:old?.unidade||'UN',controleSerie:old?.controleSerie===true,images:[...STOCK.itemImages],createdAtISO:old?.createdAtISO||new Date().toISOString()};
+ try{btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+  for(const p of STOCK.pendingFiles){const ext=(p.file.name.split('.').pop()||'jpg').replace(/[^a-z0-9]/gi,''),sp=`estoque_pecas/${id}/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`,ref=window.fbStorageRef(window.AppStorage,sp);await window.fbUploadBytes(ref,p.file,{contentType:p.file.type});const url=await window.fbGetDownloadURL(ref);item.images.push({url,path:sp,name:p.file.name,uploadedAtISO:new Date().toISOString()})}
+  const adjustmentReason=old&&quantity!==Number(old.quantity)?prompt('Informe o motivo da alteração do saldo físico:'):'';if(old&&quantity!==Number(old.quantity)&&!adjustmentReason)throw Error('O ajuste de saldo exige justificativa.');
+  await window.MaterialOS.execute('STOCK_SAVE',{materialId:id,data:dbPayload(item),expectedStockTimestamp:old?.updatedAtISO||'',reason:adjustmentReason||'Cadastro inicial'});
+  closeModal('item-modal');toast(old?'Peça atualizada.':'Peça cadastrada.','success')
+ }catch(err){console.error(err);toast('Erro ao salvar: '+(err.message||err),'error')}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar item'}
+}
+async function deleteItem(id){const item=STOCK.items.find(x=>x.id===id);if(!item||!confirm(`Arquivar ${item.name}? O saldo deve estar zerado e não pode haver pendências.`))return;try{await window.MaterialOS.execute('STOCK_ARCHIVE',{materialId:id});toast('Item arquivado.','success')}catch(e){toast(e.message,'error')}}
+
+
+function openMovementModal(){populateDropdowns();document.getElementById('mov-type').value='Entrada';document.getElementById('mov-qty').value=1;document.getElementById('mov-reason').value='';document.getElementById('mov-reference').value='';document.getElementById('movement-modal').classList.remove('hidden')}
+function openQuickMove(id){openMovementModal();document.getElementById('mov-item-id').value=id}
+async function saveMovement(e){e.preventDefault();const id=document.getElementById('mov-item-id').value,item=STOCK.items.find(x=>x.id===id);if(!item)return;const kind=document.getElementById('mov-type').value;if(kind==='Saída'){toast('Requisite a peça dentro da OS para identificar o equipamento e o responsável.','error');return}const button=e.submitter;try{if(button)button.disabled=true;await window.MaterialOS.execute('STOCK_MOVE',{materialId:id,kind,quantity:document.getElementById('mov-qty').value,reason:document.getElementById('mov-reason').value.trim(),reference:document.getElementById('mov-reference').value.trim(),expectedStockTimestamp:item.updatedAtISO||''});closeModal('movement-modal');toast('Movimentação confirmada pelo servidor.','success')}catch(err){toast(err.message,'error')}finally{if(button)button.disabled=false}}
+
+function openLocator(cab,shelf,box,name){document.getElementById('locator-address').textContent=`${cab}-${shelf}-${box}`;document.getElementById('locator-name').textContent=name;document.getElementById('loc-cab').textContent=cab;document.getElementById('loc-shelf').textContent=shelf;document.getElementById('loc-box').textContent=box;document.getElementById('locator-modal').classList.remove('hidden')}
+function openGallery(id){const item=STOCK.items.find(x=>x.id===id);if(!item)return;STOCK.galleryItem=item;STOCK.galleryIndex=0;document.getElementById('gallery-title').textContent=item.name;renderGallery();document.getElementById('gallery-modal').classList.remove('hidden')}
+function renderGallery(){const item=STOCK.galleryItem,imgs=item?.images||[],main=document.getElementById('gallery-main'),thumb=document.getElementById('gallery-thumbs');if(!imgs.length){main.innerHTML='<div class="text-slate-400 text-xs"><i class="fa-solid fa-images text-3xl block text-center mb-2"></i>Nenhuma foto cadastrada.</div>';thumb.innerHTML='';return}STOCK.galleryIndex=Math.min(STOCK.galleryIndex,imgs.length-1);main.innerHTML=`<img src="${esc(imageUrl(imgs[STOCK.galleryIndex]))}" class="w-full h-full object-contain">`;thumb.innerHTML=imgs.map((x,i)=>`<button onclick="STOCK.galleryIndex=${i};renderGallery()" class="border-2 ${i===STOCK.galleryIndex?'border-sky-500':'border-slate-200'} rounded-lg"><img src="${esc(imageUrl(x))}" class="w-14 h-14 object-cover rounded-md"></button>`).join('')}
+
+async function saveSettings(notify=true){await window.fsSetDoc(sDoc('estoque_configuracoes','listas'),{...STOCK.settings,updatedAtISO:new Date().toISOString(),updatedBy:window.nomeUsuarioLogado||window.currentUser?.email||''});if(notify)toast('Configuração salva.','success')}
+function renderSettings(){const render=(id,key)=>{const b=document.getElementById(id);if(!b)return;b.innerHTML=STOCK.settings[key].map((v,i)=>`<div class="flex justify-between items-center border rounded-lg px-2 py-1.5 bg-white text-xs"><span>${esc(v)}</span><button onclick="removeSettingValue('${key}',${i})" class="text-rose-500 p-1"><i class="fa-solid fa-trash"></i></button></div>`).join('')};render('settings-brands','brands');render('settings-categories','categories');render('settings-conditions','conditions');render('settings-cabinets','cabinets')}
+async function addSettingValue(e,key,input,upper=false){e.preventDefault();const el=document.getElementById(input),v=(upper?el.value.trim().toUpperCase():el.value.trim());if(!v)return;if(STOCK.settings[key].some(x=>norm(x)===norm(v))){toast('Valor já cadastrado.','error');return}STOCK.settings[key].push(v);el.value='';await saveSettings();populateDropdowns();renderSettings()}
+async function removeSettingValue(key,index){const v=STOCK.settings[key][index];if(!confirm(`Remover "${v}" da lista? Itens existentes não serão apagados.`))return;STOCK.settings[key].splice(index,1);await saveSettings();populateDropdowns();renderSettings()}
+
+function openImportModal(){STOCK.imported=[];document.getElementById('import-file').value='';document.getElementById('import-summary').textContent='';document.getElementById('btn-confirm-import').disabled=true;document.getElementById('import-modal').classList.remove('hidden')}
+function handleImportFile(file){if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});STOCK.imported=rows.map(r=>({code:String(r['Código']||r['Codigo']||r['SKU']||'').trim().toUpperCase(),name:String(r['Nome']||r['Nome/Descrição']||r['Descrição']||r['Descricao']||r['Item']||'').trim(),brand:String(r['Marca']||r['Fabricante']||'Outras').trim(),category:String(r['Categoria']||r['Filtro']||'Diversos').trim(),cabinet:String(r['Armário']||r['Armario']||'A01').trim().toUpperCase(),shelf:String(r['Prateleira']||'P01').trim().toUpperCase(),box:String(r['Caixa']||r['Gaveta']||'G01').trim().toUpperCase(),condition:String(r['Condição']||r['Condicao']||'Novos').trim(),quantity:Number(r['Quantidade']||r['QTD']||r['Qtd']||0),minQty:Number(r['Estoque Mínimo']||r['Minimo']||0),notes:String(r['Observações']||r['Observacao']||'').trim()})).filter(x=>x.code&&x.name);const dup=STOCK.imported.filter(x=>STOCK.items.some(i=>active(i)&&i.code===x.code&&i.condition===x.condition)).length;document.getElementById('import-summary').textContent=`${STOCK.imported.length} linha(s) válida(s); ${dup} duplicada(s) serão ignoradas.`;document.getElementById('btn-confirm-import').disabled=!STOCK.imported.length}catch(err){toast('Erro ao ler a planilha.','error')}};reader.readAsArrayBuffer(file)}
+async function confirmImport(){const btn=document.getElementById('btn-confirm-import');btn.disabled=true;let created=0,skipped=0;try{for(const x of STOCK.imported){if(STOCK.items.some(i=>active(i)&&i.code===x.code&&i.condition===x.condition)){skipped++;continue}const id='peca_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),item={...x,id,images:[],createdAtISO:new Date().toISOString()};await window.MaterialOS.execute('STOCK_SAVE',{materialId:id,data:dbPayload(item),reason:'Importação de cadastro via planilha'});created++}closeModal('import-modal');toast(`Importação: ${created} criado(s), ${skipped} ignorado(s).`,'success')}catch(e){console.error(e);toast('Importação interrompida: '+e.message,'error')}finally{btn.disabled=false}}
+function downloadSampleTemplate(){const rows=[{'Código':'FIL-HIT-01','Nome':'Filtro Principal Hitachi 10 micra','Marca':'Hitachi','Categoria':'Filtros','Armário':'A01','Prateleira':'P02','Caixa':'G03','Condição':'Novos','Quantidade':8,'Estoque Mínimo':3,'Observações':'Saco original'}],ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Modelo_Estoque');XLSX.writeFile(wb,'Modelo_Importacao_Estoque.xlsx')}
+function exportToExcel(){const rows=STOCK.items.filter(active).map(i=>({'Código':i.code,'Nome/Descrição':i.name,'Marca':i.brand,'Categoria':i.category,'Endereço Físico':`${i.cabinet}-${i.shelf}-${i.box}`,'Armário':i.cabinet,'Prateleira':i.shelf,'Caixa/Gaveta':i.box,'Condição':i.condition,'Quantidade':i.quantity,'Estoque Mínimo':i.minQty,'Observações':i.notes||''}));if(!rows.length){toast('Não há itens para exportar.','error');return}const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Estoque_Atual');XLSX.writeFile(wb,`Relatorio_Estoque_${new Date().toISOString().slice(0,10)}.xlsx`)}
+</script>
+<script src="materiais-os.js?v=1.79.4"></script>
+<script type="module" src="core.js?v=20261007-mat4"></script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parque de Máquinas V2 - Portal CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Biblioteca Geradora de QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased bg-slate-50">
+
+    <!-- DATALISTS PARA AUTOCOMPLETE (Puxados da Central) -->
+    <datalist id="list-clientes"></datalist>
+    <datalist id="list-equipamentos"></datalist>
+
+    <!-- TELA DE LOGIN (Padrão do Sistema) -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Carregando a Base Instalada...</p>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
+        
+        <!-- CABEÇALHO DO MÓDULO -->
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 shrink-0">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded border border-indigo-300">Gestão de Ativos V2</span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Parque de Máquinas</h1>
+                    <p class="text-slate-500 text-sm mt-1">Controle de equipamentos instalados, QR Codes, transferências e histórico.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
+                <button onclick="window.migrarVinculosParque()" class="bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-300 font-bold px-4 py-2.5 rounded-xl transition text-xs flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center" title="Preenche IDs oficiais em registros antigos sem apagar campos legados">
+                    <i class="fa-solid fa-link"></i> Migrar vínculos
+                </button>
+                <button onclick="window.abrirModalCadastro()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition text-xs flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center">
+                    <i class="fa-solid fa-plus"></i> Registrar Nova Máquina
+                </button>
+            </div>
+        </header>
+
+        <!-- KPIS -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div><p class="text-[10px] font-bold text-slate-500 uppercase">Base Instalada</p><p id="kpi-total" class="text-xl font-black text-slate-800">0</p></div>
+                <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600"><i class="fa-solid fa-cubes"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div><p class="text-[10px] font-bold text-emerald-600 uppercase">Em Campo (Clientes)</p><p id="kpi-campo" class="text-xl font-black text-emerald-700">0</p></div>
+                <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600"><i class="fa-solid fa-industry"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div><p class="text-[10px] font-bold text-blue-600 uppercase">Estoque Disponível</p><p id="kpi-disp" class="text-xl font-black text-blue-700">0</p></div>
+                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600"><i class="fa-solid fa-box-open"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div><p class="text-[10px] font-bold text-amber-600 uppercase">Em Manutenção</p><p id="kpi-manut" class="text-xl font-black text-amber-700">0</p></div>
+                <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600"><i class="fa-solid fa-wrench"></i></div>
+            </div>
+        </div>
+
+        <!-- FILTROS E PESQUISA -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-end gap-4 shrink-0">
+            <div class="flex-1 w-full">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar Máquina (SN, Modelo, Cliente)</label>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="filtro-busca" onkeyup="window.renderizarTabela()" placeholder="Digite para pesquisar..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-indigo-600 shadow-sm font-medium">
+                </div>
+            </div>
+            <div class="w-full md:w-64">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Status</label>
+                <select id="filtro-status" onchange="window.renderizarTabela()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-600 shadow-sm cursor-pointer text-slate-700">
+                    <option value="ALL">Todos os Status</option>
+                    <option value="Ativo do Cliente">Ativo do Cliente</option>
+                    <option value="Ativo CIJ - Disponível">Ativo CIJ - Disponível</option>
+                    <option value="Ativo CIJ - Manutenção">Ativo CIJ - Manutenção</option>
+                    <option value="Ativo CIJ - Alugada">Ativo CIJ - Alugada</option>
+                    <option value="Ativo CIJ - Emprestada">Ativo CIJ - Emprestada</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TABELA DE MÁQUINAS -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col min-h-[400px]">
+            <div class="overflow-x-auto overflow-y-auto custom-scrollbar flex-1">
+                <table class="w-full text-left text-xs min-w-[900px]">
+                    <thead class="bg-slate-900 text-white uppercase font-bold sticky top-0 z-10">
+                        <tr>
+                            <th class="p-4">Nº Série (SN)</th>
+                            <th class="p-4">Equipamento / Modelo</th>
+                            <th class="p-4">Cliente Atual (Alocado)</th>
+                            <th class="p-4">Data Instalação</th>
+                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-maquinas" class="divide-y divide-slate-200 font-medium text-slate-700">
+                        <!-- Renderizado via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: CADASTRAR / EDITAR MÁQUINA -->
+    <div id="modalCadastro" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl border border-slate-200 my-auto transform transition-all">
+            <div class="bg-indigo-900 text-white px-6 py-4 flex items-center justify-between rounded-t-3xl">
+                <h3 class="font-black text-sm flex items-center gap-2"><i class="fa-solid fa-server text-indigo-300"></i> <span id="tituloModalCadastro">Registrar Máquina</span></h3>
+                <button onclick="window.fecharModalCadastro()" class="text-slate-400 hover:text-white text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="window.salvarMaquina(event)" class="p-6 space-y-4">
+                <input type="hidden" id="cad_id">
+                
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200 mb-4">
+                    <p class="text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-2"><i class="fa-solid fa-barcode"></i> Identificação Única</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Número de Série (SN) *</label>
+                            <input type="text" id="cad_serial" required placeholder="Ex: 88776655" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-black outline-none focus:border-indigo-600 shadow-sm uppercase">
+                            <p class="text-[9px] text-slate-500 mt-1">Este número é a chave do QR Code.</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Equipamento do Catálogo Oficial *</label>
+                            <select id="cad_catalogo_id" required onchange="window.sincronizarCatalogoSelecionado()" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-600 shadow-sm">
+                                <option value="">Selecione...</option>
+                            </select>
+                            <input type="hidden" id="cad_modelo">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Cliente Oficial *</label>
+                        <select id="cad_cliente_id" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-600">
+                            <option value="">Selecione o cliente...</option>
+                        </select>
+                        <input type="hidden" id="cad_cliente">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Data de Instalação Atual</label>
+                        <input type="date" id="cad_data_inst" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-600 cursor-pointer">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Local / Linha / Setor</label>
+                    <input type="text" id="cad_local" placeholder="Ex: Linha 2 - Envase" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Status Operacional *</label>
+                    <select id="cad_status" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-600 cursor-pointer">
+                        <option value="Ativo do Cliente">Ativo do Cliente</option>
+                        <option value="Ativo CIJ - Disponível">Ativo CIJ - Disponível</option>
+                        <option value="Ativo CIJ - Manutenção">Ativo CIJ - Manutenção</option>
+                        <option value="Ativo CIJ - Alugada">Ativo CIJ - Alugada</option>
+                        <option value="Ativo CIJ - Emprestada">Ativo CIJ - Emprestada</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Observações / Local Exato na Fábrica</label>
+                    <textarea id="cad_obs" rows="2" placeholder="Ex: Instalada na Linha 2 do setor de envase..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-indigo-600 resize-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 mt-2">
+                    <button type="button" onclick="window.fecharModalCadastro()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar</button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer"><i class="fa-solid fa-save mr-1"></i> Salvar Máquina</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TRANSFERÊNCIA DE CLIENTE -->
+    <div id="modalTransferencia" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 my-auto transform transition-all">
+            <div class="bg-amber-500 text-white px-6 py-4 flex items-center justify-between rounded-t-3xl">
+                <h3 class="font-black text-sm flex items-center gap-2"><i class="fa-solid fa-right-left"></i> Transferir Equipamento</h3>
+                <button onclick="window.fecharModalTransferencia()" class="text-amber-100 hover:text-white text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="window.salvarTransferencia(event)" class="p-6 space-y-4">
+                <input type="hidden" id="transf_id">
+                
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                    <p class="text-slate-500 font-bold uppercase text-[9px] mb-1">Máquina Selecionada:</p>
+                    <p id="transf_resumo" class="font-black text-slate-800"></p>
+                    <p class="text-slate-500 font-bold uppercase text-[9px] mt-2 mb-1">Cliente Atual:</p>
+                    <p id="transf_cliente_antigo" class="font-black text-rose-600 bg-rose-50 px-2 py-1 rounded inline-block"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Transferir PARA QUAL CLIENTE? *</label>
+                    <select id="transf_cliente_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-amber-500 shadow-sm"><option value="">Selecione o cliente...</option></select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Data da Transferência *</label>
+                    <input type="date" id="transf_data" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-amber-500 shadow-sm cursor-pointer">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Motivo / Autorização</label>
+                    <input type="text" id="transf_motivo" required placeholder="Ex: Fim do contrato, Troca de filial..." class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-amber-500 shadow-sm">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 mt-2">
+                    <button type="button" onclick="window.fecharModalTransferencia()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"><i class="fa-solid fa-check"></i> Efetivar Mudança</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CLIENTE (EDIÇÃO RAPIDA) -->
+    <div id="modalCliente" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden my-auto">
+            <div class="bg-blue-800 text-white p-5 flex items-center justify-between shrink-0">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-building text-blue-300"></i> Ficha do Cliente</h3>
+                <button onclick="window.fecharModalCliente()" class="text-blue-300 hover:text-white p-1 transition cursor-pointer"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[75vh] custom-scrollbar">
+                <form id="formCliente" onsubmit="window.salvarCliente(event)" class="space-y-4 mb-6">
+                    <input type="hidden" id="cli_id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Razão Social *</label>
+                            <input type="text" id="cli_razao" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Nome Fantasia</label>
+                            <input type="text" id="cli_fantasia" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">CNPJ</label>
+                            <input type="text" id="cli_cnpj" onkeyup="this.value = window.mascaraCNPJ(this.value)" maxlength="18" placeholder="00.000.000/0000-00" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo</label>
+                            <input type="email" id="cli_email" placeholder="contato@empresa.com.br" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                        </div>
+                    </div>
+                    
+                    <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-700">Contatos e WhatsApp</label>
+                            <button type="button" onclick="window.adicionarContato()" class="text-[10px] font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded-lg transition cursor-pointer shadow-sm">
+                                <i class="fa-solid fa-plus mr-1"></i> Adicionar
+                            </button>
+                        </div>
+                        <div id="contatos_container" class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Endereço (Rua, Número, Complemento)</label>
+                        <input type="text" id="cli_endereco" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Bairro</label>
+                            <input type="text" id="cli_bairro" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Cidade *</label>
+                            <input type="text" id="cli_cidade" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Estado (UF) *</label>
+                            <input type="text" id="cli_estado" required placeholder="Ex: SC" maxlength="2" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-blue-600 uppercase text-center">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Observações Internas</label>
+                        <textarea id="cli_observacoes" rows="2" placeholder="Detalhes ou anotações sobre o cliente..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium outline-none focus:border-blue-600 resize-none"></textarea>
+                    </div>
+                </form>
+
+                <!-- SEÇÃO: MÁQUINAS INSTALADAS -->
+                <div class="border-t border-slate-200 pt-5 mt-2">
+                    <h4 class="text-xs font-black text-slate-800 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-server text-blue-600"></i> Equipamentos no Cliente</h4>
+                    <div id="cli_maquinas_container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Injetado via JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-5 bg-slate-50 border-t border-slate-100 flex gap-3 shrink-0">
+                <button type="button" onclick="window.fecharModalCliente()" class="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar</button>
+                <button type="submit" form="formCliente" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer">Salvar Alterações do Cliente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: FICHA COMPLETA (QR CODE E HISTÓRICO DE OS) -->
+    <div id="modalFicha" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto custom-scrollbar">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl border border-slate-200 my-auto transform transition-all flex flex-col max-h-[90vh]">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between rounded-t-3xl shrink-0">
+                <h3 class="font-black text-sm flex items-center gap-2"><i class="fa-solid fa-id-card text-blue-400"></i> Ficha do Equipamento</h3>
+                <button onclick="window.fecharModalFicha()" class="text-slate-400 hover:text-white text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                
+                <!-- IDENTIFICAÇÃO E QR CODE -->
+                <div class="flex flex-col md:flex-row gap-6 items-center md:items-start bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center shrink-0">
+                        <div id="qrcode_container" class="w-32 h-32 flex items-center justify-center"></div>
+                        <p class="text-[9px] font-bold text-slate-400 mt-2 uppercase">Scan to Identify</p>
+                    </div>
+                    
+                    <div class="flex-1 space-y-3 w-full">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Modelo do Equipamento</p>
+                            <h2 id="ficha_modelo" class="text-xl font-black text-blue-800 leading-tight"></h2>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Número de Série (SN)</p><p id="ficha_serial" class="text-sm font-black text-slate-800 font-mono"></p></div>
+                            <div><p class="text-[10px] font-bold text-slate-400 uppercase">Status</p><p id="ficha_status" class="mt-0.5"></p></div>
+                            <div class="col-span-2"><p class="text-[10px] font-bold text-slate-400 uppercase">Cliente Atual / Local</p>
+                                <!-- NOME DO CLIENTE CLICÁVEL TAMBÉM DENTRO DA FICHA -->
+                                <button id="ficha_cliente_btn" onclick="window.abrirModalClientePorNome(this.innerText)" class="text-sm font-black text-blue-700 bg-white border border-slate-200 px-2 py-1 rounded shadow-sm inline-block mt-0.5 hover:bg-blue-50 transition cursor-pointer"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LINHA DO TEMPO: HISTÓRICO DE MANUTENÇÕES E TRANSFERÊNCIAS -->
+                <div>
+                    <div class="flex items-center gap-3 border-b border-slate-200 pb-2 mb-4">
+                        <button onclick="window.mudarAbaFicha('manutencao')" id="btnAbaManut" class="text-xs font-black pb-2 border-b-2 border-blue-600 text-blue-700 transition cursor-pointer">Histórico de OS (Manutenções)</button>
+                        <button onclick="window.mudarAbaFicha('transferencia')" id="btnAbaTransf" class="text-xs font-bold pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition cursor-pointer">Log de Transferências</button>
+                    </div>
+
+                    <div id="aba_manutencao" class="space-y-3">
+                        <div id="container_os_historico" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2"></div>
+                    </div>
+
+                    <div id="aba_transferencia" class="space-y-3 hidden">
+                        <div id="container_transf_historico" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2"></div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 text-right shrink-0">
+                <button onclick="window.fecharModalFicha()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer">Fechar Ficha</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-[9999] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700 transition-opacity">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-semibold">Sucesso!</span>
+    </div>
+
+    <!-- MOTOR CENTRAL DO SISTEMA E FIREBASE -->
+    <script type="module" src="core.js?v=20260925-parque-v2"></script>
+
+    <!-- LÓGICA DO PARQUE DE MÁQUINAS -->
+    <script>
+        window.parqueMaquinas = [];
+        window.historicoOSR = [];
+        window.historicoAssistencia = [];
+        window.catalogoEquipamentos = []; 
+        window.dadosClientes = [];
+        window.currentUserEmail = '';
+        window.currentUserName = '';
+        
+        let qrCodeObj = null;
+
+
+        window.normKey = function(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase()};
+        window.clientLabel = function(c){return c?.fantasia||c?.razao_social||c?.razaoSocial||'SEM NOME'};
+        window.machineSerial = function(m){return String(m?.numeroSerie||m?.numero_serie||m?.serial||'').trim()};
+        window.machineModel = function(m){return m?.modelo||m?.equipamentoModelo||'Equipamento'};
+        window.machineClientName = function(m){return m?.clienteNome||m?.cliente_atual||m?.clienteAtual||'-'};
+        window.machineActive = function(m){return !!m && m.is_deleted!==true && m.ativo!==false};
+        window.resolveClienteByLegacyName = function(nome){
+            const key=window.normKey(nome);if(!key)return null;
+            const matches=window.dadosClientes.filter(c=>[c.razao_social,c.fantasia].some(v=>window.normKey(v)===key));
+            return matches.length===1?matches[0]:null;
+        };
+        window.resolveCatalogoByLegacyModel = function(modelo){
+            const key=window.normKey(modelo);if(!key)return null;
+            const matches=window.catalogoEquipamentos.filter(x=>window.normKey(x.modelo)===key);
+            return matches.length===1?matches[0]:null;
+        };
+        window.populateOfficialSelectors = function(){
+            const cli=document.getElementById('cad_cliente_id'),tr=document.getElementById('transf_cliente_id'),cat=document.getElementById('cad_catalogo_id');
+            const clientes=window.dadosClientes.filter(c=>c.is_deleted!==true&&c.ativo!==false).sort((a,b)=>window.clientLabel(a).localeCompare(window.clientLabel(b),'pt-BR'));
+            const equips=window.catalogoEquipamentos.filter(e=>e.is_deleted!==true&&e.ativo!==false).sort((a,b)=>String(a.modelo||'').localeCompare(String(b.modelo||''),'pt-BR'));
+            const opts='<option value="">Selecione o cliente...</option>'+clientes.map(c=>`<option value="${c.id}">${window.clientLabel(c)}${c.razao_social&&c.fantasia&&c.razao_social!==c.fantasia?' · '+c.razao_social:''}</option>`).join('');
+            if(cli)cli.innerHTML=opts;if(tr)tr.innerHTML=opts;
+            if(cat)cat.innerHTML='<option value="">Selecione...</option>'+equips.map(e=>`<option value="${e.id}">${e.fabricante||e.marca?((e.fabricante||e.marca)+' · '):''}${e.modelo||'-'}${e.codigo?' · '+e.codigo:''}</option>`).join('');
+        };
+        window.sincronizarCatalogoSelecionado = function(){
+            const id=document.getElementById('cad_catalogo_id')?.value;
+            const e=window.catalogoEquipamentos.find(x=>String(x.id)===String(id));
+            document.getElementById('cad_modelo').value=e?.modelo||'';
+        };
+
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
+            window.currentUserEmail = window.currentUser ? window.currentUser.email : '';
+            window.currentUserName = window.nomeUsuarioLogado || '';
+            const db = window.AppDB;
+
+            window.fsOnSnapshot(window.fsCollection(db,'artifacts','plataforma-cij','public','data','parque_maquinas'),snap=>{
+                window.parqueMaquinas=[];let emCampo=0,disp=0,manut=0;
+                snap.forEach(d=>{
+                    const m={id:d.id,...d.data()};
+                    if(!window.machineActive(m))return;
+                    window.parqueMaquinas.push(m);
+                    const status=m.status||'';
+                    if(status==='Ativo do Cliente'||status==='Ativo CIJ - Alugada'||status==='Ativo CIJ - Emprestada')emCampo++;
+                    else if(status==='Ativo CIJ - Disponível')disp++;
+                    else if(status==='Ativo CIJ - Manutenção')manut++;
+                });
+                window.parqueMaquinas.sort((a,b)=>window.machineSerial(a).localeCompare(window.machineSerial(b),'pt-BR'));
+                document.getElementById('kpi-total').innerText=window.parqueMaquinas.length;
+                document.getElementById('kpi-campo').innerText=emCampo;document.getElementById('kpi-disp').innerText=disp;document.getElementById('kpi-manut').innerText=manut;
+                window.renderizarTabela();
+            });
+
+            window.fsOnSnapshot(window.fsCollection(db,'artifacts','plataforma-cij','public','data','suportes_osr'),snap=>{
+                window.historicoOSR=[];snap.forEach(d=>{const r={id:d.id,...d.data()};if(r.is_deleted!==true)window.historicoOSR.push(r)});
+            });
+
+            window.fsOnSnapshot(window.fsCollection(db,'artifacts','plataforma-cij','public','data','os_ordens'),snap=>{
+                window.historicoAssistencia=[];snap.forEach(d=>{const r={id:d.id,...d.data()};if(r.is_deleted!==true)window.historicoAssistencia.push(r)});
+            });
+
+            window.fsOnSnapshot(window.fsCollection(db,'artifacts','plataforma-cij','public','data','cadastros_clientes'),snap=>{
+                window.dadosClientes=[];snap.forEach(d=>{const c={id:d.id,...d.data()};if(c.is_deleted!==true)window.dadosClientes.push(c)});
+                window.populateOfficialSelectors();
+            });
+
+            window.fsOnSnapshot(window.fsCollection(db,'artifacts','plataforma-cij','public','data','cadastros_equipamentos'),snap=>{
+                window.catalogoEquipamentos=[];snap.forEach(d=>{const e={id:d.id,...d.data()};if(e.is_deleted!==true)window.catalogoEquipamentos.push(e)});
+                window.populateOfficialSelectors();
+            });
+        }
+
+        window.mostrarNotificacao = function(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
+            toast.classList.remove('hidden'); 
+            setTimeout(() => toast.classList.add('hidden'), 4000);
+        };
+
+        window.formatarDataBR = function(isoStr) {
+            if(!isoStr) return '-';
+            try {
+                const data = new Date(isoStr);
+                return data.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+            } catch(e) { return isoStr; }
+        };
+
+        // --- SISTEMA DE CORES PARA OS STATUS ---
+        window.obterCorBadgeStatus = function(status) {
+            let badgeClass = 'bg-slate-100 text-slate-800 border-slate-300';
+            if(status === 'Ativo do Cliente') badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            else if(status === 'Ativo CIJ - Disponível') badgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
+            else if(status === 'Ativo CIJ - Manutenção') badgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
+            else if(status === 'Ativo CIJ - Alugada') badgeClass = 'bg-purple-100 text-purple-800 border-purple-300';
+            else if(status === 'Ativo CIJ - Emprestada') badgeClass = 'bg-teal-100 text-teal-800 border-teal-300';
+            return badgeClass;
+        }
+
+        window.renderizarTabela = function() {
+            const tbody = document.getElementById('tabela-maquinas');
+            const busca = document.getElementById('filtro-busca').value.toLowerCase();
+            const statusFiltro = document.getElementById('filtro-status').value;
+
+            const filtrados = window.parqueMaquinas.filter(m => {
+                if(statusFiltro !== 'ALL' && m.status !== statusFiltro) return false;
+                if(busca) {
+                    const str = `${window.machineSerial(m)} ${window.machineModel(m)} ${window.machineClientName(m)}`.toLowerCase();
+                    if(!str.includes(busca)) return false;
+                }
+                return true;
+            });
+
+            if(filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Nenhuma máquina encontrada.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtrados.map(m => {
+                const badgeClass = window.obterCorBadgeStatus(m.status);
+
+                return `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                    <td class="p-4">
+                        <button onclick="window.abrirFicha('${m.id}')" class="text-left font-mono font-black text-blue-700 text-sm hover:underline flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-qrcode text-slate-400 text-xs"></i> ${window.machineSerial(m)}
+                        </button>
+                    </td>
+                    <td class="p-4 font-bold text-slate-800">${window.machineModel(m)}</td>
+                    <td class="p-4 font-bold text-slate-600">
+                        <button onclick="window.abrirModalClientePorNome('${window.machineClientName(m)}')" class="text-left font-bold text-slate-700 hover:text-blue-700 hover:underline transition cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-building text-slate-400"></i> ${window.machineClientName(m)}
+                        </button>
+                    </td>
+                    <td class="p-4 text-slate-500 font-medium">${window.formatarDataBR(m.data_instalacao)}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 text-[9px] font-black uppercase rounded-lg border ${badgeClass}">${m.status}</span>
+                    </td>
+                    <td class="p-4 text-center space-x-1 whitespace-nowrap">
+                        <button onclick="window.abrirModalTransferencia('${m.id}')" title="Transferir Cliente" class="p-2 text-amber-600 bg-amber-50 hover:bg-amber-500 hover:text-white rounded-lg transition shadow-sm font-bold text-[10px] cursor-pointer"><i class="fa-solid fa-right-left"></i> Transferir</button>
+                        <button onclick="window.abrirModalCadastro('${m.id}')" title="Editar Máquina" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg transition shadow-sm cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.excluirMaquina('${m.id}')" title="Excluir do Parque" class="p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg transition shadow-sm cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        };
+
+
+        window.migrarVinculosParque = async function(){
+            if(String(window.userProfile?.perfil||'').toUpperCase()!=='MASTER'){
+                alert('A migração de vínculos é exclusiva do perfil Master.');return;
+            }
+            const pendentes=window.parqueMaquinas.filter(m=>!m.clienteId||!m.equipamentoCatalogoId||!m.numeroSerie||Number(m.schemaParque||0)<2);
+            if(!pendentes.length){window.mostrarNotificacao('Todos os registros ativos já usam o modelo V2.');return}
+            if(!confirm(`Foram encontrados ${pendentes.length} registro(s) antigos. A migração preencherá IDs oficiais somente quando houver correspondência única de cliente e modelo. Nenhum campo antigo será apagado. Continuar?`))return;
+
+            let ok=0,parcial=0,falha=0;
+            for(const m of pendentes){
+                try{
+                    const c=m.clienteId?window.dadosClientes.find(x=>String(x.id)===String(m.clienteId)):window.resolveClienteByLegacyName(m.cliente_atual||m.clienteNome);
+                    const cat=m.equipamentoCatalogoId?window.catalogoEquipamentos.find(x=>String(x.id)===String(m.equipamentoCatalogoId)):window.resolveCatalogoByLegacyModel(m.modelo);
+                    const numeroSerie=window.machineSerial(m).toUpperCase(),now=new Date().toISOString();
+                    const patch={...m,numeroSerie,numero_serie:numeroSerie,serial:numeroSerie,updatedAtISO:now};
+                    if(c){patch.clienteId=c.id;patch.clienteNome=window.clientLabel(c);patch.cliente_atual=window.clientLabel(c);patch.clienteAtual=window.clientLabel(c)}
+                    if(cat){patch.equipamentoCatalogoId=cat.id;patch.modelo=cat.modelo||m.modelo;patch.fabricante=cat.fabricante||cat.marca||m.fabricante||'';patch.marca=patch.fabricante;patch.codigoEquipamento=cat.codigo||''}
+                    if(c&&cat){patch.schemaParque=2;ok++}else parcial++;
+                    await window.fsSetDoc(window.fsDoc(window.AppDB,'artifacts','plataforma-cij','public','data','parque_maquinas',m.id),patch);
+                }catch(e){console.error('[Parque] migração',m.id,e);falha++}
+            }
+            alert(`Migração concluída.\n\nCompletos: ${ok}\nParciais: ${parcial}\nFalhas: ${falha}\n\nRegistros parciais exigem correção manual de cliente ou modelo.`);
+        };
+
+        // =====================================
+        // CLIENTES (MÁGICA DA TEIA RELACIONAL)
+        // =====================================
+        window.abrirModalClientePorNome = function(nome) {
+            const c=window.dadosClientes.find(x=>window.normKey(x.razao_social)===window.normKey(nome)||window.normKey(x.fantasia)===window.normKey(nome));
+            if(!c){alert('Cliente não encontrado na base oficial. Cadastre-o primeiro na Central de Cadastros.');return}
+            window.location.href='central_cadastros.html?cliente='+encodeURIComponent(c.id);
+        }
+
+        window.fecharModalCliente = () => document.getElementById('modalCliente').classList.add('hidden');
+        
+        window.abrirModalCliente = function(id = null, nomePreenchido = '') {
+            document.getElementById('contatos_container').innerHTML = '';
+            const maquinasContainer = document.getElementById('cli_maquinas_container');
+            maquinasContainer.innerHTML = '';
+
+            if (id) {
+                const c = window.dadosClientes.find(x => x.id === id);
+                document.getElementById('cli_id').value = c.id;
+                document.getElementById('cli_razao').value = c.razao_social || '';
+                document.getElementById('cli_fantasia').value = c.fantasia || '';
+                document.getElementById('cli_cnpj').value = c.cnpj || '';
+                document.getElementById('cli_email').value = c.email || '';
+                document.getElementById('cli_endereco').value = c.endereco || '';
+                document.getElementById('cli_bairro').value = c.bairro || '';
+                document.getElementById('cli_cidade').value = c.cidade || '';
+                document.getElementById('cli_estado').value = c.estado || c.uf || '';
+                document.getElementById('cli_observacoes').value = c.observacoes || '';
+
+                if (c.contatos && c.contatos.length > 0) c.contatos.forEach(ct => window.adicionarContato(ct.nome, ct.telefone));
+                else if (c.contato || c.telefone) window.adicionarContato(c.contato || '', c.telefone || '');
+                else window.adicionarContato();
+
+                // BUSCA MÁQUINAS VINCULADAS
+                const maquinasVinculadas = window.parqueMaquinas.filter(m => m.cliente_atual === c.razao_social || m.cliente_atual === c.fantasia);
+                if (maquinasVinculadas.length > 0) {
+                    maquinasContainer.innerHTML = maquinasVinculadas.map(m => {
+                        let dataFormatadaUltima = 'Sem manutenções';
+                        let hist = window.historicoOSR.filter(o => o.serial === m.serial);
+                        hist.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        if (hist.length > 0) {
+                            const ultData = hist[0].timestamp ? new Date(hist[0].timestamp).toISOString() : (hist[0].dataComparacao || hist[0].data_formatada);
+                            dataFormatadaUltima = window.formatarDataBR(ultData);
+                        }
+                        
+                        const badgeClass = window.obterCorBadgeStatus(m.status);
+                        
+                        return `
+                        <div onclick="window.fecharModalCliente(); window.abrirFicha('${m.id}')" class="bg-white border border-slate-200 rounded-xl p-3 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-sm transition">
+                            <div>
+                                <h5 class="text-xs font-black text-blue-700"><i class="fa-solid fa-print mr-1"></i> ${window.machineModel(m)}</h5>
+                                <p class="text-[10px] text-slate-500 font-mono mt-0.5">SN: ${window.machineSerial(m)}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded ${badgeClass}">${m.status}</span>
+                                <p class="text-[9px] text-slate-400 mt-1">Última OS: <strong class="text-slate-600">${dataFormatadaUltima}</strong></p>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } else {
+                    maquinasContainer.innerHTML = '<p class="text-[10px] text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-200">Nenhum equipamento vinculado a este cliente no Parque.</p>';
+                }
+            } else {
+                document.getElementById('cli_id').value = '';
+                document.getElementById('cli_razao').value = nomePreenchido;
+                document.getElementById('cli_fantasia').value = '';
+                document.getElementById('cli_cnpj').value = '';
+                document.getElementById('cli_email').value = '';
+                document.getElementById('cli_endereco').value = '';
+                document.getElementById('cli_bairro').value = '';
+                document.getElementById('cli_cidade').value = '';
+                document.getElementById('cli_estado').value = '';
+                document.getElementById('cli_observacoes').value = '';
+                window.adicionarContato();
+                maquinasContainer.innerHTML = '<p class="text-[10px] text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-200">Cadastre e salve o cliente primeiro.</p>';
+            }
+            document.getElementById('modalCliente').classList.remove('hidden');
+        };
+
+        window.mascaraTelefone = function(v) {
+            v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); v = v.replace(/(\d)(\d{4})$/, "$1-$2"); return v;
+        };
+        window.mascaraCNPJ = function(v) {
+            v = v.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/, "$1.$2"); v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3"); v = v.replace(/\.(\d{3})(\d)/, ".$1/$2"); v = v.replace(/(\d{4})(\d)/, "$1-$2"); return v;
+        };
+
+        window.adicionarContato = function(nome = '', tel = '') {
+            const container = document.getElementById('contatos_container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center contato-row';
+            div.innerHTML = `<div class="flex-1"><input type="text" placeholder="Nome do Contato" value="${nome}" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-blue-600 c-nome"></div><div class="flex-1"><input type="text" placeholder="(00) 00000-0000" onkeyup="this.value = window.mascaraTelefone(this.value)" maxlength="15" value="${tel}" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium outline-none focus:border-blue-600 c-tel"></div><button type="button" onclick="this.parentElement.remove()" class="w-7 h-7 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition shadow-sm cursor-pointer"><i class="fa-solid fa-xmark"></i></button>`;
+            container.appendChild(div);
+        };
+
+        window.salvarCliente = async function(e) {
+            e.preventDefault();
+            alert('O cadastro oficial de clientes agora é mantido exclusivamente na Central de Cadastros.');
+        }
+
+        // =====================================
+        // CRUD: CADASTRAR / EDITAR MÁQUINA
+        // =====================================
+        window.fecharModalCadastro = () => document.getElementById('modalCadastro').classList.add('hidden');
+        window.abrirModalCadastro = function(id = null) {
+            window.populateOfficialSelectors();
+            const m=id?window.parqueMaquinas.find(x=>String(x.id)===String(id)):null;
+            document.getElementById('cad_id').value=m?.id||'';
+            document.getElementById('cad_serial').value=window.machineSerial(m);
+            document.getElementById('cad_serial').readOnly=!!m;
+            document.getElementById('cad_serial').classList.toggle('bg-slate-100',!!m);
+            document.getElementById('cad_serial').classList.toggle('text-slate-500',!!m);
+
+            let catalogId=m?.equipamentoCatalogoId||'';
+            if(!catalogId&&m)catalogId=window.resolveCatalogoByLegacyModel(m.modelo)?.id||'';
+            document.getElementById('cad_catalogo_id').value=catalogId;
+            document.getElementById('cad_modelo').value=m?.modelo||window.catalogoEquipamentos.find(x=>x.id===catalogId)?.modelo||'';
+
+            let clienteId=m?.clienteId||'';
+            if(!clienteId&&m)clienteId=window.resolveClienteByLegacyName(m.cliente_atual||m.clienteNome)?.id||'';
+            document.getElementById('cad_cliente_id').value=clienteId;
+            document.getElementById('cad_cliente').value=m?.clienteNome||m?.cliente_atual||'';
+            document.getElementById('cad_data_inst').value=(m?.dataInstalacaoAtual||m?.data_instalacao||'').split('T')[0]||new Date().toISOString().split('T')[0];
+            document.getElementById('cad_local').value=m?.localInstalacao||m?.identificacaoLocal||'';
+            document.getElementById('cad_status').value=m?.status||'Ativo do Cliente';
+            document.getElementById('cad_obs').value=m?.observacoes||'';
+            document.getElementById('tituloModalCadastro').innerText=m?'Editar Equipamento':'Registrar Nova Máquina';
+            document.getElementById('modalCadastro').classList.remove('hidden');
+        }
+
+        window.salvarMaquina = async function(e) {
+            e.preventDefault();
+            const isEdit=!!document.getElementById('cad_id').value;
+            const id=isEdit?document.getElementById('cad_id').value:'pm_'+Date.now();
+            const antiga=isEdit?window.parqueMaquinas.find(x=>String(x.id)===String(id))||{}:{};
+            const numeroSerie=document.getElementById('cad_serial').value.trim().toUpperCase();
+            const clienteId=document.getElementById('cad_cliente_id').value;
+            const equipamentoCatalogoId=document.getElementById('cad_catalogo_id').value;
+            const cliente=window.dadosClientes.find(x=>String(x.id)===String(clienteId));
+            const catalogo=window.catalogoEquipamentos.find(x=>String(x.id)===String(equipamentoCatalogoId));
+            if(!cliente){alert('Selecione um cliente válido da base oficial.');return}
+            if(!catalogo){alert('Selecione um equipamento válido do catálogo oficial.');return}
+
+            const dup=window.parqueMaquinas.find(m=>String(m.id)!==String(id)&&window.normKey(window.machineSerial(m))===window.normKey(numeroSerie));
+            if(dup){alert('Já existe uma máquina ativa com este número de série.');return}
+
+            const status=document.getElementById('cad_status').value,now=new Date().toISOString();
+            const propriedade=status.startsWith('Ativo CIJ')?'CIJ':'CLIENTE';
+            const modalidade=status.includes('Alugada')?'ALUGADA':status.includes('Emprestada')?'EMPRESTADA':status.includes('Disponível')?'DISPONIVEL':'INSTALADA';
+            const statusOperacional=status.includes('Manutenção')?'MANUTENCAO':'OPERACIONAL';
+            const instalacao=document.getElementById('cad_data_inst').value;
+            const nomeCliente=window.clientLabel(cliente);
+
+            const data={
+                ...antiga,id,
+                numeroSerie,numero_serie:numeroSerie,serial:numeroSerie,
+                equipamentoCatalogoId,
+                modelo:catalogo.modelo||'',
+                fabricante:catalogo.fabricante||catalogo.marca||'',
+                marca:catalogo.fabricante||catalogo.marca||'',
+                codigoEquipamento:catalogo.codigo||'',
+                clienteId,
+                clienteNome:nomeCliente,
+                cliente_atual:nomeCliente,
+                clienteAtual:nomeCliente,
+                dataPrimeiraInstalacao:antiga.dataPrimeiraInstalacao||antiga.data_instalacao||instalacao,
+                dataInstalacaoAtual:instalacao,
+                data_instalacao:instalacao,
+                localInstalacao:document.getElementById('cad_local').value.trim().toUpperCase(),
+                identificacaoLocal:document.getElementById('cad_local').value.trim().toUpperCase(),
+                status,statusOperacional,propriedade,modalidade,
+                observacoes:document.getElementById('cad_obs').value.trim(),
+                historico_transferencias:antiga.historico_transferencias||[],
+                ativo:true,is_deleted:false,
+                createdAtISO:antiga.createdAtISO||now,updatedAtISO:now,
+                cadastrado_por:antiga.cadastrado_por||window.currentUserName||window.currentUserEmail,
+                atualizadoPor:window.currentUserName||window.currentUserEmail,
+                timestamp:antiga.timestamp||Date.now(),
+                schemaParque:2
+            };
+            try{
+                await window.fsSetDoc(window.fsDoc(window.AppDB,'artifacts','plataforma-cij','public','data','parque_maquinas',id),data);
+                window.mostrarNotificacao('Equipamento salvo no Parque com vínculos oficiais.');
+                window.fecharModalCadastro();
+            }catch(err){console.error(err);alert('Erro ao salvar no banco.')}
+        }
+
+        window.excluirMaquina = async function(id) {
+            const m=window.parqueMaquinas.find(x=>String(x.id)===String(id));if(!m)return;
+            if(confirm('Remover esta máquina do Parque ativo? O registro e o histórico serão preservados para auditoria.')){
+                try{
+                    const now=new Date().toISOString();
+                    await window.fsSetDoc(window.fsDoc(window.AppDB,'artifacts','plataforma-cij','public','data','parque_maquinas',id),{
+                        ...m,is_deleted:true,ativo:false,deletedAtISO:now,deletedBy:window.currentUserName||window.currentUserEmail,updatedAtISO:now
+                    });
+                    window.mostrarNotificacao('Máquina removida do Parque ativo.');
+                }catch(e){console.error(e);alert('Não foi possível remover a máquina.')}
+            }
+        }
+
+        // =====================================
+        // TRANSFERÊNCIA DE CLIENTE (LOG)
+        // =====================================
+        window.fecharModalTransferencia = () => document.getElementById('modalTransferencia').classList.add('hidden');
+        window.abrirModalTransferencia = function(id) {
+            const m=window.parqueMaquinas.find(x=>String(x.id)===String(id));if(!m)return;
+            window.populateOfficialSelectors();
+            document.getElementById('transf_id').value=m.id;
+            document.getElementById('transf_resumo').innerText=`${window.machineModel(m)} (SN: ${window.machineSerial(m)})`;
+            document.getElementById('transf_cliente_antigo').innerText=window.machineClientName(m);
+            document.getElementById('transf_cliente_id').value='';
+            document.getElementById('transf_data').value=new Date().toISOString().split('T')[0];
+            document.getElementById('transf_motivo').value='';
+            document.getElementById('modalTransferencia').classList.remove('hidden');
+        }
+
+        window.salvarTransferencia = async function(e) {
+            e.preventDefault();
+            const id=document.getElementById('transf_id').value,m=window.parqueMaquinas.find(x=>String(x.id)===String(id));
+            const novoClienteId=document.getElementById('transf_cliente_id').value;
+            const novoCliente=window.dadosClientes.find(c=>String(c.id)===String(novoClienteId));
+            if(!m||!novoCliente){alert('Selecione um cliente válido.');return}
+            if(String(m.clienteId||'')===String(novoClienteId)){alert('A máquina já está vinculada a este cliente.');return}
+
+            const now=new Date().toISOString(),nomeNovo=window.clientLabel(novoCliente),dataTransf=document.getElementById('transf_data').value;
+            const log={
+                id_log:'tr_'+Date.now(),data:dataTransf,
+                clienteAntigoId:m.clienteId||'',cliente_antigo:window.machineClientName(m),
+                clienteNovoId:novoClienteId,cliente_novo:nomeNovo,
+                motivo:document.getElementById('transf_motivo').value.trim(),
+                responsavel:window.currentUserName||window.currentUserEmail,timestamp:Date.now(),createdAtISO:now
+            };
+            const updated={
+                ...m,clienteId:novoClienteId,clienteNome:nomeNovo,cliente_atual:nomeNovo,clienteAtual:nomeNovo,
+                dataInstalacaoAtual:dataTransf,data_instalacao:dataTransf,
+                historico_transferencias:[...(m.historico_transferencias||[]),log],
+                updatedAtISO:now,atualizadoPor:window.currentUserName||window.currentUserEmail,schemaParque:2
+            };
+            try{
+                await window.fsSetDoc(window.fsDoc(window.AppDB,'artifacts','plataforma-cij','public','data','parque_maquinas',id),updated);
+                window.mostrarNotificacao('Transferência registrada com vínculo oficial.');
+                window.fecharModalTransferencia();
+            }catch(err){console.error(err);alert('Erro na transferência.')}
+        }
+
+        // =====================================
+        // FICHA COMPLETA E QR CODE
+        // =====================================
+        window.fecharModalFicha = () => document.getElementById('modalFicha').classList.add('hidden');
+        window.abrirFicha = function(id) {
+            const m = window.parqueMaquinas.find(x => x.id === id);
+            if(!m) return;
+
+            document.getElementById('ficha_modelo').innerText = window.machineModel(m);
+            document.getElementById('ficha_serial').innerText = window.machineSerial(m);
+            
+            // Botão Clicável para retornar ao Cliente
+            document.getElementById('ficha_cliente_btn').innerText = window.machineClientName(m);
+            
+            const badgeClass = window.obterCorBadgeStatus(m.status);
+            document.getElementById('ficha_status').innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase border ${badgeClass}">${m.status}</span>`;
+
+            const qrContainer = document.getElementById('qrcode_container');
+            qrContainer.innerHTML = ''; 
+            qrCodeObj = new QRCode(qrContainer, { text: window.machineSerial(m), width: 128, height: 128, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+
+            // Histórico OSR
+            const containerOS = document.getElementById('container_os_historico');
+            const chamadosDessaMaquina = window.historicoOSR.filter(os => window.normKey(os.serial) === window.normKey(window.machineSerial(m)));
+            chamadosDessaMaquina.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            if(chamadosDessaMaquina.length === 0) {
+                containerOS.innerHTML = `<div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 text-center"><i class="fa-solid fa-check-double text-emerald-500 text-2xl mb-2"></i><p class="text-xs font-bold text-emerald-800">Nenhum defeito ou manutenção registrada no histórico.</p></div>`;
+            } else {
+                containerOS.innerHTML = chamadosDessaMaquina.map(h => {
+                    const dataOs = h.timestamp ? window.formatarDataBR(new Date(h.timestamp).toISOString()) : window.formatarDataBR(h.data_formatada || h.dataComparacao);
+                    const badgeOS = h.conclusao && h.conclusao.includes('Resolvido') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800';
+                    return `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                            <div><span class="font-bold text-blue-700 block">${h.osr || 'S/N'}</span><span class="text-[10px] text-slate-400 font-bold">${dataOs}</span></div>
+                            <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${badgeOS}">${h.conclusao || 'Pendente'}</span>
+                        </div>
+                        <div class="space-y-1 text-xs">
+                            <p class="text-slate-700"><strong class="text-slate-400 uppercase text-[9px]">Técnico:</strong> ${h.tecnico}</p>
+                            <p class="text-slate-700 bg-rose-50 p-1.5 rounded"><strong class="text-rose-400 uppercase text-[9px]">Defeito:</strong> ${h.defeito}</p>
+                            <p class="text-slate-700 bg-emerald-50 p-1.5 rounded"><strong class="text-emerald-500 uppercase text-[9px]">Solução:</strong> ${h.solucao}</p>
+                            ${h.pecas ? `<p class="text-slate-700 bg-purple-50 p-1.5 rounded"><strong class="text-purple-400 uppercase text-[9px]">Peças:</strong> ${h.pecas}</p>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // Transferências
+            const containerTransf = document.getElementById('container_transf_historico');
+            if(!m.historico_transferencias || m.historico_transferencias.length === 0) {
+                containerTransf.innerHTML = `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center"><i class="fa-solid fa-anchor text-slate-400 text-2xl mb-2"></i><p class="text-xs font-bold text-slate-600">A máquina nunca foi transferida de cliente.</p></div>`;
+            } else {
+                let transfs = [...m.historico_transferencias].sort((a,b) => b.timestamp - a.timestamp);
+                containerTransf.innerHTML = transfs.map(t => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs relative pl-6">
+                        <div class="absolute left-2.5 top-4 bottom-4 w-px bg-slate-300"></div><div class="absolute left-1.5 top-3.5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-white"></div>
+                        <div class="flex items-center justify-between mb-1"><span class="font-bold text-slate-800">${window.formatarDataBR(t.data)}</span><span class="text-[9px] text-slate-400 font-bold">Por: ${t.responsavel}</span></div>
+                        <div class="bg-slate-50 p-2 rounded border border-slate-100 mt-1"><p class="text-slate-500 font-semibold mb-1 line-through">${t.cliente_antigo}</p><p class="text-blue-700 font-black"><i class="fa-solid fa-arrow-turn-down fa-rotate-270 mr-1 text-slate-400"></i> ${t.cliente_novo}</p></div>
+                        <p class="mt-2 text-[10px] text-slate-500"><strong class="uppercase text-[9px]">Motivo:</strong> ${t.motivo}</p>
+                    </div>
+                `).join('');
+            }
+
+            window.mudarAbaFicha('manutencao'); 
+            document.getElementById('modalFicha').classList.remove('hidden');
+        };
+
+        window.mudarAbaFicha = function(aba) {
+            const btnM = document.getElementById('btnAbaManut'); const btnT = document.getElementById('btnAbaTransf');
+            const divM = document.getElementById('aba_manutencao'); const divT = document.getElementById('aba_transferencia');
+            if (aba === 'manutencao') {
+                btnM.className = 'text-xs font-black pb-2 border-b-2 border-blue-600 text-blue-700 transition cursor-pointer';
+                btnT.className = 'text-xs font-bold pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition cursor-pointer';
+                divM.classList.remove('hidden'); divT.classList.add('hidden');
+            } else {
+                btnT.className = 'text-xs font-black pb-2 border-b-2 border-amber-500 text-amber-600 transition cursor-pointer';
+                btnM.className = 'text-xs font-bold pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition cursor-pointer';
+                divT.classList.remove('hidden'); divM.classList.add('hidden');
+            }
+        };
+    </script>
+</body>
+</html>

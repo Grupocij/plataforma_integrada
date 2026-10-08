@@ -1,0 +1,206 @@
+// FRAGMENTO: inserir dentro de match /databases/{database}/documents.
+// Integração obrigatória: veja LEIA-ME.txt. Não substitui as regras dos demais módulos.
+function dv2Email() { return request.auth.token.email.lower(); }
+function dv2GrantPath() {
+  return /databases/$(database)/documents/artifacts/plataforma-cij/public/data/despesas_permissoes/$(dv2Email());
+}
+function dv2Grant() { return get(dv2GrantPath()).data; }
+function dv2Master() {
+  return request.auth != null && (
+    dv2Email() in ['marcos@grupocij.com', 'marcos@grupocij.com.br',
+      'marcos.bazacas@grupocij.com', 'marcos.bazacas@grupocij.com.br',
+      'adm@grupocij.com', 'adm@grupocij.com.br'] ||
+    (exists(dv2GrantPath()) && dv2Grant().master == true));
+}
+function dv2Module() {
+  return request.auth != null && (dv2Master() ||
+    (exists(dv2GrantPath()) && dv2Grant().moduloAtivo == true));
+}
+function dv2Cards() {
+  return dv2Module() && (dv2Master() || dv2Grant().gerenciarCartoes == true);
+}
+function dv2Reports() {
+  return dv2Module() && (dv2Master() || dv2Grant().gerenciarRelatorios == true);
+}
+function dv2Global() {
+  return dv2Module() && (dv2Master() || dv2Grant().verTodos == true || dv2Reports());
+}
+function dv2Own(h) { return h.ownerEmail == dv2Email(); }
+function dv2ReportPath(id) {
+  return /databases/$(database)/documents/artifacts/plataforma-cij/public/data/despesas_relatorios/$(id);
+}
+function dv2ItemPath(id) {
+  return /databases/$(database)/documents/artifacts/plataforma-cij/public/data/despesas_relatorio_novo/$(id);
+}
+function dv2CounterPath() {
+  return /databases/$(database)/documents/artifacts/plataforma-cij/public/data/despesas_contadores/relatorios;
+}
+function dv2Allocated(number) {
+  return exists(dv2CounterPath()) &&
+    getAfter(dv2CounterPath()).data.value == get(dv2CounterPath()).data.value + 1 &&
+    getAfter(dv2CounterPath()).data.updatedByEmail == dv2Email() &&
+    number == 'REL-' + string(getAfter(dv2CounterPath()).data.value);
+}
+function dv2Transition(before, after) {
+  return (before == 'RASCUNHO' && after in ['RASCUNHO', 'FINALIZADO', 'EXCLUIDO']) ||
+    (before == 'FINALIZADO' && (after in ['FINALIZADO', 'RASCUNHO'] ||
+      (dv2Reports() && after in ['REEMBOLSADO', 'EXCLUIDO']))) ||
+    (before == 'REEMBOLSADO' && dv2Reports() && after == 'FINALIZADO');
+}
+function dv2Header(h, id) {
+  return h.id == id && h.schemaVersion == 2 &&
+    h.ownerEmail is string && h.tecnico is string && h.tecnico.size() > 0 &&
+    h.itemIds is list && h.itemIds.size() <= 400 &&
+    h.itemCount == h.itemIds.size() && h.totalCentavos is int && h.totalCentavos >= 0 &&
+    h.revision is int && h.status in ['RASCUNHO', 'FINALIZADO', 'REEMBOLSADO', 'EXCLUIDO'] &&
+    h.updatedByEmail == dv2Email() && h.updatedByUid == request.auth.uid;
+}
+function dv2Legacy(h) {
+  let source = get(dv2ItemPath(h.legacySourceId)).data;
+  let before = source.get('num_relatorio', 'Rascunho') == 'Rascunho' ? 'RASCUNHO' : 'FINALIZADO';
+  return h.get('legacy', false) == true && h.id.matches('legacy_.*') &&
+    exists(dv2ItemPath(h.legacySourceId)) &&
+    (h.ownerEmail == source.get('autor', '').lower() ||
+      (source.get('autor', '') == '' && dv2Reports())) &&
+    h.tecnico == source.tecnico && dv2Transition(before, h.status) &&
+    (h.num_relatorio == source.get('num_relatorio', 'Rascunho') ||
+      (before == 'RASCUNHO' && h.status == 'FINALIZADO' && dv2Allocated(h.num_relatorio)));
+}
+function dv2Expense(i, id) {
+  return i.id == id && i.schemaVersion == 2 && i.reportId is string &&
+    i.valorCentavos is int && i.valorCentavos > 0 && i.valorCentavos <= 99999999999 &&
+    i.valor is number && math.round(i.valor * 100) == i.valorCentavos && i.data_pagamento.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}') &&
+    i.cliente is string && i.cliente.size() > 0 && i.cliente.size() <= 180 &&
+    i.cidade is string && i.cidade.size() > 0 && i.cidade.size() <= 120 &&
+    i.descricao is string && i.descricao.size() > 0 && i.descricao.size() <= 250 &&
+    i.categoria in ['Combustível', 'Pedágio', 'Alimentação/Bebida', 'Peças/Ferramentas', 'Hotel', 'Outros'] &&
+    (i.categoria != 'Outros' || i.categoria_outros.size() > 0) &&
+    i.pagamento in ['Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Pix', 'Outro'] &&
+    i.anexos is list && i.anexos.size() <= 3 && i.is_deleted == false;
+}
+function dv2CardUsed(i, original) {
+  let cardPath = /databases/$(database)/documents/artifacts/plataforma-cij/public/data/despesas_cartoes/$(i.cartaoId);
+  return !(i.pagamento in ['Cartão de Crédito', 'Cartão de Débito']) ||
+    (i.cartaoId == original.get('cartaoId', '') && i.cartao == original.get('cartao', '') &&
+      original.get('pagamento', '') in ['Cartão de Crédito', 'Cartão de Débito']) ||
+    (i.cartaoId != '' && exists(cardPath) && get(cardPath).data.ativo == true);
+}
+function dv2ItemOwner(i, h) {
+  return i.reportId == h.id && i.autor == h.ownerEmail && i.tecnico == h.tecnico &&
+    i.num_relatorio == h.num_relatorio && i.id in h.itemIds && (dv2Own(h) || dv2Reports());
+}
+function dv2ReportTouched(id) {
+  return getAfter(dv2ReportPath(id)).data.updatedByEmail == dv2Email() &&
+    getAfter(dv2ReportPath(id)).data.revision ==
+      (exists(dv2ReportPath(id)) ? get(dv2ReportPath(id)).data.revision + 1 : 1);
+}
+function dv2DraftBefore(i) {
+  return (i.get('reportId', '') != '' && exists(dv2ReportPath(i.reportId)) &&
+      get(dv2ReportPath(i.reportId)).data.status == 'RASCUNHO') ||
+    (i.get('reportId', '') == '' && i.get('num_relatorio', 'Rascunho') == 'Rascunho');
+}
+match /artifacts/plataforma-cij/public/data/despesas_permissoes/{email} {
+  allow read: if request.auth != null && (email == dv2Email() || dv2Master());
+  allow create, update: if dv2Master() && request.resource.data.email == email &&
+    request.resource.data.updatedByEmail == dv2Email() &&
+    request.resource.data.master is bool && request.resource.data.moduloAtivo is bool &&
+    request.resource.data.gerenciarCartoes is bool && request.resource.data.gerenciarRelatorios is bool &&
+    request.resource.data.verTodos is bool;
+  allow delete: if false;
+}
+match /artifacts/plataforma-cij/public/data/despesas_permissoes_historico/{id} {
+  allow read, create: if dv2Master();
+  allow update, delete: if false;
+}
+function dv2CardValid(id, revision) {
+  return request.resource.data.id == id &&
+    request.resource.data.final.matches('[0-9]{4}') && request.resource.data.ativo is bool &&
+    request.resource.data.nome.size() <= 80 && request.resource.data.bandeira.size() > 0 &&
+    request.resource.data.bandeira.size() <= 40 && request.resource.data.updatedByEmail == dv2Email() &&
+    request.resource.data.revision == revision;
+}
+match /artifacts/plataforma-cij/public/data/despesas_cartoes/{id} {
+  allow read: if dv2Module();
+  allow create: if dv2Cards() && dv2CardValid(id, 1);
+  allow update: if dv2Cards() && dv2CardValid(id, resource.data.revision + 1);
+  allow delete: if false;
+}
+match /artifacts/plataforma-cij/public/data/despesas_cartoes_historico/{id} {
+  allow read: if dv2Cards();
+  allow create: if dv2Cards() && request.resource.data.actorEmail == dv2Email() &&
+    request.resource.data.actorUid == request.auth.uid &&
+    getAfter(/databases/$(database)/documents/artifacts/plataforma-cij/public/data/despesas_cartoes/$(request.resource.data.cartaoId)).data == request.resource.data.depois;
+  allow update, delete: if false;
+}
+match /artifacts/plataforma-cij/public/data/despesas_contadores/{id} {
+  allow read: if dv2Module();
+  allow create: if dv2Master() && id == 'relatorios' && request.resource.data.value is int &&
+    request.resource.data.value >= 1000 && request.resource.data.updatedByEmail == dv2Email();
+  allow update: if dv2Module() && id == 'relatorios' && request.resource.data.value is int &&
+    request.resource.data.updatedByEmail == dv2Email() &&
+    ((dv2Master() && request.resource.data.value > resource.data.value) ||
+      request.resource.data.value == resource.data.value + 1);
+  allow delete: if false;
+}
+match /artifacts/plataforma-cij/public/data/despesas_relatorios/{id} {
+  allow read: if dv2Module() && (dv2Global() || dv2Own(resource.data));
+  allow create: if dv2Module() && dv2Header(request.resource.data, id) &&
+    (dv2Own(request.resource.data) || dv2Reports()) && request.resource.data.revision == 1 &&
+    ((request.resource.data.get('legacy', false) == false && dv2Own(request.resource.data) &&
+      request.resource.data.ownerUid == request.auth.uid && request.resource.data.status == 'RASCUNHO' &&
+      request.resource.data.num_relatorio == 'Rascunho') || dv2Legacy(request.resource.data));
+  allow update: if dv2Module() && (dv2Own(resource.data) || dv2Reports()) &&
+    dv2Header(request.resource.data, id) && request.resource.data.revision == resource.data.revision + 1 &&
+    request.resource.data.ownerEmail == resource.data.ownerEmail &&
+    request.resource.data.ownerUid == resource.data.get('ownerUid', '') &&
+    request.resource.data.tecnico == resource.data.tecnico &&
+    request.resource.data.profissionalId == resource.data.get('profissionalId', '') &&
+    request.resource.data.createdAtISO == resource.data.createdAtISO &&
+    dv2Transition(resource.data.status, request.resource.data.status) &&
+    (request.resource.data.num_relatorio == resource.data.num_relatorio ||
+      (resource.data.num_relatorio == 'Rascunho' && resource.data.status == 'RASCUNHO' &&
+        request.resource.data.status == 'FINALIZADO' && dv2Allocated(request.resource.data.num_relatorio))) &&
+    (resource.data.status == 'RASCUNHO' || request.resource.data.status == 'EXCLUIDO' ||
+      (request.resource.data.itemIds == resource.data.itemIds &&
+        request.resource.data.totalCentavos == resource.data.totalCentavos));
+  allow delete: if false;
+  match /historico/{event} {
+    allow read: if dv2Module() && (dv2Global() || dv2Own(get(dv2ReportPath(id)).data));
+    allow create: if dv2Module() && request.resource.data.reportId == id &&
+      request.resource.data.actorEmail == dv2Email() && request.resource.data.actorUid == request.auth.uid &&
+      (dv2Own(getAfter(dv2ReportPath(id)).data) || dv2Reports()) &&
+      getAfter(dv2ReportPath(id)).data.updatedByEmail == dv2Email() &&
+      request.resource.data.reportRevision == getAfter(dv2ReportPath(id)).data.revision &&
+      getAfter(dv2ReportPath(id)).data.revision ==
+        (exists(dv2ReportPath(id)) ? get(dv2ReportPath(id)).data.revision + 1 : 1);
+    allow update, delete: if false;
+  }
+}
+match /artifacts/plataforma-cij/public/data/despesas_relatorio_novo/{id} {
+  allow read: if dv2Module() && (dv2Global() || resource.data.autor == dv2Email());
+  allow create: if dv2Module() && dv2Expense(request.resource.data, id) && dv2ReportTouched(request.resource.data.reportId) &&
+    dv2CardUsed(request.resource.data, {}) &&
+    dv2ItemOwner(request.resource.data, getAfter(dv2ReportPath(request.resource.data.reportId)).data) &&
+    getAfter(dv2ReportPath(request.resource.data.reportId)).data.status == 'RASCUNHO';
+  allow update: if dv2Module() && dv2Expense(request.resource.data, id) && dv2ReportTouched(request.resource.data.reportId) &&
+    (resource.data.get('autor', '') == dv2Email() || dv2Reports()) &&
+    (resource.data.get('reportId', '') == '' || request.resource.data.reportId == resource.data.reportId) &&
+    dv2ItemOwner(request.resource.data, getAfter(dv2ReportPath(request.resource.data.reportId)).data) &&
+    dv2CardUsed(request.resource.data, resource.data) &&
+    (dv2DraftBefore(resource.data) ||
+      (request.resource.data.valorCentavos == math.round(resource.data.valor * 100) &&
+      request.resource.data.data_pagamento == resource.data.data_pagamento &&
+      request.resource.data.anexos == resource.data.get('anexos', []) &&
+      request.resource.data.cartaoId == resource.data.get('cartaoId', '') &&
+      request.resource.data.categoria_outros == resource.data.get('categoria_outros', '') &&
+      request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'reportId', 'num_relatorio', 'autor', 'tecnico', 'profissionalId',
+        'data_pagamento', 'valorCentavos', 'valor', 'anexos', 'is_deleted', 'categoria_outros', 'schemaVersion'])));
+  allow delete: if dv2Module() && (resource.data.get('autor', '') == dv2Email() || dv2Reports()) &&
+    (dv2DraftBefore(resource.data) ||
+      (dv2Reports() && resource.data.get('reportId', '') == '' &&
+        resource.data.get('num_relatorio', 'Rascunho') != 'Rascunho') ||
+      (resource.data.get('reportId', '') != '' && dv2Reports() &&
+        get(dv2ReportPath(resource.data.reportId)).data.status == 'FINALIZADO' &&
+        getAfter(dv2ReportPath(resource.data.reportId)).data.status == 'EXCLUIDO'));
+}

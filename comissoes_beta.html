@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Gestão de Comissões Beta - Portal CIJ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{font-family:Inter,sans-serif;background:#f8fafc;color:#0f172a}
+.c-scroll::-webkit-scrollbar{width:6px;height:6px}.c-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+.c-card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.c-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:34px;padding:.46rem .68rem;border-radius:.7rem;font-size:.68rem;font-weight:800;transition:.15s}
+.c-btn-primary{background:#2563eb;color:#fff}.c-btn-primary:hover{background:#1d4ed8}.c-btn-dark{background:#0f172a;color:#fff}
+.c-btn-light{background:#fff;border:1px solid #cbd5e1;color:#334155}.c-btn-light:hover{background:#f8fafc}
+.c-btn-danger{background:#fff1f2;border:1px solid #fecdd3;color:#be123c}.c-btn-emerald{background:#059669;color:#fff}
+.c-input{width:100%;height:36px;border:1px solid #cbd5e1;background:#fff;border-radius:.72rem;padding:.5rem .65rem;font-size:.72rem;outline:none}
+.c-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+textarea.c-input{height:auto}.c-label{display:block;font-size:.56rem;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.035em;margin-bottom:.25rem}
+.c-pill{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.23rem .52rem;font-size:.56rem;font-weight:900}
+.c-tab{display:inline-flex;align-items:center;gap:.42rem;padding:.48rem .65rem;border-radius:.7rem;font-size:.66rem;font-weight:900;color:#64748b;white-space:nowrap}
+.c-tab.active{background:#2563eb;color:white}.c-tab:not(.active):hover{background:#f1f5f9;color:#0f172a}
+.c-table th{background:#f1f5f9;color:#64748b;text-transform:uppercase;font-size:.55rem;letter-spacing:.025em;padding:.52rem .6rem;text-align:left;position:sticky;top:0;z-index:2}
+.c-table td{padding:.55rem .6rem;border-top:1px solid #f1f5f9;font-size:.68rem;vertical-align:middle}
+.c-modal{position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,.68);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:.65rem}
+.c-modal.hidden{display:none}.c-modal-card{width:min(980px,98vw);max-height:95vh;overflow:auto;background:white;border:1px solid #e2e8f0;border-radius:1.15rem;box-shadow:0 25px 70px rgba(15,23,42,.3)}
+.c-kpi{padding:.65rem .75rem}.c-kpi span{font-size:.52rem;color:#94a3b8;text-transform:uppercase;font-weight:900}.c-kpi b{display:block;font-size:1.15rem;margin-top:.05rem}
+.c-timeline{position:relative;padding-left:1.1rem}.c-timeline:before{content:"";position:absolute;left:.25rem;top:.3rem;bottom:.3rem;width:2px;background:#e2e8f0}
+.c-event{position:relative;padding:0 0 .8rem .9rem}.c-event:before{content:"";position:absolute;left:-.94rem;top:.25rem;width:.5rem;height:.5rem;background:#3b82f6;border-radius:999px;box-shadow:0 0 0 3px #eff6ff}
+.c-pager{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.52rem .65rem;border-top:1px solid #e2e8f0;flex-wrap:wrap}
+.c-status-await{background:#fff7ed;color:#c2410c}.c-status-free{background:#ecfdf5;color:#047857}.c-status-program{background:#eff6ff;color:#1d4ed8}.c-status-paid{background:#f0fdf4;color:#166534}.c-status-late{background:#fff1f2;color:#be123c}.c-status-cancel{background:#f1f5f9;color:#64748b}
+.matrix-grid input{height:32px}
+@media(max-width:720px){#commission-shell{padding:.4rem!important}.c-tabs{overflow-x:auto;flex-wrap:nowrap!important}.c-table td,.c-table th{padding:.48rem}.c-modal{padding:.3rem}}
+.seller-pay-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff;transition:.15s}
+.seller-pay-card:hover{border-color:#c7d2fe;box-shadow:0 6px 18px rgba(15,23,42,.06)}
+.seller-pay-card.active{border-color:#6366f1;background:#eef2ff}
+.seller-group-row td{background:#f8fafc!important;border-top:2px solid #cbd5e1!important;border-bottom:1px solid #e2e8f0!important}
+.batch-seller-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:9px 0;border-top:1px solid #f1f5f9}
+.batch-seller-row:first-child{border-top:0}
+.receipt-state-paid{color:#047857}.receipt-state-unpaid{color:#be123c}.receipt-state-pending{color:#b45309}
+@media(max-width:720px){.seller-pay-card{padding:10px}.batch-seller-row{grid-template-columns:1fr}.batch-seller-row .batch-actions{justify-content:flex-start!important}}
+
+</style>
+</head>
+<body class="h-full overflow-hidden">
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto c-scroll">
+<div id="commission-shell" class="max-w-[1560px] mx-auto p-2 md:p-3 space-y-2.5">
+
+<section class="c-card px-3 py-2.5 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+    <div>
+      <div class="flex items-center gap-2"><span class="c-pill bg-amber-100 text-amber-800">AMBIENTE BETA</span><span class="text-[9px] font-bold text-slate-400">V0.3</span></div>
+      <h1 class="text-base font-black mt-1">Gestão de Comissões</h1>
+      <p class="text-[10px] text-slate-500">Vendas, recebimentos reais, liberação automática e pagamentos nos ciclos 15/30.</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 text-[10px] text-slate-500">
+    <i class="fa-solid fa-flask text-amber-500"></i>
+    Dados de teste ficam separados do módulo Comissões Azul atual.
+  </div>
+</section>
+
+<nav class="c-card p-1.5 c-tabs flex flex-wrap gap-1">
+  <button id="tab-btn-dashboard" class="c-tab active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</button>
+  <button id="tab-btn-nova-venda" class="c-tab" onclick="switchTab('nova-venda')"><i class="fa-solid fa-file-invoice-dollar"></i> Lançar venda</button>
+  <button id="tab-btn-vendas" class="c-tab" onclick="switchTab('vendas')"><i class="fa-solid fa-list-check"></i> Vendas & recebimentos</button>
+  <button id="tab-btn-pagamentos" class="c-tab" onclick="switchTab('pagamentos')"><i class="fa-solid fa-calendar-check"></i> Pagamentos 15/30</button>
+  <button id="tab-btn-matriz" class="c-tab" onclick="switchTab('matriz')"><i class="fa-solid fa-sliders"></i> Tabela de comissões</button>
+</nav>
+
+<!-- DASHBOARD -->
+<section id="tab-dashboard" class="tab-section space-y-2.5">
+  <div class="c-card p-2.5 flex flex-wrap gap-2 items-end">
+    <label class="w-44"><span class="c-label">Mês da venda</span><input id="dash-month" type="month" class="c-input" onchange="renderDashboard()"></label>
+    <button class="c-btn c-btn-light" onclick="renderDashboard()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+  </div>
+  <div class="grid grid-cols-2 xl:grid-cols-5 gap-2">
+    <div class="c-card c-kpi"><span>Faturamento</span><b id="kpi-sales">R$ 0,00</b></div>
+    <div class="c-card c-kpi"><span>Comissão gerada</span><b id="kpi-commission">R$ 0,00</b></div>
+    <div class="c-card c-kpi"><span>Aguardando recebimento</span><b id="kpi-blocked" class="text-amber-700">R$ 0,00</b></div>
+    <div class="c-card c-kpi"><span>Liberada / programada</span><b id="kpi-released" class="text-blue-700">R$ 0,00</b></div>
+    <div class="c-card c-kpi"><span>Paga no mês</span><b id="kpi-paid" class="text-emerald-700">R$ 0,00</b></div>
+  </div>
+  <div class="grid xl:grid-cols-2 gap-2.5">
+    <div class="c-card p-3"><div class="font-black text-xs mb-2">Comissão por vendedor</div><div class="h-56"><canvas id="sellerChart"></canvas></div></div>
+    <div class="c-card p-3"><div class="font-black text-xs mb-2">Faturamento por tipo de item</div><div class="h-56"><canvas id="typeChart"></canvas></div></div>
+  </div>
+  <div class="grid xl:grid-cols-2 gap-2.5">
+    <div class="c-card p-3"><div class="font-black text-xs mb-2">Próximas comissões liberadas</div><div id="dash-next" class="divide-y max-h-64 overflow-auto c-scroll"></div></div>
+    <div class="c-card p-3"><div class="font-black text-xs mb-2">Vendas aguardando recebimento</div><div id="dash-waiting" class="divide-y max-h-64 overflow-auto c-scroll"></div></div>
+  </div>
+</section>
+
+<!-- NOVA VENDA -->
+<section id="tab-nova-venda" class="tab-section hidden">
+  <form id="sale-form" onsubmit="saveSale(event)" class="c-card p-3 md:p-4 space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+      <div><span class="c-pill bg-blue-50 text-blue-700">VENDA / NOTA FISCAL</span><h2 id="sale-form-title" class="font-black text-sm mt-1">Novo lançamento</h2></div>
+      <button id="btn-cancel-edit" type="button" onclick="resetSaleForm()" class="c-btn c-btn-light hidden">Cancelar edição</button>
+    </div>
+    <input id="sale-id" type="hidden">
+    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      <label><span class="c-label">Vendedor *</span><select id="sale-seller" class="c-input" required></select></label>
+      <label><span class="c-label">Data da venda *</span><input id="sale-date" type="date" class="c-input" required></label>
+      <label><span class="c-label">Nº NF *</span><input id="sale-nf" class="c-input uppercase font-bold" required></label>
+      <label><span class="c-label">Cliente *</span><select id="sale-client" class="c-input" required onchange="fillClientSnapshot()"></select></label>
+      <label><span class="c-label">Tipo de cliente</span><select id="sale-client-type" class="c-input"><option value="Atual">Cliente atual</option><option value="Novo">Cliente novo</option></select></label>
+      <label><span class="c-label">Condição de pagamento</span><select id="sale-payment-cond" class="c-input" onchange="paymentFieldsChanged()"><option value="A_VISTA">À vista</option><option value="PARCELADO">Parcelado</option></select></label>
+      <label><span class="c-label">Data da entrada / vencimento *</span><input id="sale-entry-date" type="date" class="c-input" required></label>
+      <label><span class="c-label">Entrada (%)</span><input id="sale-entry-percent" type="number" min="0" max="100" step="0.1" value="20" class="c-input"></label>
+      <label class="installment-field hidden"><span class="c-label">Nº parcelas</span><input id="sale-installments" type="number" min="1" max="72" value="1" class="c-input"></label>
+      <label class="installment-field hidden"><span class="c-label">Intervalo (dias)</span><input id="sale-interval" type="number" min="1" value="30" class="c-input"></label>
+      <label class="installment-field hidden"><span class="c-label">Data 1ª parcela</span><input id="sale-first-installment" type="date" class="c-input"></label>
+      <label><span class="c-label">Observação</span><input id="sale-notes" class="c-input"></label>
+    </div>
+    <div id="client-snapshot" class="rounded-xl border bg-slate-50 p-2.5 text-[10px] text-slate-600">Selecione o cliente cadastrado.</div>
+
+    <div class="flex justify-between items-center gap-2 border-t pt-3">
+      <div><h3 class="font-black text-xs">Itens da NF</h3><p class="text-[10px] text-slate-500">Máquinas usam a tabela configurável; demais tipos permitem percentual manual.</p></div>
+      <button type="button" class="c-btn c-btn-light" onclick="addSaleItem()"><i class="fa-solid fa-plus"></i> Item</button>
+    </div>
+    <div class="overflow-auto c-scroll border rounded-xl">
+      <table class="c-table w-full min-w-[1050px]">
+        <thead><tr><th>Tipo</th><th>Especificação / máquina</th><th class="text-center">Qtd</th><th class="text-right">Valor un.</th><th class="text-center">Comissão %</th><th class="text-right">Comissão</th><th></th></tr></thead>
+        <tbody id="sale-items-body"></tbody>
+      </table>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-2">
+      <div class="rounded-xl bg-slate-50 border p-3"><span class="c-label">Valor NF</span><b id="sale-total" class="text-lg">R$ 0,00</b></div>
+      <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-3"><span class="c-label text-emerald-700">Comissão</span><b id="sale-commission" class="text-lg text-emerald-800">R$ 0,00</b></div>
+      <div class="rounded-xl bg-blue-50 border border-blue-200 p-3"><span class="c-label text-blue-700">Regra de liberação</span><b id="sale-rule" class="text-sm text-blue-800">20% recebido</b></div>
+    </div>
+    <div class="flex justify-end"><button id="btn-save-sale" class="c-btn c-btn-primary px-5"><i class="fa-solid fa-floppy-disk"></i> Salvar venda</button></div>
+  </form>
+</section>
+
+<!-- VENDAS -->
+<section id="tab-vendas" class="tab-section hidden space-y-2.5">
+  <div class="c-card p-2.5 grid md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_180px_auto] gap-2 items-end">
+    <label><span class="c-label">Busca</span><input id="sales-search" class="c-input" oninput="salesFilterChanged()" placeholder="NF, cliente, vendedor..."></label>
+    <label><span class="c-label">Status</span><select id="sales-status" class="c-input" onchange="salesFilterChanged()"><option value="">Todos</option><option value="AGUARDANDO_RECEBIMENTO">Aguardando recebimento</option><option value="LIBERADA">Liberada</option><option value="PROGRAMADA">Programada</option><option value="PAGA">Paga</option><option value="INADIMPLENTE">Inadimplente</option><option value="CANCELADA">Cancelada</option></select></label>
+    <label><span class="c-label">Mês venda</span><input id="sales-month" type="month" class="c-input" onchange="salesFilterChanged()"></label>
+    <label><span class="c-label">Ciclo</span><select id="sales-cycle" class="c-input" onchange="salesFilterChanged()"><option value="">Todos</option><option value="15">Dia 15</option><option value="30">Dia 30</option></select></label>
+    <button class="c-btn c-btn-light" onclick="exportSalesExcel()"><i class="fa-solid fa-file-excel text-emerald-700"></i> Excel</button>
+  </div>
+  <div class="c-card overflow-hidden">
+    <div class="overflow-auto c-scroll max-h-[65vh]"><table class="c-table w-full min-w-[1250px]"><thead><tr><th>NF / Venda</th><th>Cliente</th><th>Vendedor</th><th class="text-right">Venda</th><th class="text-right">Comissão</th><th>Recebido</th><th>Liberação</th><th>Status</th><th>Ações</th></tr></thead><tbody id="sales-body"></tbody></table></div>
+    <div id="sales-pager" class="c-pager"></div>
+  </div>
+</section>
+
+<!-- PAGAMENTOS -->
+<section id="tab-pagamentos" class="tab-section hidden space-y-2.5">
+  <div class="c-card p-2.5 flex flex-wrap items-end gap-2">
+    <label class="w-44"><span class="c-label">Mês do ciclo</span><input id="pay-cycle-month" type="month" class="c-input" onchange="renderPayments()"></label>
+    <label class="w-36"><span class="c-label">Dia</span><select id="pay-cycle-day" class="c-input" onchange="renderPayments()"><option value="15">Dia 15</option><option value="30">Dia 30</option></select></label>
+    <label class="w-56"><span class="c-label">Vendedor</span><select id="pay-seller-filter" class="c-input" onchange="renderPayments()"><option value="">Todos os vendedores</option></select></label>
+    <button class="c-btn c-btn-light" onclick="renderPayments()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+    <button id="btn-finance-alert-config" class="c-btn c-btn-light hidden" onclick="openFinanceAlertConfig()"><i class="fa-solid fa-bell"></i> Alertas financeiros</button>
+    <button id="btn-close-cycle" class="c-btn c-btn-primary ml-auto" onclick="closePaymentCycle()"><i class="fa-solid fa-lock"></i> Fechar ciclo</button>
+  </div>
+
+  <div id="finance-alert-status" class="c-card p-2.5 text-[10px] text-slate-500"></div>
+  <div id="payment-summary" class="grid sm:grid-cols-3 gap-2"></div>
+
+  <div class="c-card p-3">
+    <div class="flex items-center justify-between gap-2 mb-2">
+      <div><h3 class="font-black text-xs">Total por vendedor</h3><p class="text-[10px] text-slate-500">Clique em um vendedor para filtrar as comissões do ciclo.</p></div>
+      <button class="c-btn c-btn-light !min-h-8" onclick="setPaySellerFilter('')"><i class="fa-solid fa-users"></i> Todos</button>
+    </div>
+    <div id="seller-payment-summary" class="grid md:grid-cols-2 xl:grid-cols-3 gap-2"></div>
+  </div>
+
+  <div class="c-card overflow-hidden"><div class="overflow-auto c-scroll max-h-[58vh]"><table class="c-table w-full min-w-[1050px]"><thead><tr><th>Vendedor</th><th>NF</th><th>Cliente</th><th>Liberação real</th><th>Ciclo</th><th class="text-right">Comissão</th><th>Status</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>
+
+  <div class="c-card p-3">
+    <div class="flex items-center justify-between gap-2 mb-2"><div><h3 class="font-black text-xs">Lotes de pagamento</h3><p class="text-[10px] text-slate-500">Fechamentos 15/30 com pagamento separado por vendedor. Administradores podem editar ciclos fechados e pagamentos já realizados.</p></div></div>
+    <div id="batch-list" class="grid lg:grid-cols-2 gap-2"></div>
+  </div>
+</section>
+
+<!-- MATRIZ -->
+<section id="tab-matriz" class="tab-section hidden space-y-2.5">
+  <div class="c-card p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+    <div><span class="c-pill bg-indigo-50 text-indigo-700">CONFIGURAÇÃO FIRESTORE</span><h2 class="font-black text-sm mt-1">Tabela de preços e comissões de máquinas</h2><p class="text-[10px] text-slate-500">Alterações passam a valer para novos cálculos. Vendas já salvas preservam o percentual aplicado.</p></div>
+    <div class="flex flex-wrap gap-2"><button class="c-btn c-btn-light" onclick="addMatrixModel()"><i class="fa-solid fa-plus"></i> Modelo</button><button class="c-btn c-btn-primary" onclick="saveMatrixConfig()"><i class="fa-solid fa-floppy-disk"></i> Salvar tabela</button></div>
+  </div>
+  <div class="c-card p-2.5 grid md:grid-cols-[240px_1fr] gap-2">
+    <label><span class="c-label">Categoria</span><select id="matrix-category" class="c-input" onchange="renderMatrixModels()"></select></label>
+    <label><span class="c-label">Modelo</span><select id="matrix-model" class="c-input" onchange="renderMatrixEditor()"></select></label>
+  </div>
+  <div id="matrix-editor" class="c-card p-3"></div>
+  <div class="c-card p-3">
+    <div class="flex items-center justify-between gap-2 mb-2">
+      <div><h3 class="font-black text-xs">Histórico da tabela</h3><p class="text-[10px] text-slate-500">Cada salvamento gera uma revisão independente para auditoria.</p></div>
+    </div>
+    <div id="matrix-history" class="divide-y max-h-52 overflow-auto c-scroll"></div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<!-- RECEBIMENTOS / DETALHES -->
+<div id="sale-detail-modal" class="c-modal hidden"><div class="c-modal-card">
+  <div class="p-4 border-b flex justify-between gap-3">
+    <div><span id="detail-status" class="c-pill bg-slate-100 text-slate-700">STATUS</span><h2 id="detail-title" class="font-black text-lg mt-1">Venda</h2><p id="detail-subtitle" class="text-[10px] text-slate-500"></p></div>
+    <button class="c-btn c-btn-light !w-9 !px-0" onclick="closeModal('sale-detail-modal')"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="p-4 space-y-3">
+    <div id="detail-kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-2"></div>
+    <div class="grid xl:grid-cols-2 gap-3">
+      <section class="c-card p-3"><h3 class="font-black text-xs">Itens da NF</h3><div id="detail-items" class="mt-2 divide-y"></div></section>
+      <section class="c-card p-3"><h3 class="font-black text-xs">Recebimentos do cliente</h3><div id="detail-receipts" class="mt-2 divide-y"></div></section>
+    </div>
+    <section class="c-card p-3"><h3 class="font-black text-xs">Auditoria</h3><div id="detail-events" class="c-timeline mt-3 max-h-52 overflow-auto c-scroll"></div></section>
+  </div>
+  <div class="p-4 border-t bg-slate-50 flex flex-wrap justify-between gap-2">
+    <div class="flex gap-2"><button id="btn-edit-detail" class="c-btn c-btn-light"><i class="fa-solid fa-pen"></i> Editar venda</button><button id="btn-late-detail" class="c-btn c-btn-light"><i class="fa-solid fa-triangle-exclamation"></i> Inadimplente</button></div>
+    <button id="btn-cancel-detail" class="c-btn c-btn-danger"><i class="fa-solid fa-ban"></i> Cancelar venda</button>
+  </div>
+</div></div>
+
+<!-- CONFIRMAR RECEBIMENTO -->
+<div id="receipt-modal" class="c-modal hidden"><div class="c-modal-card max-w-lg">
+  <form onsubmit="saveReceipt(event)">
+    <div class="p-4 border-b flex justify-between"><div><span class="c-pill bg-emerald-50 text-emerald-700">CONFERÊNCIA FINANCEIRA</span><h2 id="receipt-title" class="font-black text-lg mt-1">Confirmar parcela</h2></div><button type="button" class="c-btn c-btn-light !w-9 !px-0" onclick="closeModal('receipt-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-4 space-y-3"><input id="receipt-id" type="hidden"><div id="receipt-info" class="rounded-xl border bg-slate-50 p-3 text-xs"></div>
+      <label><span class="c-label">Situação *</span><select id="receipt-status" class="c-input" onchange="receiptStatusChanged()"><option value="RECEBIDO">Recebido</option><option value="NAO_RECEBIDO">Não recebido</option></select></label>
+      <label id="receipt-amount-wrap"><span class="c-label">Valor efetivamente recebido *</span><input id="receipt-amount" type="number" min="0" step="0.01" class="c-input" required></label>
+      <label><span id="receipt-date-label" class="c-label">Data real do recebimento *</span><input id="receipt-date" type="date" class="c-input" required></label>
+      <label><span class="c-label">Observação</span><input id="receipt-notes" class="c-input" placeholder="Opcional"></label>
+      <div id="receipt-admin-warning" class="hidden rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-[10px] text-amber-800 font-bold"><i class="fa-solid fa-user-shield mr-1"></i>Edição administrativa de um registro já incluído em ciclo fechado/pago. O histórico será preservado.</div>
+    </div>
+    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="c-btn c-btn-light" onclick="closeModal('receipt-modal')">Cancelar</button><button class="c-btn c-btn-emerald"><i class="fa-solid fa-check"></i> Salvar conferência</button></div>
+  </form>
+</div></div>
+
+
+<!-- ALERTAS FINANCEIROS -->
+<div id="finance-alert-modal" class="c-modal hidden"><div class="c-modal-card max-w-2xl">
+  <form onsubmit="saveFinanceAlertConfig(event)">
+    <div class="p-4 border-b flex justify-between gap-3">
+      <div><span class="c-pill bg-blue-50 text-blue-700">ALERTAS</span><h2 class="font-black text-lg mt-1">Responsável financeiro</h2><p class="text-[10px] text-slate-500 mt-1">Os usuários selecionados receberão alertas das parcelas dos clientes.</p></div>
+      <button type="button" class="c-btn c-btn-light !w-9 !px-0" onclick="closeModal('finance-alert-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-4 space-y-4">
+      <section><span class="c-label">Responsável(is)</span><div id="finance-alert-users" class="mt-2 grid md:grid-cols-2 gap-2 max-h-64 overflow-auto c-scroll"></div></section>
+      <section class="rounded-xl bg-slate-50 border p-3">
+        <span class="c-label">Quando alertar</span>
+        <div class="grid sm:grid-cols-3 gap-2 mt-2 text-[10px] font-bold">
+          <label class="flex items-center gap-2"><input id="fin-alert-before" type="checkbox" checked> 1 dia antes</label>
+          <label class="flex items-center gap-2"><input id="fin-alert-due" type="checkbox" checked> No vencimento</label>
+          <label class="flex items-center gap-2"><input id="fin-alert-overdue" type="checkbox" checked> Quando atrasada</label>
+        </div>
+        <p class="text-[9px] text-slate-500 mt-2">O alerta de atraso é gerado uma vez por parcela/vencimento para evitar repetição excessiva.</p>
+      </section>
+    </div>
+    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="c-btn c-btn-light" onclick="closeModal('finance-alert-modal')">Cancelar</button><button class="c-btn c-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Salvar alertas</button></div>
+  </form>
+</div></div>
+
+<!-- EDITAR CICLO / LOTE -->
+<div id="batch-edit-modal" class="c-modal hidden"><div class="c-modal-card max-w-3xl">
+  <form onsubmit="saveBatchEditor(event)">
+    <div class="p-4 border-b flex justify-between gap-3">
+      <div><span class="c-pill bg-indigo-50 text-indigo-700">ADMINISTRADOR</span><h2 class="font-black text-lg mt-1">Editar ciclo fechado</h2><p id="batch-edit-subtitle" class="text-[10px] text-slate-500 mt-1"></p></div>
+      <button type="button" class="c-btn c-btn-light !w-9 !px-0" onclick="closeModal('batch-edit-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-4 space-y-3">
+      <input id="batch-edit-id" type="hidden">
+      <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[10px] text-amber-900"><b>Atenção:</b> alterar as vendas de um ciclo recalcula os totais por vendedor. Se a composição de um vendedor já pago for alterada, o pagamento desse vendedor volta para <b>Pendente</b> para nova conferência.</div>
+      <label><span class="c-label">Observação administrativa</span><input id="batch-edit-notes" class="c-input" placeholder="Motivo / observação da alteração"></label>
+      <section><div class="flex justify-between gap-2 items-center"><span class="c-label">Comissões incluídas no ciclo</span><span id="batch-edit-count" class="text-[9px] text-slate-500"></span></div><div id="batch-edit-sales" class="mt-2 divide-y border rounded-xl max-h-80 overflow-auto c-scroll"></div></section>
+    </div>
+    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="c-btn c-btn-light" onclick="closeModal('batch-edit-modal')">Cancelar</button><button class="c-btn c-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Salvar ciclo</button></div>
+  </form>
+</div></div>
+
+<!-- MODELO MATRIZ -->
+<div id="matrix-model-modal" class="c-modal hidden"><div class="c-modal-card max-w-lg">
+  <form onsubmit="saveNewMatrixModel(event)">
+    <div class="p-4 border-b flex justify-between"><div><span class="c-pill bg-indigo-50 text-indigo-700">NOVO MODELO</span><h2 class="font-black text-lg mt-1">Adicionar à tabela</h2></div><button type="button" class="c-btn c-btn-light !w-9 !px-0" onclick="closeModal('matrix-model-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-4 space-y-3"><label><span class="c-label">Categoria *</span><input id="new-matrix-category" class="c-input uppercase" list="matrix-category-list" required><datalist id="matrix-category-list"></datalist></label><label><span class="c-label">Modelo *</span><input id="new-matrix-model" class="c-input uppercase" required></label></div>
+    <div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="c-btn c-btn-light" onclick="closeModal('matrix-model-modal')">Cancelar</button><button class="c-btn c-btn-primary">Adicionar</button></div>
+  </form>
+</div></div>
+
+<div id="toast-container" class="fixed right-4 bottom-4 z-[12000] space-y-2 pointer-events-none"></div>
+
+<script>
+const BETA_VERSION='0.3';
+const ROOT=['artifacts','plataforma-cij','public','data'];
+const COL={
+  sales:'comissoes_beta_vendas',
+  receipts:'comissoes_beta_recebimentos',
+  events:'comissoes_beta_eventos',
+  batches:'comissoes_beta_fechamentos',
+  config:'comissoes_beta_configuracoes',
+  matrixHistory:'comissoes_beta_config_historico',
+  clients:'cadastros_clientes',
+  users:'usuarios_permissoes'
+};
+const DEFAULT_MATRIX={"INKJET":[{"modelo":"LEADJET V8820 (3 LINHAS)","faixas":[{"preco":32000.8,"com":10},{"preco":31040.78,"com":9},{"preco":30080.75,"com":8},{"preco":29120.73,"com":7},{"preco":28160.7,"com":6},{"preco":27200.68,"com":5},{"preco":25920.65,"com":4},{"preco":24640.62,"com":3},{"preco":23360.58,"com":2},{"preco":21840.55,"com":1}]},{"modelo":"LEADJET V8910 (4 LINHAS)","faixas":[{"preco":32000.8,"com":10},{"preco":31040.78,"com":9},{"preco":30080.75,"com":8},{"preco":29120.73,"com":7},{"preco":28160.7,"com":6},{"preco":27200.68,"com":5},{"preco":25920.65,"com":4},{"preco":24640.62,"com":3},{"preco":23360.58,"com":2},{"preco":21840.55,"com":1}]},{"modelo":"LEADJET V8820P (PIGMENTADA)","faixas":[{"preco":49400,"com":10},{"preco":47918,"com":9},{"preco":46436,"com":8},{"preco":44954,"com":7},{"preco":43472,"com":6},{"preco":41990,"com":5},{"preco":40014,"com":4},{"preco":38038,"com":3},{"preco":36062,"com":2},{"preco":33715.5,"com":1}]}],"LASER CO2":[{"modelo":"C-T 35 / 30W","faixas":[{"preco":58813.77,"com":10},{"preco":57049.35,"com":9},{"preco":55284.94,"com":8},{"preco":53520.53,"com":7},{"preco":51756.12,"com":6},{"preco":49991.7,"com":5},{"preco":47639.15,"com":4},{"preco":45286.6,"com":3},{"preco":42934.05,"com":2},{"preco":40140.4,"com":1}]},{"modelo":"60W","faixas":[{"preco":164965.53,"com":10},{"preco":160016.56,"com":9},{"preco":155067.6,"com":8},{"preco":150118.63,"com":7},{"preco":145169.66,"com":6},{"preco":140220.7,"com":5},{"preco":133622.08,"com":4},{"preco":127023.46,"com":3},{"preco":120424.84,"com":2},{"preco":112588.97,"com":1}]}],"LASER FIBER":[{"modelo":"F 30R-FLY 30W","faixas":[{"preco":57379.3,"com":10},{"preco":55657.92,"com":9},{"preco":53936.54,"com":8},{"preco":52215.16,"com":7},{"preco":50493.78,"com":6},{"preco":48772.4,"com":5},{"preco":46477.23,"com":4},{"preco":44182.06,"com":3},{"preco":41886.89,"com":2},{"preco":39161.37,"com":1}]},{"modelo":"F 50R-FLY 50W","faixas":[{"preco":93241.36,"com":10},{"preco":90444.12,"com":9},{"preco":87646.87,"com":8},{"preco":84849.63,"com":7},{"preco":82052.39,"com":6},{"preco":79255.15,"com":5},{"preco":75525.5,"com":4},{"preco":71795.84,"com":3},{"preco":68066.19,"com":2},{"preco":63637.23,"com":1}]}],"LASER FIBER MANUAL":[{"modelo":"20W","faixas":[{"preco":55944.82,"com":10},{"preco":54266.48,"com":9},{"preco":52588.13,"com":8},{"preco":50909.79,"com":7},{"preco":49231.45,"com":6},{"preco":47553.1,"com":5},{"preco":45315.31,"com":4},{"preco":43077.51,"com":3},{"preco":40839.72,"com":2},{"preco":38182.34,"com":1}]}],"LASER UV":[{"modelo":"9305 3W","faixas":[{"preco":80331.06,"com":10},{"preco":77921.12,"com":9},{"preco":75511.19,"com":8},{"preco":73101.26,"com":7},{"preco":70691.33,"com":6},{"preco":68281.4,"com":5},{"preco":65068.16,"com":4},{"preco":61854.91,"com":3},{"preco":58641.67,"com":2},{"preco":54825.95,"com":1}]},{"modelo":"9305 5W","faixas":[{"preco":87503.47,"com":10},{"preco":84878.36,"com":9},{"preco":82253.26,"com":8},{"preco":79628.16,"com":7},{"preco":77003.05,"com":6},{"preco":74377.95,"com":5},{"preco":70877.81,"com":4},{"preco":67377.67,"com":3},{"preco":63877.53,"com":2},{"preco":59721.12,"com":1}]}],"LASER UV (TTO)":[{"modelo":"9305M 5W","faixas":[{"preco":58813.77,"com":10},{"preco":57049.35,"com":9},{"preco":55284.94,"com":8},{"preco":53520.53,"com":7},{"preco":51756.12,"com":6},{"preco":49991.7,"com":5},{"preco":47639.15,"com":4},{"preco":45286.6,"com":3},{"preco":42934.05,"com":2},{"preco":40140.4,"com":1}]}],"TIJ":[{"modelo":"TIJ - T110H (MANUAL)","faixas":[{"preco":8320,"com":10},{"preco":8070.4,"com":9},{"preco":7820.8,"com":8},{"preco":7571.2,"com":7},{"preco":7321.6,"com":6},{"preco":7072,"com":5},{"preco":6739.2,"com":4},{"preco":6406.4,"com":3},{"preco":6073.6,"com":2},{"preco":5678.4,"com":1}]},{"modelo":"TIJ - T110M (MINI)","faixas":[{"preco":10400,"com":10},{"preco":10088,"com":9},{"preco":9776,"com":8},{"preco":9464,"com":7},{"preco":9152,"com":6},{"preco":8840,"com":5},{"preco":8424,"com":4},{"preco":8008,"com":3},{"preco":7592,"com":2},{"preco":7098,"com":1}]},{"modelo":"TIJ - GT291 (CONVENCIONAL)","faixas":[{"preco":15600,"com":10},{"preco":15132,"com":9},{"preco":14664,"com":8},{"preco":14196,"com":7},{"preco":13728,"com":6},{"preco":13260,"com":5},{"preco":12636,"com":4},{"preco":12012,"com":3},{"preco":11388,"com":2},{"preco":10647,"com":1}]},{"modelo":"TIJ - GT280 (IP65)","faixas":[{"preco":18720,"com":10},{"preco":18158.4,"com":9},{"preco":17596.8,"com":8},{"preco":17035.2,"com":7},{"preco":16473.6,"com":6},{"preco":15912,"com":5},{"preco":15163.2,"com":4},{"preco":14414.4,"com":3},{"preco":13665.6,"com":2},{"preco":12776.4,"com":1}]}],"TTO":[{"modelo":"R32 (32mm)","faixas":[{"preco":24960,"com":10},{"preco":24211.2,"com":9},{"preco":23462.4,"com":8},{"preco":22713.6,"com":7},{"preco":21964.8,"com":6},{"preco":21216,"com":5},{"preco":20217.6,"com":4},{"preco":19219.2,"com":3},{"preco":18220.8,"com":2},{"preco":17035.2,"com":1}]},{"modelo":"R53 (53mm)","faixas":[{"preco":28080,"com":10},{"preco":27237.6,"com":9},{"preco":26395.2,"com":8},{"preco":25552.8,"com":7},{"preco":24710.4,"com":6},{"preco":23868,"com":5},{"preco":22744.8,"com":4},{"preco":21621.6,"com":3},{"preco":20498.4,"com":2},{"preco":19164.6,"com":1}]},{"modelo":"Suporte para TTO","faixas":[{"preco":5200,"com":10},{"preco":5044,"com":9},{"preco":4888,"com":8},{"preco":4732,"com":7},{"preco":4576,"com":6},{"preco":4420,"com":5},{"preco":4212,"com":4},{"preco":4004,"com":3},{"preco":3796,"com":2},{"preco":3549,"com":1}]}]};
+
+const ST={
+  sales:[],receipts:[],events:[],batches:[],clients:[],users:[],
+  matrix:null,matrixRevision:0,matrixHistory:[],itemSeq:0,selectedSaleId:null,
+  salesPage:1,salesPageSize:10,
+  charts:{seller:null,type:null},
+  profile:'',canEditMatrix:false,canManagePayments:false,isAdmin:false,
+  financeAlertConfig:{responsaveis:[],alertBefore:true,alertDue:true,alertOverdue:true},
+  financeAlertTimer:null,deepLinkDone:false
+};
+
+const col=n=>window.fsCollection(window.AppDB,...ROOT,n);
+const doc=(n,id)=>window.fsDoc(window.AppDB,...ROOT,n,id);
+const money=v=>(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+const dateBR=v=>{if(!v)return'-';const p=String(v).slice(0,10).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(v)};
+const nowISO=()=>new Date().toISOString();
+const today=()=>new Date().toISOString().slice(0,10);
+const activeClient=c=>c&&c.is_deleted!==true&&c.ativo!==false;
+const saleActive=s=>s&&s.is_deleted!==true&&s.status!=='CANCELADA';
+function toast(msg,type='info'){const e=document.createElement('div');e.className=`pointer-events-auto rounded-xl shadow-xl px-4 py-3 text-xs font-bold text-white ${type==='error'?'bg-rose-600':type==='success'?'bg-emerald-600':type==='warning'?'bg-amber-600':'bg-slate-800'}`;e.textContent=msg;document.getElementById('toast-container').appendChild(e);setTimeout(()=>e.remove(),3800)}
+function closeModal(id){document.getElementById(id)?.classList.add('hidden')}
+function uuid(prefix){return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`}
+function currentUserName(){return window.nomeUsuarioLogado||window.currentUser?.email||'Usuário'}
+function currentUserEmail(){return window.currentUser?.email||''}
+function userRecord(u){
+  return {
+    id:String(u?.userId||u?.id||u?.email||''),
+    email:String(u?.email||u?.id||'').toLowerCase().trim(),
+    uid:String(u?.authUid||u?.uid||'').trim(),
+    nome:String(u?.nome||u?.displayName||u?.email||u?.id||'Usuário')
+  };
+}
+function sellerKey(s){return String(s?.sellerId||s?.sellerEmail||s?.sellerName||'SEM_VENDEDOR')}
+function sellerLabel(s){return String(s?.sellerName||s?.sellerEmail||s?.sellerId||'Sem vendedor')}
+function receiptState(r){
+  if(Number(r?.actualAmount||0)>0||r?.receiptStatus==='RECEBIDO')return 'RECEBIDO';
+  if(r?.receiptStatus==='NAO_RECEBIDO')return 'NAO_RECEBIDO';
+  return 'PENDENTE';
+}
+function calendarDiffDays(target,base=today()){
+  if(!target)return null;
+  const a=new Date(String(base).slice(0,10)+'T12:00:00'),b=new Date(String(target).slice(0,10)+'T12:00:00');
+  return Math.round((b-a)/86400000);
+}
+function safeDocToken(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9_.-]+/g,'_').slice(0,140)}
+
+
+function statusMeta(status){
+  const map={
+    AGUARDANDO_RECEBIMENTO:['Aguardando recebimento','c-status-await'],
+    LIBERADA:['Liberada','c-status-free'],
+    PROGRAMADA:['Programada','c-status-program'],
+    PAGA:['Paga','c-status-paid'],
+    INADIMPLENTE:['Inadimplente','c-status-late'],
+    CANCELADA:['Cancelada','c-status-cancel']
+  };
+  return map[status]||[status||'-','c-status-cancel'];
+}
+function statusPill(status){const [l,c]=statusMeta(status);return `<span class="c-pill ${c}">${esc(l)}</span>`}
+
+function addDays(dateStr,days){const d=new Date(dateStr+'T12:00:00');d.setDate(d.getDate()+Number(days||0));return d.toISOString().slice(0,10)}
+function cycleFromLiberation(dateStr){
+  if(!dateStr)return null;
+  const [y,m,d]=dateStr.slice(0,10).split('-').map(Number);
+  let cy=y,cm=m,day;
+  if(d<=14)day=15;
+  else if(d<=29)day=30;
+  else{day=15;cm++;if(cm>12){cm=1;cy++}}
+  return {day,year:cy,month:cm,key:`${cy}-${String(cm).padStart(2,'0')}-${day}`,label:`Dia ${day} · ${String(cm).padStart(2,'0')}/${cy}`,monthKey:`${cy}-${String(cm).padStart(2,'0')}`};
+}
+function requiredPercentForSale(sale){
+  return sale.clientType==='Novo'&&(sale.items||[]).some(i=>i.type==='Alternativo')?100:20;
+}
+function receiptsForSale(saleId){return ST.receipts.filter(r=>r.saleId===saleId&&r.is_deleted!==true)}
+function eventsForSale(saleId){return ST.events.filter(e=>e.saleId===saleId).sort((a,b)=>String(b.createdAtISO||'').localeCompare(String(a.createdAtISO||'')))}
+function actualReceiptTotal(saleId){return receiptsForSale(saleId).reduce((a,r)=>a+Number(r.actualAmount||0),0)}
+function liberationInfo(sale){
+  const req=requiredPercentForSale(sale),threshold=Number(sale.saleValue||0)*(req/100),rs=receiptsForSale(sale.id).filter(r=>Number(r.actualAmount||0)>0&&r.actualDate).sort((a,b)=>String(a.actualDate).localeCompare(String(b.actualDate))||String(a.id).localeCompare(String(b.id)));
+  let acc=0,libDate='';
+  for(const r of rs){acc+=Number(r.actualAmount||0);if(!libDate&&acc+0.005>=threshold)libDate=r.actualDate}
+  const received=actualReceiptTotal(sale.id),pct=Number(sale.saleValue)>0?(received/Number(sale.saleValue))*100:0,cycle=libDate?cycleFromLiberation(libDate):null;
+  return {requiredPercent:req,threshold,received,receivedPercent:pct,liberated:!!libDate,liberatedAt:libDate,cycle};
+}
+async function logEvent(saleId,type,message,extra={}){
+  const id=uuid('evt');await window.fsSetDoc(doc(COL.events,id),{id,saleId,type,message,...extra,createdAtISO:nowISO(),userEmail:currentUserEmail(),userName:currentUserName()});
+}
+async function refreshSaleComputed(saleId,options={}){
+  const sale=ST.sales.find(s=>s.id===saleId);if(!sale)return;
+  const li=liberationInfo(sale),preserveSettlement=options.preserveSettlement===true&&['PROGRAMADA','PAGA'].includes(sale.status);
+  let status=sale.status;
+  if(status!=='PAGA'&&status!=='CANCELADA'&&status!=='INADIMPLENTE'){
+    status=sale.paymentBatchId?'PROGRAMADA':li.liberated?'LIBERADA':'AGUARDANDO_RECEBIMENTO';
+  }
+  const patch={
+    ...sale,
+    requiredReceivedPercent:li.requiredPercent,
+    receivedValue:li.received,
+    receivedPercent:li.receivedPercent,
+    liberatedAtISO:preserveSettlement?(sale.liberatedAtISO||li.liberatedAt||''):(li.liberatedAt||''),
+    paymentCycleDay:preserveSettlement?sale.paymentCycleDay:(li.cycle?.day||null),
+    paymentCycleMonth:preserveSettlement?sale.paymentCycleMonth:(li.cycle?.monthKey||''),
+    paymentCycleKey:preserveSettlement?sale.paymentCycleKey:(li.cycle?.key||''),
+    paymentCycleLabel:preserveSettlement?sale.paymentCycleLabel:(li.cycle?.label||''),
+    status,updatedAtISO:nowISO()
+  };
+  await window.fsSetDoc(doc(COL.sales,saleId),patch);
+}
+
+function matrixCommission(category,model,unitPrice){
+  const machine=(ST.matrix?.[category]||[]).find(m=>m.modelo===model);if(!machine||!unitPrice)return 0;
+  const ranges=[...(machine.faixas||[])];
+  for(let i=0;i<ranges.length;i++){
+    if(i===ranges.length-1){
+      if(Number(unitPrice)>=Number(ranges[i].preco)-0.05)return Number(ranges[i].com)||0;
+      break;
+    }
+    if(Number(unitPrice)>Number(ranges[i+1].preco)+0.05)return Number(ranges[i].com)||0;
+  }
+  return 0;
+}
+
+window.initModule=function(perfil){
+  ST.profile=String(perfil||'');
+  ST.isAdmin=['Master','Administrativo'].includes(ST.profile);
+  ST.canEditMatrix=ST.isAdmin;
+  ST.canManagePayments=['Master','Administrativo','Financeiro'].includes(ST.profile);
+  document.getElementById('main-content')?.classList.remove('hidden');
+  document.getElementById('tab-btn-matriz')?.classList.toggle('hidden',!ST.canEditMatrix);
+  document.getElementById('btn-close-cycle')?.classList.toggle('hidden',!ST.canManagePayments);
+  document.getElementById('btn-finance-alert-config')?.classList.toggle('hidden',!ST.isAdmin);
+  const d=new Date(),mk=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  ['dash-month','sales-month','pay-cycle-month'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=mk});
+  document.getElementById('sale-date').value=today();document.getElementById('sale-entry-date').value=today();document.getElementById('sale-first-installment').value=today();
+  addSaleItem();
+
+  window.fsOnSnapshot(col(COL.sales),snap=>{ST.sales=[];snap.forEach(d=>ST.sales.push({id:d.id,...d.data()}));ST.sales.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));renderAll();queueFinancialDueAlerts();tryCommissionDeepLink()});
+  window.fsOnSnapshot(col(COL.receipts),snap=>{ST.receipts=[];snap.forEach(d=>ST.receipts.push({id:d.id,...d.data()}));renderAll();if(ST.selectedSaleId)renderSaleDetail(ST.selectedSaleId);queueFinancialDueAlerts();tryCommissionDeepLink()});
+  window.fsOnSnapshot(col(COL.events),snap=>{ST.events=[];snap.forEach(d=>ST.events.push({id:d.id,...d.data()}));if(ST.selectedSaleId)renderSaleDetail(ST.selectedSaleId)});
+  window.fsOnSnapshot(col(COL.batches),snap=>{ST.batches=[];snap.forEach(d=>ST.batches.push({id:d.id,...d.data()}));renderPayments()});
+  window.fsOnSnapshot(col(COL.matrixHistory),snap=>{ST.matrixHistory=[];snap.forEach(d=>ST.matrixHistory.push({id:d.id,...d.data()}));ST.matrixHistory.sort((a,b)=>Number(b.revision||0)-Number(a.revision||0));renderMatrixHistory()});
+  window.fsOnSnapshot(col(COL.clients),snap=>{ST.clients=[];snap.forEach(d=>{const x={id:d.id,...d.data()};if(activeClient(x))ST.clients.push(x)});ST.clients.sort((a,b)=>clientName(a).localeCompare(clientName(b),'pt-BR'));populateMasterData()});
+  window.fsOnSnapshot(col(COL.users),snap=>{ST.users=[];snap.forEach(d=>ST.users.push({id:d.id,...d.data()}));ST.users.sort((a,b)=>String(a.nome||a.email||'').localeCompare(String(b.nome||b.email||''),'pt-BR'));populateMasterData();renderFinanceAlertStatus();queueFinancialDueAlerts()});
+  window.fsOnSnapshot(col(COL.config),async snap=>{
+    const cfg=snap.docs?.find?.(d=>d.id==='matriz') || null;
+    if(cfg){const x=cfg.data();ST.matrix=x.matrix||structuredClone(DEFAULT_MATRIX);ST.matrixRevision=Number(x.revision||1)}
+    else{
+      ST.matrix=structuredClone(DEFAULT_MATRIX);ST.matrixRevision=1;
+      try{
+        await window.fsSetDoc(doc(COL.config,'matriz'),{matrix:ST.matrix,revision:1,createdAtISO:nowISO(),createdBy:currentUserName()});
+        if(ST.canEditMatrix)await window.fsSetDoc(doc(COL.matrixHistory,'matriz_rev_1'),{revision:1,matrix:ST.matrix,createdAtISO:nowISO(),createdBy:currentUserName(),createdByEmail:currentUserEmail(),note:'Matriz inicial importada do módulo Comissões Azul.'});
+      }catch(e){console.warn(e)}
+    }
+    const fin=snap.docs?.find?.(d=>d.id==='alertas_financeiro')||null;
+    if(fin){
+      const x=fin.data()||{};
+      ST.financeAlertConfig={
+        responsaveis:Array.isArray(x.responsaveis)?x.responsaveis:[],
+        alertBefore:x.alertBefore!==false,
+        alertDue:x.alertDue!==false,
+        alertOverdue:x.alertOverdue!==false,
+        updatedAtISO:x.updatedAtISO||'',
+        updatedBy:x.updatedBy||''
+      };
+    }
+    populateMatrixSelectors();renderMatrixEditor();renderSaleItemsMachineSelectors();renderFinanceAlertStatus();queueFinancialDueAlerts();
+  });
+};
+function renderAll(){renderDashboard();renderSales();renderPayments();renderFinanceAlertStatus();tryCommissionDeepLink()}
+function switchTab(tab){
+  document.querySelectorAll('.tab-section').forEach(x=>x.classList.add('hidden'));document.getElementById('tab-'+tab)?.classList.remove('hidden');
+  document.querySelectorAll('.c-tab').forEach(x=>x.classList.remove('active'));document.getElementById('tab-btn-'+tab)?.classList.add('active');
+  if(tab==='dashboard')renderDashboard();if(tab==='vendas')renderSales();if(tab==='pagamentos')renderPayments();if(tab==='matriz'){populateMatrixSelectors();renderMatrixEditor()}
+}
+
+function renderFinanceAlertStatus(){
+  const box=document.getElementById('finance-alert-status');if(!box)return;
+  const rs=ST.financeAlertConfig?.responsaveis||[];
+  if(!rs.length){
+    box.innerHTML=`<i class="fa-solid fa-bell-slash text-amber-600 mr-1"></i><b class="text-amber-700">Alertas financeiros sem responsável configurado.</b>${ST.isAdmin?' Use o botão “Alertas financeiros” para selecionar.':''}`;
+    return;
+  }
+  const rules=[
+    ST.financeAlertConfig.alertBefore?'1 dia antes':null,
+    ST.financeAlertConfig.alertDue?'no vencimento':null,
+    ST.financeAlertConfig.alertOverdue?'atrasadas':null
+  ].filter(Boolean).join(' · ');
+  box.innerHTML=`<i class="fa-solid fa-bell text-blue-600 mr-1"></i><b>Alertas de parcelas:</b> ${esc(rs.map(x=>x.nome||x.email).join(', '))} <span class="text-slate-400">· ${esc(rules||'sem regras ativas')}</span>`;
+}
+function openFinanceAlertConfig(){
+  if(!ST.isAdmin){toast('Somente administradores podem alterar os responsáveis financeiros.','error');return}
+  const selected=new Set((ST.financeAlertConfig?.responsaveis||[]).map(x=>String(x.email||'').toLowerCase()));
+  const box=document.getElementById('finance-alert-users');
+  box.innerHTML=ST.users.map(u=>{const r=userRecord(u);return `<label class="rounded-xl border bg-white p-2.5 flex items-center gap-2 text-[10px] cursor-pointer"><input class="fin-alert-user" type="checkbox" value="${esc(r.email)}" ${selected.has(r.email)?'checked':''}><span class="min-w-0"><b class="block truncate">${esc(r.nome)}</b><span class="text-slate-400 block truncate">${esc(r.email)}</span></span></label>`}).join('')||'<div class="text-xs text-slate-400">Nenhum usuário disponível.</div>';
+  document.getElementById('fin-alert-before').checked=ST.financeAlertConfig?.alertBefore!==false;
+  document.getElementById('fin-alert-due').checked=ST.financeAlertConfig?.alertDue!==false;
+  document.getElementById('fin-alert-overdue').checked=ST.financeAlertConfig?.alertOverdue!==false;
+  document.getElementById('finance-alert-modal').classList.remove('hidden');
+}
+async function saveFinanceAlertConfig(e){
+  e.preventDefault();if(!ST.isAdmin)return;
+  const emails=[...document.querySelectorAll('.fin-alert-user:checked')].map(x=>String(x.value||'').toLowerCase());
+  const responsaveis=emails.map(email=>{const u=ST.users.find(x=>userRecord(x).email===email);return u?userRecord(u):{id:email,email,uid:'',nome:email}});
+  const data={responsaveis,alertBefore:document.getElementById('fin-alert-before').checked,alertDue:document.getElementById('fin-alert-due').checked,alertOverdue:document.getElementById('fin-alert-overdue').checked,updatedAtISO:nowISO(),updatedBy:currentUserName()};
+  try{
+    await window.fsSetDoc(doc(COL.config,'alertas_financeiro'),data);
+    ST.financeAlertConfig=data;closeModal('finance-alert-modal');renderFinanceAlertStatus();queueFinancialDueAlerts(true);toast('Alertas financeiros configurados.','success');
+  }catch(err){console.error(err);toast('Erro ao salvar alertas financeiros.','error')}
+}
+function queueFinancialDueAlerts(immediate=false){
+  clearTimeout(ST.financeAlertTimer);
+  ST.financeAlertTimer=setTimeout(scanFinancialDueAlerts,immediate?50:700);
+}
+async function scanFinancialDueAlerts(){
+  const cfg=ST.financeAlertConfig||{},targets=cfg.responsaveis||[];
+  if(!targets.length||!ST.receipts.length||!ST.sales.length||typeof window.enviarNotificacaoApp!=='function')return;
+  const targetEmails=[...new Set(targets.map(x=>String(x.email||'').toLowerCase().trim()).filter(Boolean))];
+  const targetUids=[...new Set(targets.map(x=>String(x.uid||'').trim()).filter(Boolean))];
+  for(const r of ST.receipts.filter(x=>x.is_deleted!==true&&x.expectedDate)){
+    if(receiptState(r)==='RECEBIDO')continue;
+    const sale=ST.sales.find(s=>s.id===r.saleId);if(!sale||sale.status==='CANCELADA'||sale.is_deleted===true)continue;
+    const diff=calendarDiffDays(r.expectedDate);
+    let stage='',title='',tipo='info';
+    if(diff===1&&cfg.alertBefore!==false){stage='AMANHA';title='Parcela vence amanhã';tipo='info'}
+    else if(diff===0&&cfg.alertDue!==false){stage='HOJE';title='Parcela vence hoje';tipo='warning'}
+    else if(diff<0&&cfg.alertOverdue!==false){stage='ATRASADA';title='Parcela vencida sem recebimento';tipo='danger'}
+    else continue;
+    const id=`combeta_${safeDocToken(r.id)}_${stage}_${safeDocToken(r.expectedDate)}`;
+    const situacao=receiptState(r)==='NAO_RECEBIDO'?' · marcada como não recebida':'';
+    await window.enviarNotificacaoApp({
+      id,titulo:title,
+      mensagem:`NF ${sale.nf} · ${sale.clientName} · ${r.label} · ${money(r.expectedAmount)} · vencimento ${dateBR(r.expectedDate)}${situacao}.`,
+      tipo,targetEmails,targetUids,modulo:'comissoes_beta.html',
+      url:`comissoes_beta.html?tab=vendas&sale=${encodeURIComponent(sale.id)}&receipt=${encodeURIComponent(r.id)}`,
+      actionLabel:'Conferir parcela',eventType:'COMISSAO_PARCELA_'+stage,sourceId:r.id,
+      dedupeKey:`COMISSAO_PARCELA:${r.id}:${stage}:${r.expectedDate}`
+    });
+  }
+}
+function tryCommissionDeepLink(){
+  if(ST.deepLinkDone)return;
+  const p=new URLSearchParams(location.search),saleId=p.get('sale'),receiptId=p.get('receipt'),tab=p.get('tab');
+  if(!saleId){if(tab&&document.getElementById('tab-'+tab)){ST.deepLinkDone=true;switchTab(tab)}return}
+  const sale=ST.sales.find(x=>x.id===saleId);if(!sale)return;
+  if(receiptId&&!ST.receipts.find(x=>x.id===receiptId))return;
+  ST.deepLinkDone=true;switchTab(tab&&document.getElementById('tab-'+tab)?tab:'vendas');openSaleDetail(saleId);
+  if(receiptId)setTimeout(()=>openReceipt(receiptId),180);
+}
+
+function clientName(c){return c?.fantasia||c?.nomeFantasia||c?.razao_social||c?.razaoSocial||'SEM NOME'}
+function clientAddress(c){return c?.enderecoCompleto||c?.endereco_completo||[[c?.logradouro||c?.endereco,c?.numero].filter(Boolean).join(', '),[c?.bairro,c?.cidade,c?.uf||c?.estado].filter(Boolean).join(' · ')].filter(Boolean).join(' | ')}
+function principalContact(c){const a=Array.isArray(c?.contatos)?c.contatos:[];return a.find(x=>x?.principal)||a[0]||{nome:c?.contatoPrincipalNome||c?.contato||'',telefone:c?.contatoPrincipalTelefone||c?.telefone||''}}
+function populateMasterData(){
+  const c=document.getElementById('sale-client');if(c){const v=c.value;c.innerHTML='<option value="">Selecione...</option>'+ST.clients.map(x=>`<option value="${esc(x.id)}">${esc(clientName(x))}${x.cnpj?' · '+esc(x.cnpj):''}</option>`).join('');if([...c.options].some(o=>o.value===v))c.value=v}
+  const s=document.getElementById('sale-seller');if(s){
+    const v=s.value;
+    const allowed=window.userVisaoGlobal===false&&currentUserEmail()?ST.users.filter(x=>String(x.email||x.id).toLowerCase()===currentUserEmail().toLowerCase()):ST.users;
+    s.innerHTML='<option value="">Selecione...</option>'+allowed.map(x=>`<option value="${esc(x.id)}" data-email="${esc(x.email||x.id)}">${esc(x.nome||x.email||x.id)}</option>`).join('');
+    let desired=v;
+    if(!desired&&currentUserEmail()){const u=allowed.find(x=>String(x.email||x.id).toLowerCase()===currentUserEmail().toLowerCase());desired=u?.id||''}
+    if([...s.options].some(o=>o.value===desired))s.value=desired;
+  }
+}
+function fillClientSnapshot(){
+  const c=ST.clients.find(x=>x.id===document.getElementById('sale-client').value),box=document.getElementById('client-snapshot');if(!c){box.textContent='Selecione o cliente cadastrado.';return}
+  const cp=principalContact(c);box.innerHTML=`<b>${esc(c.razao_social||clientName(c))}</b>${c.cnpj?' · '+esc(c.cnpj):''}<br>${esc(clientAddress(c)||'Endereço não informado')}<br>Contato: ${esc(cp.nome||'-')} · ${esc(cp.telefone||'-')}`;
+}
+function paymentFieldsChanged(){
+  const parcel=document.getElementById('sale-payment-cond').value==='PARCELADO';document.querySelectorAll('.installment-field').forEach(x=>x.classList.toggle('hidden',!parcel));
+  if(!parcel)document.getElementById('sale-entry-percent').value=100;
+  else if(Number(document.getElementById('sale-entry-percent').value)===100)document.getElementById('sale-entry-percent').value=20;
+}
+
+function addSaleItem(data={}){
+  const id='item_'+(++ST.itemSeq),tr=document.createElement('tr');tr.id=id;
+  tr.innerHTML=`<td><select id="${id}-type" class="c-input" onchange="itemTypeChanged('${id}',true)"><option>Consumíveis</option><option>Maquina</option><option>Alternativo</option><option>Locação</option><option>Corpo de Prova</option><option>Certificação</option><option>Contrato</option></select></td>
+  <td><div id="${id}-machine" class="hidden grid grid-cols-2 gap-1 mb-1"><select id="${id}-cat" class="c-input" onchange="machineCategoryChanged('${id}',true)"></select><select id="${id}-model" class="c-input" onchange="calcItem('${id}',true)"></select></div><input id="${id}-desc" class="c-input" placeholder="Descrição / detalhes"></td>
+  <td><input id="${id}-qty" type="number" min="1" value="1" class="c-input text-center" oninput="calcItem('${id}',false)"></td>
+  <td><input id="${id}-unit" type="number" min="0" step="0.01" class="c-input text-right" oninput="calcItem('${id}',true)"></td>
+  <td><input id="${id}-pct" type="number" min="0" max="100" step="0.1" class="c-input text-center font-bold" oninput="calcItem('${id}')"></td>
+  <td id="${id}-comm" class="text-right font-black text-emerald-700">R$ 0,00</td>
+  <td><button type="button" class="c-btn c-btn-danger !min-h-8 !w-8 !p-0" onclick="removeSaleItem('${id}')"><i class="fa-solid fa-trash"></i></button></td>`;
+  document.getElementById('sale-items-body').appendChild(tr);
+  document.getElementById(id+'-type').value=data.type||data.tipo||'Consumíveis';
+  document.getElementById(id+'-desc').value=data.description||data.detalhe||'';
+  document.getElementById(id+'-qty').value=data.qty||data.qtd||1;
+  document.getElementById(id+'-unit').value=data.unitValue??data.valorUn??'';
+  document.getElementById(id+'-pct').value=data.commissionPercent??data.comissaoPercent??'';
+  if((data.type||data.tipo)==='Maquina' && (data.commissionPercent!==undefined || data.comissaoPercent!==undefined)){
+    tr.dataset.preserveCommission='1';
+    tr.dataset.savedCommissionPct=String(data.commissionPercent??data.comissaoPercent??0);
+    tr.dataset.matrixRevision=String(data.matrixRevision??'');
+  }
+  itemTypeChanged(id,false);
+  if((data.type||data.tipo)==='Maquina'){
+    document.getElementById(id+'-cat').value=data.category||data.categoria||'';
+    machineCategoryChanged(id,false);
+    document.getElementById(id+'-model').value=data.model||data.modelo||'';
+  }
+  calcItem(id,false);
+}
+function removeSaleItem(id){const b=document.getElementById('sale-items-body');if(b.children.length<=1){toast('A NF precisa ter pelo menos um item.','warning');return}document.getElementById(id)?.remove();calcSaleTotals()}
+function renderSaleItemsMachineSelectors(){[...document.querySelectorAll('#sale-items-body tr')].forEach(tr=>{if(document.getElementById(tr.id+'-type')?.value==='Maquina')itemTypeChanged(tr.id)})}
+function itemTypeChanged(id,userChanged=false){
+  const row=document.getElementById(id),type=document.getElementById(id+'-type').value,isMachine=type==='Maquina',box=document.getElementById(id+'-machine'),pct=document.getElementById(id+'-pct');
+  if(userChanged&&row){row.dataset.preserveCommission='';row.dataset.matrixRevision=String(ST.matrixRevision||'')}
+  box.classList.toggle('hidden',!isMachine);pct.readOnly=isMachine;pct.classList.toggle('bg-indigo-50',isMachine);
+  if(isMachine){
+    const cat=document.getElementById(id+'-cat'),v=cat.value;
+    cat.innerHTML='<option value="">Categoria...</option>'+Object.keys(ST.matrix||{}).sort().map(x=>`<option>${esc(x)}</option>`).join('');
+    if([...cat.options].some(o=>o.value===v))cat.value=v;
+    machineCategoryChanged(id,userChanged);
+  }
+  calcItem(id,userChanged);
+}
+function machineCategoryChanged(id,userChanged=false){
+  const row=document.getElementById(id);
+  if(userChanged&&row){row.dataset.preserveCommission='';row.dataset.matrixRevision=String(ST.matrixRevision||'')}
+  const cat=document.getElementById(id+'-cat').value,sel=document.getElementById(id+'-model'),v=sel.value;
+  sel.innerHTML='<option value="">Modelo...</option>'+((ST.matrix||{})[cat]||[]).map(x=>`<option>${esc(x.modelo)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===v))sel.value=v;
+  calcItem(id,userChanged);
+}
+function calcItem(id,recalcMatrix=false){
+  const row=document.getElementById(id),type=document.getElementById(id+'-type')?.value,qty=Number(document.getElementById(id+'-qty')?.value||1),unit=Number(document.getElementById(id+'-unit')?.value||0),pctEl=document.getElementById(id+'-pct');let pct=Number(pctEl?.value||0);
+  if(type==='Maquina'){
+    if(recalcMatrix&&row){row.dataset.preserveCommission='';row.dataset.matrixRevision=String(ST.matrixRevision||'')}
+    if(row?.dataset.preserveCommission==='1'){
+      pct=Number(row.dataset.savedCommissionPct||pctEl?.value||0);
+    }else{
+      pct=matrixCommission(document.getElementById(id+'-cat').value,document.getElementById(id+'-model').value,unit);
+      if(row)row.dataset.matrixRevision=String(ST.matrixRevision||'');
+    }
+    pctEl.value=pct;
+  }
+  document.getElementById(id+'-comm').textContent=money(qty*unit*pct/100);
+  calcSaleTotals();
+}
+
+function collectItems(){
+  return [...document.querySelectorAll('#sale-items-body tr')].map(tr=>{
+    const id=tr.id,type=document.getElementById(id+'-type').value,qty=Number(document.getElementById(id+'-qty').value||1),unit=Number(document.getElementById(id+'-unit').value||0),pct=Number(document.getElementById(id+'-pct').value||0),category=type==='Maquina'?document.getElementById(id+'-cat').value:'',model=type==='Maquina'?document.getElementById(id+'-model').value:'',description=document.getElementById(id+'-desc').value.trim();
+    const row=document.getElementById(id),rev=type==='Maquina'?Number(row?.dataset.matrixRevision||ST.matrixRevision||0):null;
+    return {id:uuid('itm'),type,category,model,description,qty,unitValue:unit,totalValue:qty*unit,commissionPercent:pct,commissionValue:qty*unit*pct/100,commissionSource:type==='Maquina'?'TABELA':'MANUAL',matrixRevision:rev};
+  });
+}
+function calcSaleTotals(){
+  const rows=[...document.querySelectorAll('#sale-items-body tr')];let total=0,comm=0,special=false;
+  for(const tr of rows){const id=tr.id,q=Number(document.getElementById(id+'-qty')?.value||1),u=Number(document.getElementById(id+'-unit')?.value||0),p=Number(document.getElementById(id+'-pct')?.value||0);total+=q*u;comm+=q*u*p/100;if(document.getElementById(id+'-type')?.value==='Alternativo')special=true}
+  document.getElementById('sale-total').textContent=money(total);document.getElementById('sale-commission').textContent=money(comm);
+  const req=special&&document.getElementById('sale-client-type').value==='Novo'?100:20;document.getElementById('sale-rule').textContent=`${req}% efetivamente recebido`;
+}
+async function saveSale(e){
+  e.preventDefault();const id=document.getElementById('sale-id').value||uuid('sale'),old=ST.sales.find(x=>x.id===id),client=ST.clients.find(x=>x.id===document.getElementById('sale-client').value),seller=ST.users.find(x=>x.id===document.getElementById('sale-seller').value),items=collectItems();
+  if(!client||!seller||!items.length){toast('Preencha cliente, vendedor e itens.','error');return}
+  if(items.some(i=>!i.type||i.qty<=0||i.unitValue<=0||(i.type==='Maquina'&&(!i.category||!i.model)))){toast('Há item incompleto ou com valor inválido.','error');return}
+  const nf=document.getElementById('sale-nf').value.trim().toUpperCase(),dup=ST.sales.find(x=>x.id!==id&&x.is_deleted!==true&&norm(x.nf)===norm(nf)&&String(x.clientId||'')===String(client.id));
+  if(dup){toast(`NF duplicada para este cliente: ${nf}.`,'error');return}
+  const saleValue=items.reduce((a,i)=>a+i.totalValue,0),commissionValue=items.reduce((a,i)=>a+i.commissionValue,0),paymentCond=document.getElementById('sale-payment-cond').value,entryPercent=Number(document.getElementById('sale-entry-percent').value||0),plan={paymentCond,entryDate:document.getElementById('sale-entry-date').value,entryPercent,installmentsCount:paymentCond==='PARCELADO'?Number(document.getElementById('sale-installments').value||1):0,installmentInterval:paymentCond==='PARCELADO'?Number(document.getElementById('sale-interval').value||30):0,firstInstallmentDate:paymentCond==='PARCELADO'?document.getElementById('sale-first-installment').value:''};
+  if(old&&receiptsForSale(id).some(r=>Number(r.actualAmount||0)>0)){
+    const prev=JSON.stringify(old.paymentPlan||{}),next=JSON.stringify(plan);if(prev!==next){toast('Há recebimentos confirmados. A condição de pagamento não pode ser alterada sem antes corrigir os recebimentos.','error');return}
+  }
+  const cp=principalContact(client),now=nowISO(),data={...old,id,nf,date:document.getElementById('sale-date').value,clientId:client.id,clientName:clientName(client),clientCnpj:client.cnpj||'',clientType:document.getElementById('sale-client-type').value,clientSnapshot:{address:clientAddress(client),contactName:cp.nome||'',contactPhone:cp.telefone||''},sellerId:seller.id,sellerName:seller.nome||seller.email||seller.id,sellerEmail:seller.email||seller.id,paymentPlan:plan,items,saleValue,commissionValue,requiredReceivedPercent:document.getElementById('sale-client-type').value==='Novo'&&items.some(i=>i.type==='Alternativo')?100:20,notes:document.getElementById('sale-notes').value.trim(),status:old?.status==='PAGA'?'PAGA':old?.status==='CANCELADA'?'CANCELADA':'AGUARDANDO_RECEBIMENTO',is_deleted:false,createdAtISO:old?.createdAtISO||now,createdBy:old?.createdBy||currentUserName(),updatedAtISO:now,updatedBy:currentUserName(),schemaVersion:1};
+  try{
+    await window.fsSetDoc(doc(COL.sales,id),data);
+    await syncExpectedReceipts(data);
+    await logEvent(id,old?'VENDA_EDITADA':'VENDA_CRIADA',old?'Venda editada.':'Venda criada.',{nf});
+    await refreshSaleComputed(id);
+    toast(old?'Venda atualizada.':'Venda cadastrada.','success');resetSaleForm();switchTab('vendas');
+  }catch(err){console.error(err);toast('Erro ao salvar venda: '+(err.message||err),'error')}
+}
+async function syncExpectedReceipts(sale){
+  const plan=sale.paymentPlan||{},expected=[];
+  if(plan.paymentCond==='A_VISTA'){
+    expected.push({id:`${sale.id}_avista`,kind:'A_VISTA',label:'À vista',number:0,expectedDate:plan.entryDate||sale.date,expectedAmount:sale.saleValue});
+  }else{
+    const entryAmount=sale.saleValue*(Number(plan.entryPercent||0)/100);
+    if(entryAmount>0.004)expected.push({id:`${sale.id}_entrada`,kind:'ENTRADA',label:'Entrada',number:0,expectedDate:plan.entryDate||sale.date,expectedAmount:entryAmount});
+    const count=Math.max(1,Number(plan.installmentsCount||1)),remaining=Math.max(0,sale.saleValue-entryAmount),per=remaining/count;
+    for(let n=1;n<=count;n++)expected.push({id:`${sale.id}_p${n}`,kind:'PARCELA',label:`Parcela ${n}/${count}`,number:n,expectedDate:addDays(plan.firstInstallmentDate||sale.date,(n-1)*Number(plan.installmentInterval||30)),expectedAmount:n===count?remaining-per*(count-1):per});
+  }
+  const existing=receiptsForSale(sale.id);
+  for(const x of expected){const old=existing.find(r=>r.id===x.id);await window.fsSetDoc(doc(COL.receipts,x.id),{...old,...x,saleId:sale.id,nf:sale.nf,clientId:sale.clientId,clientName:sale.clientName,is_deleted:false,updatedAtISO:nowISO(),createdAtISO:old?.createdAtISO||nowISO()})}
+  for(const r of existing.filter(r=>!expected.some(x=>x.id===r.id)&&!Number(r.actualAmount||0))){await window.fsSetDoc(doc(COL.receipts,r.id),{...r,is_deleted:true,updatedAtISO:nowISO()})}
+}
+function resetSaleForm(){
+  document.getElementById('sale-form').reset();document.getElementById('sale-id').value='';document.getElementById('sale-form-title').textContent='Novo lançamento';document.getElementById('btn-cancel-edit').classList.add('hidden');document.getElementById('sale-date').value=today();document.getElementById('sale-entry-date').value=today();document.getElementById('sale-first-installment').value=today();document.getElementById('sale-entry-percent').value=20;document.getElementById('sale-items-body').innerHTML='';addSaleItem();paymentFieldsChanged();populateMasterData();fillClientSnapshot();calcSaleTotals();
+}
+function editSale(id){
+  const s=ST.sales.find(x=>x.id===id);if(!s)return;switchTab('nova-venda');document.getElementById('sale-id').value=s.id;document.getElementById('sale-form-title').textContent=`Editar NF ${s.nf}`;document.getElementById('btn-cancel-edit').classList.remove('hidden');
+  document.getElementById('sale-seller').value=s.sellerId||'';document.getElementById('sale-date').value=s.date||'';document.getElementById('sale-nf').value=s.nf||'';document.getElementById('sale-client').value=s.clientId||'';document.getElementById('sale-client-type').value=s.clientType||'Atual';document.getElementById('sale-payment-cond').value=s.paymentPlan?.paymentCond||'A_VISTA';document.getElementById('sale-entry-date').value=s.paymentPlan?.entryDate||s.date||'';document.getElementById('sale-entry-percent').value=s.paymentPlan?.entryPercent??20;document.getElementById('sale-installments').value=s.paymentPlan?.installmentsCount||1;document.getElementById('sale-interval').value=s.paymentPlan?.installmentInterval||30;document.getElementById('sale-first-installment').value=s.paymentPlan?.firstInstallmentDate||s.date||'';document.getElementById('sale-notes').value=s.notes||'';document.getElementById('sale-items-body').innerHTML='';(s.items||[]).forEach(addSaleItem);paymentFieldsChanged();fillClientSnapshot();calcSaleTotals();
+}
+
+function visibleSalesBase(){
+  return ST.sales.filter(s=>{
+    if(window.userVisaoGlobal===false&&currentUserEmail()&&String(s.sellerEmail||'').toLowerCase()!==currentUserEmail().toLowerCase())return false;
+    return true;
+  });
+}
+function filteredSales(){
+  const q=norm(document.getElementById('sales-search')?.value||''),st=document.getElementById('sales-status')?.value||'',month=document.getElementById('sales-month')?.value||'',cycle=document.getElementById('sales-cycle')?.value||'';
+  return visibleSalesBase().filter(s=>s.is_deleted!==true).filter(s=>{
+    if(window.userVisaoGlobal===false&&currentUserEmail()&&String(s.sellerEmail||'').toLowerCase()!==currentUserEmail().toLowerCase())return false;
+    if(q&&!norm([s.nf,s.clientName,s.sellerName].join(' ')).includes(q))return false;
+    if(st&&s.status!==st)return false;if(month&&String(s.date||'').slice(0,7)!==month)return false;if(cycle&&String(s.paymentCycleDay||'')!==cycle)return false;return true;
+  }).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+}
+function salesFilterChanged(){ST.salesPage=1;renderSales()}
+function renderSales(){
+  const rows=filteredSales(),pages=Math.max(1,Math.ceil(rows.length/ST.salesPageSize));ST.salesPage=Math.min(ST.salesPage,pages);const start=(ST.salesPage-1)*ST.salesPageSize,view=rows.slice(start,start+ST.salesPageSize),tb=document.getElementById('sales-body');if(!tb)return;
+  tb.innerHTML=view.length?view.map(s=>{const li=liberationInfo(s);return `<tr>
+    <td><b class="text-blue-700">${esc(s.nf)}</b><div class="text-[9px] text-slate-400">${dateBR(s.date)}</div></td>
+    <td><b>${esc(s.clientName)}</b><div class="text-[9px] text-slate-400">${esc(s.clientCnpj||'')}</div></td><td>${esc(s.sellerName)}</td>
+    <td class="text-right font-bold">${money(s.saleValue)}</td><td class="text-right font-black text-emerald-700">${money(s.commissionValue)}</td>
+    <td><b>${money(li.received)}</b><div class="text-[9px] text-slate-500">${li.receivedPercent.toFixed(1)}% de ${li.requiredPercent}% necessário</div></td>
+    <td>${li.liberated?`<b class="text-emerald-700">${dateBR(li.liberatedAt)}</b><div class="text-[9px] text-slate-500">Ciclo ${esc(li.cycle?.label||'-')}</div>`:'<span class="text-amber-700 font-bold">Não liberada</span>'}</td>
+    <td>${statusPill(s.status)}</td>
+    <td class="whitespace-nowrap"><button class="c-btn c-btn-light !min-h-8" onclick="openSaleDetail('${s.id}')"><i class="fa-solid fa-eye"></i></button> <button class="c-btn c-btn-light !min-h-8" onclick="editSale('${s.id}')"><i class="fa-solid fa-pen"></i></button></td>
+  </tr>`}).join(''):'<tr><td colspan="9" class="text-center text-slate-400 py-10">Nenhuma venda encontrada.</td></tr>';
+  document.getElementById('sales-pager').innerHTML=`<span class="text-[10px] text-slate-500">Mostrando ${rows.length?start+1:0}–${Math.min(start+ST.salesPageSize,rows.length)} de ${rows.length}</span><div class="flex items-center gap-2"><select class="c-input !h-8 !w-auto" onchange="ST.salesPageSize=Number(this.value);ST.salesPage=1;renderSales()">${[10,25,50,100].map(n=>`<option ${ST.salesPageSize===n?'selected':''}>${n}</option>`).join('')}</select><button class="c-btn c-btn-light !min-h-8" ${ST.salesPage<=1?'disabled':''} onclick="ST.salesPage--;renderSales()"><i class="fa-solid fa-chevron-left"></i></button><span class="text-[10px] font-bold">Página ${ST.salesPage}/${pages}</span><button class="c-btn c-btn-light !min-h-8" ${ST.salesPage>=pages?'disabled':''} onclick="ST.salesPage++;renderSales()"><i class="fa-solid fa-chevron-right"></i></button></div>`;
+}
+function openSaleDetail(id){ST.selectedSaleId=id;renderSaleDetail(id);document.getElementById('sale-detail-modal').classList.remove('hidden')}
+function renderSaleDetail(id){
+  const s=ST.sales.find(x=>x.id===id);if(!s)return;const li=liberationInfo(s),sm=statusMeta(s.status);document.getElementById('detail-status').className='c-pill '+sm[1];document.getElementById('detail-status').textContent=sm[0];document.getElementById('detail-title').textContent=`NF ${s.nf}`;document.getElementById('detail-subtitle').textContent=`${s.clientName} · ${s.sellerName} · venda ${dateBR(s.date)}`;
+  document.getElementById('detail-kpis').innerHTML=[['Venda',money(s.saleValue)],['Comissão',money(s.commissionValue)],['Recebido',`${money(li.received)} · ${li.receivedPercent.toFixed(1)}%`],['Pagamento',li.cycle?`Ciclo ${li.cycle.label}`:'Aguardando liberação']].map(x=>`<div class="c-card c-kpi"><span>${x[0]}</span><b class="!text-sm">${esc(x[1])}</b></div>`).join('');
+  document.getElementById('detail-items').innerHTML=(s.items||[]).map(i=>`<div class="py-2 flex justify-between gap-3"><div><b class="text-[10px]">${esc(i.type)} · ${esc(i.model||i.description||'-')}</b><div class="text-[9px] text-slate-500">${i.qty} × ${money(i.unitValue)} · comissão ${i.commissionPercent}%${i.commissionSource==='TABELA'?` · tabela rev. ${i.matrixRevision||'-'}`:''}</div></div><b class="text-xs text-emerald-700">${money(i.commissionValue)}</b></div>`).join('');
+  const rs=receiptsForSale(id).sort((a,b)=>String(a.expectedDate).localeCompare(String(b.expectedDate)));document.getElementById('detail-receipts').innerHTML=rs.map(r=>{const st=receiptState(r),locked=['PROGRAMADA','PAGA','CANCELADA'].includes(s.status),canEdit=!locked||ST.isAdmin;const stateHtml=st==='RECEBIDO'?`<div class="text-[9px] font-bold receipt-state-paid">Recebido ${dateBR(r.actualDate)} · ${money(r.actualAmount)}</div>`:st==='NAO_RECEBIDO'?`<div class="text-[9px] font-bold receipt-state-unpaid">Não recebido · conferido em ${dateBR(r.actualDate||r.checkedDate)}</div>`:'<div class="text-[9px] receipt-state-pending font-bold">Pendente de conferência</div>';return `<div class="py-2 flex justify-between items-center gap-3"><div><b class="text-[10px]">${esc(r.label)}</b><div class="text-[9px] text-slate-500">Previsto ${dateBR(r.expectedDate)} · ${money(r.expectedAmount)}</div>${stateHtml}</div>${canEdit?`<button class="c-btn c-btn-light !min-h-8" onclick="openReceipt('${r.id}')">${st==='PENDENTE'?'Conferir':ST.isAdmin&&locked?'Editar (Admin)':'Editar'}</button>`:'<span class="text-[9px] text-slate-400 font-bold"><i class="fa-solid fa-lock"></i> Ciclo fechado</span>'}</div>`}).join('')||'<div class="text-xs text-slate-400 py-4">Sem cronograma.</div>';
+  document.getElementById('detail-events').innerHTML=eventsForSale(id).map(e=>`<div class="c-event"><div class="flex justify-between gap-2"><b class="text-[10px]">${esc(e.message||e.type)}</b><span class="text-[9px] text-slate-400">${new Date(e.createdAtISO).toLocaleString('pt-BR')}</span></div><div class="text-[9px] text-slate-500">${esc(e.userName||'')}</div></div>`).join('')||'<div class="text-xs text-slate-400">Sem eventos.</div>';
+  document.getElementById('btn-edit-detail').onclick=()=>{closeModal('sale-detail-modal');editSale(id)};document.getElementById('btn-late-detail').onclick=()=>toggleLate(id);document.getElementById('btn-cancel-detail').onclick=()=>cancelSale(id);
+}
+function receiptStatusChanged(){
+  const st=document.getElementById('receipt-status')?.value||'RECEBIDO',amount=document.getElementById('receipt-amount'),wrap=document.getElementById('receipt-amount-wrap'),label=document.getElementById('receipt-date-label');
+  const received=st==='RECEBIDO';wrap?.classList.toggle('hidden',!received);if(amount){amount.required=received;if(!received)amount.value=0}
+  if(label)label.textContent=received?'Data real do recebimento *':'Data da conferência *';
+}
+function openReceipt(id){
+  const r=ST.receipts.find(x=>x.id===id);if(!r)return;
+  const sale=ST.sales.find(x=>x.id===r.saleId),locked=sale&&['PROGRAMADA','PAGA','CANCELADA'].includes(sale.status);
+  if(locked&&!ST.isAdmin){toast('Este recebimento está congelado. Somente Administrador/Master pode editar após fechamento/pagamento.','warning');return}
+  const st=receiptState(r)==='NAO_RECEBIDO'?'NAO_RECEBIDO':'RECEBIDO';
+  document.getElementById('receipt-id').value=id;
+  document.getElementById('receipt-title').textContent=receiptState(r)==='PENDENTE'?'Conferir parcela':'Editar conferência';
+  document.getElementById('receipt-info').innerHTML=`<b>${esc(r.label)}</b><br>NF ${esc(sale?.nf||r.nf||'-')} · ${esc(sale?.clientName||r.clientName||'-')}<br>Previsto: ${dateBR(r.expectedDate)} · ${money(r.expectedAmount)}`;
+  document.getElementById('receipt-status').value=st;
+  document.getElementById('receipt-amount').value=st==='RECEBIDO'?(r.actualAmount??r.expectedAmount??0):0;
+  document.getElementById('receipt-date').value=r.actualDate||r.checkedDate||today();
+  document.getElementById('receipt-notes').value=r.actualNotes||r.checkNotes||'';
+  document.getElementById('receipt-admin-warning').classList.toggle('hidden',!(locked&&ST.isAdmin));
+  receiptStatusChanged();document.getElementById('receipt-modal').classList.remove('hidden');
+}
+async function saveReceipt(e){
+  e.preventDefault();const id=document.getElementById('receipt-id').value,r=ST.receipts.find(x=>x.id===id);if(!r)return;
+  const sale=ST.sales.find(x=>x.id===r.saleId),locked=sale&&['PROGRAMADA','PAGA','CANCELADA'].includes(sale.status);
+  if(locked&&!ST.isAdmin){toast('Somente administradores podem editar recebimentos após fechamento/pagamento.','error');closeModal('receipt-modal');return}
+  const status=document.getElementById('receipt-status').value,date=document.getElementById('receipt-date').value,notes=document.getElementById('receipt-notes').value.trim();
+  const amount=status==='RECEBIDO'?Number(document.getElementById('receipt-amount').value||0):0;
+  if(status==='RECEBIDO'&&amount<=0){toast('Informe o valor efetivamente recebido.','error');return}
+  const before=receiptState(r),stamp=nowISO();
+  const patch={...r,receiptStatus:status,actualAmount:amount,actualDate:date,actualNotes:notes,checkedDate:date,checkedAtISO:stamp,checkedBy:currentUserName(),checkedByEmail:currentUserEmail(),confirmedBy:status==='RECEBIDO'?currentUserName():'',confirmedByEmail:status==='RECEBIDO'?currentUserEmail():'',confirmedAtISO:status==='RECEBIDO'?stamp:'',updatedAtISO:stamp,adminEditedLockedRecord:locked&&ST.isAdmin};
+  try{
+    await window.fsSetDoc(doc(COL.receipts,id),patch);
+    const msg=status==='RECEBIDO'?`${r.label}: ${money(amount)} recebido em ${dateBR(date)}.`:`${r.label}: conferido como NÃO RECEBIDO em ${dateBR(date)}.`;
+    await logEvent(r.saleId,before==='PENDENTE'?'RECEBIMENTO_CONFERIDO':'RECEBIMENTO_EDITADO',msg,{receiptStatus:status,adminEdit:locked&&ST.isAdmin});
+    await refreshSaleComputed(r.saleId,{preserveSettlement:locked&&ST.isAdmin});
+    closeModal('receipt-modal');toast('Conferência financeira atualizada.','success');queueFinancialDueAlerts(true);
+  }catch(err){console.error(err);toast('Erro ao registrar conferência.','error')}
+}
+async function toggleLate(id){
+  const s=ST.sales.find(x=>x.id===id);if(!s)return;
+  if(['PROGRAMADA','PAGA','CANCELADA'].includes(s.status)){toast('Status congelado após fechamento/pagamento/cancelamento.','warning');return}
+  const next=s.status==='INADIMPLENTE'?'AGUARDANDO_RECEBIMENTO':'INADIMPLENTE';
+  await window.fsSetDoc(doc(COL.sales,id),{...s,status:next,updatedAtISO:nowISO(),updatedBy:currentUserName()});
+  await logEvent(id,'STATUS',next==='INADIMPLENTE'?'Venda marcada como inadimplente.':'Inadimplência removida.');
+  if(next!=='INADIMPLENTE')await refreshSaleComputed(id);
+  toast('Status atualizado.','success');
+}
+async function cancelSale(id){const s=ST.sales.find(x=>x.id===id);if(!s)return;if(['PROGRAMADA','PAGA'].includes(s.status)){toast('Venda incluída em lote ou já paga não pode ser cancelada.','error');return}const reason=prompt('Motivo do cancelamento:');if(!reason)return;await window.fsSetDoc(doc(COL.sales,id),{...s,status:'CANCELADA',is_deleted:false,cancelReason:reason,cancelledAtISO:nowISO(),cancelledBy:currentUserName(),updatedAtISO:nowISO()});await logEvent(id,'CANCELADA','Venda cancelada.',{reason});closeModal('sale-detail-modal');toast('Venda cancelada com histórico preservado.','success')}
+
+function renderDashboard(){
+  const month=document.getElementById('dash-month')?.value||'',sales=visibleSalesBase().filter(s=>saleActive(s)&&(!month||String(s.date||'').slice(0,7)===month));let total=0,comm=0,blocked=0,released=0,paid=0;const sellers={},types={};
+  for(const s of sales){total+=Number(s.saleValue||0);comm+=Number(s.commissionValue||0);if(s.status==='AGUARDANDO_RECEBIMENTO'||s.status==='INADIMPLENTE')blocked+=Number(s.commissionValue||0);if(['LIBERADA','PROGRAMADA'].includes(s.status))released+=Number(s.commissionValue||0);sellers[s.sellerName]=(sellers[s.sellerName]||0)+Number(s.commissionValue||0);for(const i of s.items||[])types[i.type]=(types[i.type]||0)+Number(i.totalValue||0)}
+  paid=visibleSalesBase().filter(s=>s.status==='PAGA'&&String(s.paidAtISO||'').slice(0,7)===month).reduce((a,s)=>a+Number(s.commissionValue||0),0);
+  document.getElementById('kpi-sales').textContent=money(total);document.getElementById('kpi-commission').textContent=money(comm);document.getElementById('kpi-blocked').textContent=money(blocked);document.getElementById('kpi-released').textContent=money(released);document.getElementById('kpi-paid').textContent=money(paid);
+  if(window.Chart){ST.charts.seller?.destroy();ST.charts.type?.destroy();const se=Object.entries(sellers).sort((a,b)=>b[1]-a[1]).slice(0,10),te=Object.entries(types).sort((a,b)=>b[1]-a[1]);ST.charts.seller=new Chart(document.getElementById('sellerChart'),{type:'bar',data:{labels:se.map(x=>x[0]),datasets:[{data:se.map(x=>x[1]),label:'Comissão'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});ST.charts.type=new Chart(document.getElementById('typeChart'),{type:'bar',data:{labels:te.map(x=>x[0]),datasets:[{data:te.map(x=>x[1]),label:'Faturamento'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}})}
+  const next=visibleSalesBase().filter(s=>['LIBERADA','PROGRAMADA'].includes(s.status)).sort((a,b)=>String(a.paymentCycleKey||'').localeCompare(String(b.paymentCycleKey||''))).slice(0,15);document.getElementById('dash-next').innerHTML=next.map(s=>`<div class="py-2 flex justify-between gap-2"><div><b class="text-[10px]">${esc(s.nf)} · ${esc(s.sellerName)}</b><div class="text-[9px] text-slate-500">${esc(s.clientName)} · ciclo ${esc(s.paymentCycleLabel||'-')}</div></div><b class="text-xs text-emerald-700">${money(s.commissionValue)}</b></div>`).join('')||'<div class="text-xs text-slate-400 py-5 text-center">Nenhuma comissão liberada.</div>';
+  const waiting=visibleSalesBase().filter(s=>['AGUARDANDO_RECEBIMENTO','INADIMPLENTE'].includes(s.status)).sort((a,b)=>Number(liberationInfo(b).receivedPercent)-Number(liberationInfo(a).receivedPercent)).slice(0,15);document.getElementById('dash-waiting').innerHTML=waiting.map(s=>{const l=liberationInfo(s);return `<div class="py-2 flex justify-between gap-2"><div><b class="text-[10px]">${esc(s.nf)} · ${esc(s.clientName)}</b><div class="text-[9px] text-slate-500">${l.receivedPercent.toFixed(1)}% recebido · exige ${l.requiredPercent}%</div></div><b class="text-xs">${money(s.commissionValue)}</b></div>`}).join('')||'<div class="text-xs text-slate-400 py-5 text-center">Nenhuma venda aguardando.</div>';
+}
+
+function cycleSalesBase(){
+  const month=document.getElementById('pay-cycle-month')?.value||'',day=Number(document.getElementById('pay-cycle-day')?.value||15);
+  return visibleSalesBase().filter(s=>s.is_deleted!==true&&s.status!=='CANCELADA'&&s.paymentCycleMonth===month&&Number(s.paymentCycleDay)===day&&['LIBERADA','PROGRAMADA','PAGA'].includes(s.status)).sort((a,b)=>sellerLabel(a).localeCompare(sellerLabel(b),'pt-BR')||String(a.nf).localeCompare(String(b.nf)));
+}
+function cycleSales(){
+  const seller=document.getElementById('pay-seller-filter')?.value||'';
+  return cycleSalesBase().filter(s=>!seller||sellerKey(s)===seller);
+}
+function cycleId(){return `${document.getElementById('pay-cycle-month').value}-D${document.getElementById('pay-cycle-day').value}`}
+function paymentSellerGroups(rows){
+  const map=new Map();
+  for(const s of rows){
+    const key=sellerKey(s);if(!map.has(key))map.set(key,{key,name:sellerLabel(s),email:s.sellerEmail||'',sellerId:s.sellerId||'',rows:[],total:0});
+    const g=map.get(key);g.rows.push(s);g.total+=Number(s.commissionValue||0);
+  }
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+}
+function populatePaySellerFilter(rows){
+  const sel=document.getElementById('pay-seller-filter');if(!sel)return;const prev=sel.value,groups=paymentSellerGroups(rows);
+  sel.innerHTML='<option value="">Todos os vendedores</option>'+groups.map(g=>`<option value="${esc(g.key)}">${esc(g.name)} · ${money(g.total)}</option>`).join('');
+  if(groups.some(g=>g.key===prev))sel.value=prev;else sel.value='';
+}
+function setPaySellerFilter(key){const sel=document.getElementById('pay-seller-filter');if(sel)sel.value=key||'';renderPayments()}
+function setPaySellerFilterEncoded(key){setPaySellerFilter(decodeURIComponent(key||''))}
+function normalizeBatchSellerPayments(batch){
+  const old=new Map((batch?.sellerPayments||[]).map(p=>[String(p.key),p])),groups=paymentSellerGroups((batch?.saleIds||[]).map(id=>ST.sales.find(s=>s.id===id)).filter(Boolean));
+  return groups.map(g=>{
+    const p=old.get(g.key),legacyPaid=!p&&batch?.status==='PAGO';
+    return {key:g.key,sellerId:g.sellerId,sellerName:g.name,sellerEmail:g.email,saleIds:g.rows.map(s=>s.id),total:g.total,status:p?.status||(legacyPaid?'PAGO':'PENDENTE'),paidAtISO:p?.paidAtISO||(legacyPaid?batch?.paidAtISO||'':''),paidBy:p?.paidBy||(legacyPaid?batch?.paidBy||'':'')};
+  });
+}
+function batchStatusFromSellerPayments(ps){const paid=ps.filter(p=>p.status==='PAGO').length;return paid===0?'ABERTO':paid===ps.length&&ps.length?'PAGO':'PARCIAL'}
+function batchPill(status){
+  if(status==='PAGO')return '<span class="c-pill c-status-paid">Pago</span>';
+  if(status==='PARCIAL')return '<span class="c-pill bg-amber-100 text-amber-800">Parcial</span>';
+  return '<span class="c-pill c-status-program">Fechado / pendente</span>';
+}
+function renderPayments(){
+  const tb=document.getElementById('payments-body');if(!tb)return;
+  const allRows=cycleSalesBase();populatePaySellerFilter(allRows);
+  const rows=cycleSales(),total=rows.reduce((a,s)=>a+Number(s.commissionValue||0),0),groups=paymentSellerGroups(allRows),batch=ST.batches.find(b=>b.id===cycleId());
+  document.getElementById('payment-summary').innerHTML=[['Comissões exibidas',rows.length],['Vendedores no ciclo',groups.length],['Total exibido',money(total)]].map(x=>`<div class="c-card c-kpi"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('');
+  const selected=document.getElementById('pay-seller-filter')?.value||'';
+  document.getElementById('seller-payment-summary').innerHTML=groups.map(g=>{
+    const paid=g.rows.filter(s=>s.status==='PAGA').reduce((a,s)=>a+Number(s.commissionValue||0),0),pending=g.total-paid;
+    return `<button type="button" class="seller-pay-card text-left ${selected===g.key?'active':''}" onclick="setPaySellerFilterEncoded('${encodeURIComponent(g.key)}')"><div class="flex justify-between gap-2"><div class="min-w-0"><b class="text-xs block truncate">${esc(g.name)}</b><span class="text-[9px] text-slate-500">${g.rows.length} comissão(ões)</span></div><b class="text-sm text-emerald-700 whitespace-nowrap">${money(g.total)}</b></div><div class="mt-2 grid grid-cols-2 gap-2 text-[9px]"><div class="rounded-lg bg-emerald-50 p-2"><span class="text-slate-500">Já pago</span><b class="block text-emerald-700">${money(paid)}</b></div><div class="rounded-lg bg-amber-50 p-2"><span class="text-slate-500">Pendente</span><b class="block text-amber-700">${money(pending)}</b></div></div></button>`;
+  }).join('')||'<div class="text-xs text-slate-400">Nenhuma comissão neste ciclo.</div>';
+
+  let body='',lastSeller='';
+  for(const s of rows){
+    if(!selected&&sellerKey(s)!==lastSeller){
+      lastSeller=sellerKey(s);const g=groups.find(x=>x.key===lastSeller);
+      body+=`<tr class="seller-group-row"><td colspan="7"><div class="flex justify-between gap-2"><b>${esc(g?.name||sellerLabel(s))}</b><b class="text-emerald-700">${money(g?.total||0)}</b></div></td></tr>`;
+    }
+    body+=`<tr><td><b>${esc(s.sellerName)}</b></td><td class="font-bold text-blue-700">${esc(s.nf)}</td><td>${esc(s.clientName)}</td><td>${dateBR(s.liberatedAtISO)}</td><td><b>${esc(s.paymentCycleLabel)}</b></td><td class="text-right font-black text-emerald-700">${money(s.commissionValue)}</td><td>${statusPill(s.status)}</td></tr>`;
+  }
+  tb.innerHTML=body||'<tr><td colspan="7" class="text-center text-slate-400 py-10">Nenhuma comissão para este ciclo/vendedor.</td></tr>';
+  const close=document.getElementById('btn-close-cycle');close.disabled=!allRows.filter(s=>s.status==='LIBERADA').length||!!batch;close.innerHTML=batch?'<i class="fa-solid fa-lock"></i> Ciclo já fechado':'<i class="fa-solid fa-lock"></i> Fechar ciclo';
+  renderBatches();
+}
+async function closePaymentCycle(){
+  if(!ST.canManagePayments){toast('Seu perfil não pode fechar ciclos de pagamento.','error');return}
+  const rows=cycleSalesBase().filter(s=>s.status==='LIBERADA');if(!rows.length)return;
+  const id=cycleId();if(ST.batches.some(b=>b.id===id)){toast('Este ciclo já possui lote.','error');return}
+  const total=rows.reduce((a,s)=>a+Number(s.commissionValue||0),0),groups=paymentSellerGroups(rows);
+  if(!confirm(`Fechar o ciclo ${id} com ${rows.length} comissão(ões), ${groups.length} vendedor(es), total ${money(total)}?`))return;
+  const batch={id,cycleMonth:document.getElementById('pay-cycle-month').value,cycleDay:Number(document.getElementById('pay-cycle-day').value),status:'ABERTO',saleIds:rows.map(s=>s.id),total,sellerPayments:groups.map(g=>({key:g.key,sellerId:g.sellerId,sellerName:g.name,sellerEmail:g.email,saleIds:g.rows.map(s=>s.id),total:g.total,status:'PENDENTE',paidAtISO:'',paidBy:''})),createdAtISO:nowISO(),createdBy:currentUserName(),updatedAtISO:nowISO()};
+  try{
+    await window.fsSetDoc(doc(COL.batches,id),batch);
+    for(const s of rows){await window.fsSetDoc(doc(COL.sales,s.id),{...s,status:'PROGRAMADA',paymentBatchId:id,updatedAtISO:nowISO(),updatedBy:currentUserName()});await logEvent(s.id,'PROGRAMADA',`Comissão incluída no lote ${id}.`)}
+    toast('Ciclo fechado e separado por vendedor.','success');
+  }catch(e){console.error(e);toast('Erro ao fechar ciclo.','error')}
+}
+function renderBatches(){
+  const box=document.getElementById('batch-list');if(!box)return;
+  const rows=[...ST.batches].sort((a,b)=>String(b.id).localeCompare(String(a.id))).slice(0,12);
+  box.innerHTML=rows.map(b=>{
+    const ps=normalizeBatchSellerPayments(b),status=batchStatusFromSellerPayments(ps);
+    return `<div class="c-card p-3"><div class="flex justify-between gap-2"><div><b class="text-xs">${esc(b.id)}</b><div class="text-[9px] text-slate-500">${(b.saleIds||[]).length} comissão(ões) · ${ps.length} vendedor(es) · ${money(b.total)}</div></div>${batchPill(status)}</div>
+      <div class="mt-2">${ps.map(p=>`<div class="batch-seller-row"><div><b class="text-[10px]">${esc(p.sellerName)}</b><div class="text-[9px] text-slate-500">${p.saleIds.length} comissão(ões) · <b>${money(p.total)}</b></div>${p.status==='PAGO'?`<div class="text-[9px] text-emerald-700 font-bold mt-1">Pago em ${dateBR(p.paidAtISO)} · ${esc(p.paidBy||'')}</div>`:'<div class="text-[9px] text-amber-700 font-bold mt-1">Pagamento pendente</div>'}</div><div class="batch-actions flex items-center justify-end gap-1">${p.status!=='PAGO'&&ST.canManagePayments?`<button class="c-btn c-btn-emerald !min-h-8" onclick="markSellerPaid('${esc(b.id)}','${encodeURIComponent(p.key)}')"><i class="fa-solid fa-check"></i> Pagar</button>`:''}${p.status==='PAGO'&&ST.isAdmin?`<button class="c-btn c-btn-light !min-h-8" onclick="editSellerPayment('${esc(b.id)}','${encodeURIComponent(p.key)}')"><i class="fa-solid fa-pen"></i> Editar</button>`:''}</div></div>`).join('')}</div>
+      <div class="mt-3 pt-2 border-t flex flex-wrap justify-end gap-2">${status!=='PAGO'&&ST.canManagePayments?`<button class="c-btn c-btn-emerald !min-h-8" onclick="markBatchPaid('${esc(b.id)}')"><i class="fa-solid fa-check-double"></i> Pagar todos pendentes</button>`:''}${ST.isAdmin?`<button class="c-btn c-btn-light !min-h-8" onclick="openBatchEditor('${esc(b.id)}')"><i class="fa-solid fa-user-shield"></i> Editar ciclo</button>`:''}</div></div>`;
+  }).join('')||'<div class="text-xs text-slate-400">Nenhum lote fechado.</div>';
+}
+async function persistSellerPayment(batch,payment,paidDate){
+  const ps=normalizeBatchSellerPayments(batch).map(p=>p.key===payment.key?{...p,status:paidDate?'PAGO':'PENDENTE',paidAtISO:paidDate||'',paidBy:paidDate?currentUserName():''}:p);
+  const status=batchStatusFromSellerPayments(ps),stamp=nowISO();
+  for(const sid of payment.saleIds||[]){
+    const s=ST.sales.find(x=>x.id===sid);if(!s)continue;
+    const patch={...s,status:paidDate?'PAGA':'PROGRAMADA',paidAtISO:paidDate||'',paymentBatchId:batch.id,updatedAtISO:stamp,updatedBy:currentUserName()};
+    await window.fsSetDoc(doc(COL.sales,sid),patch);
+    await logEvent(sid,paidDate?'COMISSAO_PAGA':'COMISSAO_PAGAMENTO_EDITADO',paidDate?`Comissão do vendedor ${payment.sellerName} paga no lote ${batch.id} em ${dateBR(paidDate)}.`:`Pagamento do vendedor ${payment.sellerName} reaberto no lote ${batch.id}.`,{batchId:batch.id,sellerKey:payment.key,adminEdit:ST.isAdmin});
+  }
+  const paidDates=ps.filter(p=>p.status==='PAGO'&&p.paidAtISO).map(p=>p.paidAtISO).sort();
+  await window.fsSetDoc(doc(COL.batches,batch.id),{...batch,sellerPayments:ps,status,total:ps.reduce((a,p)=>a+Number(p.total||0),0),paidAtISO:status==='PAGO'?(paidDates.at(-1)||paidDate||''):'',paidBy:status==='PAGO'?currentUserName():'',updatedAtISO:stamp,updatedBy:currentUserName()});
+}
+async function markSellerPaid(batchId,encodedKey){
+  if(!ST.canManagePayments){toast('Seu perfil não pode confirmar pagamentos.','error');return}
+  const b=ST.batches.find(x=>x.id===batchId);if(!b)return;const key=decodeURIComponent(encodedKey),p=normalizeBatchSellerPayments(b).find(x=>x.key===key);if(!p)return;
+  const payDate=prompt(`Data real do pagamento para ${p.sellerName} (AAAA-MM-DD):`,today());if(!payDate)return;
+  try{await persistSellerPayment(b,p,payDate);toast(`Pagamento de ${p.sellerName} confirmado.`,'success')}catch(e){console.error(e);toast('Erro ao confirmar pagamento.','error')}
+}
+async function editSellerPayment(batchId,encodedKey){
+  if(!ST.isAdmin){toast('Somente administradores podem editar pagamento já realizado.','error');return}
+  const b=ST.batches.find(x=>x.id===batchId);if(!b)return;const key=decodeURIComponent(encodedKey),p=normalizeBatchSellerPayments(b).find(x=>x.key===key);if(!p)return;
+  const value=prompt(`Editar data do pagamento de ${p.sellerName}.\nInforme AAAA-MM-DD ou deixe em branco para voltar a PENDENTE:`,p.paidAtISO||today());
+  if(value===null)return;if(!value&&!confirm(`Reabrir o pagamento de ${p.sellerName}?`))return;
+  try{await persistSellerPayment(b,p,value.trim());toast('Pagamento administrativo atualizado.','success')}catch(e){console.error(e);toast('Erro ao editar pagamento.','error')}
+}
+async function markBatchPaid(id){
+  if(!ST.canManagePayments){toast('Seu perfil não pode confirmar pagamentos.','error');return}
+  const b=ST.batches.find(x=>x.id===id);if(!b)return;const pending=normalizeBatchSellerPayments(b).filter(p=>p.status!=='PAGO');if(!pending.length)return;
+  const payDate=prompt('Data real do pagamento para todos os vendedores pendentes (AAAA-MM-DD):',today());if(!payDate)return;
+  try{
+    let current={...b,sellerPayments:normalizeBatchSellerPayments(b)};
+    for(const p of pending){await persistSellerPayment(current,p,payDate);current={...current,sellerPayments:current.sellerPayments.map(x=>x.key===p.key?{...x,status:'PAGO',paidAtISO:payDate,paidBy:currentUserName()}:x)}}
+    toast('Pagamentos pendentes marcados como pagos.','success');
+  }catch(e){console.error(e);toast('Erro ao marcar pagamentos.','error')}
+}
+function openBatchEditor(id){
+  if(!ST.isAdmin){toast('Somente administradores podem editar ciclos fechados.','error');return}
+  const b=ST.batches.find(x=>x.id===id);if(!b)return;
+  const candidates=visibleSalesBase().filter(s=>s.is_deleted!==true&&s.status!=='CANCELADA'&&s.paymentCycleMonth===b.cycleMonth&&Number(s.paymentCycleDay)===Number(b.cycleDay)&&(!s.paymentBatchId||s.paymentBatchId===b.id));
+  const selected=new Set(b.saleIds||[]);
+  document.getElementById('batch-edit-id').value=b.id;
+  document.getElementById('batch-edit-subtitle').textContent=`${b.id} · ${dateBR(b.createdAtISO)} · total atual ${money(b.total)}`;
+  document.getElementById('batch-edit-notes').value=b.adminNotes||'';
+  document.getElementById('batch-edit-sales').innerHTML=candidates.map(s=>`<label class="flex items-center gap-3 px-3 py-2.5 text-[10px] cursor-pointer hover:bg-slate-50"><input class="batch-edit-sale" type="checkbox" value="${esc(s.id)}" ${selected.has(s.id)?'checked':''}><span class="min-w-0 flex-1"><b class="block">${esc(s.sellerName)} · NF ${esc(s.nf)}</b><span class="text-slate-500 block truncate">${esc(s.clientName)}</span></span><b class="text-emerald-700 whitespace-nowrap">${money(s.commissionValue)}</b></label>`).join('')||'<div class="p-4 text-xs text-slate-400">Nenhuma comissão elegível.</div>';
+  document.getElementById('batch-edit-count').textContent=`${selected.size} selecionada(s)`;
+  document.querySelectorAll('.batch-edit-sale').forEach(x=>x.addEventListener('change',()=>{document.getElementById('batch-edit-count').textContent=`${document.querySelectorAll('.batch-edit-sale:checked').length} selecionada(s)`}));
+  document.getElementById('batch-edit-modal').classList.remove('hidden');
+}
+async function saveBatchEditor(e){
+  e.preventDefault();if(!ST.isAdmin)return;
+  const id=document.getElementById('batch-edit-id').value,b=ST.batches.find(x=>x.id===id);if(!b)return;
+  const selected=[...document.querySelectorAll('.batch-edit-sale:checked')].map(x=>x.value);if(!selected.length){toast('O ciclo precisa manter ao menos uma comissão.','error');return}
+  const oldIds=new Set(b.saleIds||[]),newIds=new Set(selected),oldPs=normalizeBatchSellerPayments(b),stamp=nowISO();
+  const selectedSales=selected.map(sid=>ST.sales.find(s=>s.id===sid)).filter(Boolean),newGroups=paymentSellerGroups(selectedSales);
+  const newPs=newGroups.map(g=>{
+    const old=oldPs.find(p=>p.key===g.key),same=old&&old.saleIds.length===g.rows.length&&old.saleIds.every(x=>g.rows.some(s=>s.id===x));
+    return {key:g.key,sellerId:g.sellerId,sellerName:g.name,sellerEmail:g.email,saleIds:g.rows.map(s=>s.id),total:g.total,status:same?old.status:'PENDENTE',paidAtISO:same?old.paidAtISO:'',paidBy:same?old.paidBy:''};
+  });
+  try{
+    for(const sid of oldIds){
+      if(newIds.has(sid))continue;const s=ST.sales.find(x=>x.id===sid);if(!s)continue;const li=liberationInfo(s),status=li.liberated?'LIBERADA':'AGUARDANDO_RECEBIMENTO';
+      await window.fsSetDoc(doc(COL.sales,sid),{...s,status,paymentBatchId:'',paidAtISO:'',updatedAtISO:stamp,updatedBy:currentUserName()});
+      await logEvent(sid,'CICLO_EDITADO',`Comissão removida do lote ${id} por administrador.`,{batchId:id});
+    }
+    for(const s of selectedSales){
+      const p=newPs.find(x=>x.key===sellerKey(s)),paid=p?.status==='PAGO';
+      await window.fsSetDoc(doc(COL.sales,s.id),{...s,status:paid?'PAGA':'PROGRAMADA',paymentBatchId:id,paidAtISO:paid?(p.paidAtISO||''):'',updatedAtISO:stamp,updatedBy:currentUserName()});
+      if(!oldIds.has(s.id))await logEvent(s.id,'CICLO_EDITADO',`Comissão incluída administrativamente no lote ${id}.`,{batchId:id});
+    }
+    const status=batchStatusFromSellerPayments(newPs),history=[...(b.adminHistory||[]),{atISO:stamp,by:currentUserName(),beforeSaleIds:[...oldIds],afterSaleIds:selected,notes:document.getElementById('batch-edit-notes').value.trim()}].slice(-30);
+    await window.fsSetDoc(doc(COL.batches,id),{...b,saleIds:selected,total:selectedSales.reduce((a,s)=>a+Number(s.commissionValue||0),0),sellerPayments:newPs,status,paidAtISO:status==='PAGO'?(newPs.map(p=>p.paidAtISO).filter(Boolean).sort().at(-1)||''):'',adminNotes:document.getElementById('batch-edit-notes').value.trim(),adminHistory:history,updatedAtISO:stamp,updatedBy:currentUserName()});
+    closeModal('batch-edit-modal');toast('Ciclo fechado atualizado pelo administrador.','success');
+  }catch(err){console.error(err);toast('Erro ao editar ciclo.','error')}
+}
+
+function populateMatrixSelectors(){
+  const cat=document.getElementById('matrix-category');if(!cat)return;const v=cat.value,cats=Object.keys(ST.matrix||{}).sort();cat.innerHTML=cats.map(x=>`<option>${esc(x)}</option>`).join('');if(cats.includes(v))cat.value=v;else cat.value=cats[0]||'';document.getElementById('matrix-category-list').innerHTML=cats.map(x=>`<option value="${esc(x)}">`).join('');renderMatrixModels();
+}
+function renderMatrixModels(){const cat=document.getElementById('matrix-category').value,sel=document.getElementById('matrix-model'),v=sel.value,mods=ST.matrix?.[cat]||[];sel.innerHTML=mods.map(x=>`<option value="${esc(x.modelo)}">${esc(x.modelo)}</option>`).join('');if(mods.some(x=>x.modelo===v))sel.value=v;else sel.value=mods[0]?.modelo||'';renderMatrixEditor()}
+function renderMatrixEditor(){
+  const box=document.getElementById('matrix-editor');if(!box)return;const cat=document.getElementById('matrix-category')?.value,model=document.getElementById('matrix-model')?.value,m=(ST.matrix?.[cat]||[]).find(x=>x.modelo===model);if(!m){box.innerHTML='<div class="text-xs text-slate-400 py-8 text-center">Selecione ou adicione um modelo.</div>';return}
+  const ranges=[...(m.faixas||[])];box.innerHTML=`<div class="flex justify-between gap-2 mb-3"><div><b class="text-sm">${esc(cat)} · ${esc(model)}</b><p class="text-[10px] text-slate-500">Revisão atual: ${ST.matrixRevision}. Vendas já gravadas mantêm o percentual/revisão usados no lançamento; a tabela nova vale para novos cálculos.</p></div><button class="c-btn c-btn-danger" onclick="deleteMatrixModel()"><i class="fa-solid fa-trash"></i> Excluir modelo</button></div><div class="matrix-grid overflow-auto"><table class="c-table w-full max-w-2xl"><thead><tr><th>Ordem</th><th>Comissão (%)</th><th>Preço referência (R$)</th></tr></thead><tbody>${ranges.map((r,i)=>`<tr><td>${i+1}</td><td><input id="mx-com-${i}" type="number" step="0.1" class="c-input" value="${Number(r.com)}"></td><td><input id="mx-price-${i}" type="number" step="0.01" class="c-input" value="${Number(r.preco).toFixed(2)}"></td></tr>`).join('')}</tbody></table></div><div class="mt-3 text-[10px] text-slate-500">Regra atual: para cada faixa, a comissão é escolhida usando a próxima faixa inferior como limite; abaixo da última faixa, a comissão é 0%.</div>`;
+}
+function applyMatrixEditor(){
+  const cat=document.getElementById('matrix-category').value,model=document.getElementById('matrix-model').value,m=(ST.matrix?.[cat]||[]).find(x=>x.modelo===model);if(!m)return;m.faixas=(m.faixas||[]).map((r,i)=>({com:Number(document.getElementById('mx-com-'+i)?.value||0),preco:Number(document.getElementById('mx-price-'+i)?.value||0)}));
+}
+function validateMatrixConfig(){
+  const errors=[];
+  for(const [cat,models] of Object.entries(ST.matrix||{})){
+    if(!Array.isArray(models)||!models.length){errors.push(`${cat}: categoria sem modelos.`);continue}
+    const seen=new Set();
+    for(const m of models){
+      const key=norm(m.modelo);if(!key){errors.push(`${cat}: modelo sem nome.`);continue}
+      if(seen.has(key))errors.push(`${cat}: modelo duplicado "${m.modelo}".`);seen.add(key);
+      const f=Array.isArray(m.faixas)?m.faixas:[];
+      if(!f.length){errors.push(`${cat} / ${m.modelo}: sem faixas.`);continue}
+      for(let i=0;i<f.length;i++){
+        const preco=Number(f[i].preco),com=Number(f[i].com);
+        if(!(preco>0))errors.push(`${cat} / ${m.modelo}: preço inválido na faixa ${i+1}.`);
+        if(com<0||com>100||!Number.isFinite(com))errors.push(`${cat} / ${m.modelo}: comissão inválida na faixa ${i+1}.`);
+        if(i>0&&Number(f[i-1].preco)<=preco)errors.push(`${cat} / ${m.modelo}: os preços devem estar em ordem decrescente.`);
+        if(i>0&&Number(f[i-1].com)<com)errors.push(`${cat} / ${m.modelo}: as comissões devem estar em ordem decrescente.`);
+      }
+    }
+  }
+  return [...new Set(errors)];
+}
+function renderMatrixHistory(){
+  const box=document.getElementById('matrix-history');if(!box)return;
+  box.innerHTML=(ST.matrixHistory||[]).slice(0,20).map(h=>`<div class="py-2 flex justify-between gap-3"><div><b class="text-[10px]">Revisão ${Number(h.revision||0)}</b><div class="text-[9px] text-slate-500">${esc(h.note||'Tabela de preços/comissões atualizada.')}</div><div class="text-[9px] text-slate-400">${esc(h.createdBy||h.updatedBy||'-')}</div></div><span class="text-[9px] text-slate-400 whitespace-nowrap">${h.createdAtISO?new Date(h.createdAtISO).toLocaleString('pt-BR'):'-'}</span></div>`).join('')||'<div class="text-xs text-slate-400 py-5 text-center">Nenhuma revisão registrada.</div>';
+}
+async function saveMatrixConfig(){
+  if(!ST.canEditMatrix){toast('Somente Master/Administrativo pode alterar a tabela.','error');return}
+  applyMatrixEditor();
+  const errors=validateMatrixConfig();if(errors.length){alert('A tabela não pode ser salva:\n\n- '+errors.slice(0,20).join('\n- '));return}
+  const next=ST.matrixRevision+1,stamp=nowISO(),snapshot=structuredClone(ST.matrix),note=prompt('Observação da alteração (opcional):','Atualização da tabela de preços e comissões')||'Atualização da tabela de preços e comissões';
+  try{
+    await window.fsSetDoc(doc(COL.config,'matriz'),{matrix:snapshot,revision:next,updatedAtISO:stamp,updatedBy:currentUserName()});
+    await window.fsSetDoc(doc(COL.matrixHistory,`matriz_rev_${next}`),{revision:next,matrix:snapshot,createdAtISO:stamp,createdBy:currentUserName(),createdByEmail:currentUserEmail(),note});
+    toast(`Tabela salva como revisão ${next}.`,'success');
+  }catch(e){console.error(e);toast('Erro ao salvar tabela.','error')}
+}
+
+function addMatrixModel(){if(!ST.canEditMatrix){toast('Seu perfil não pode alterar a tabela.','error');return}document.getElementById('new-matrix-category').value=document.getElementById('matrix-category')?.value||'';document.getElementById('new-matrix-model').value='';document.getElementById('matrix-model-modal').classList.remove('hidden')}
+function saveNewMatrixModel(e){e.preventDefault();if(!ST.canEditMatrix){toast('Seu perfil não pode alterar a tabela.','error');return}applyMatrixEditor();const cat=document.getElementById('new-matrix-category').value.trim().toUpperCase(),model=document.getElementById('new-matrix-model').value.trim().toUpperCase();if(!cat||!model)return;ST.matrix[cat]=ST.matrix[cat]||[];if(ST.matrix[cat].some(x=>norm(x.modelo)===norm(model))){toast('Modelo já existe nesta categoria.','error');return}ST.matrix[cat].push({modelo:model,faixas:Array.from({length:10},(_,i)=>({com:10-i,preco:0}))});closeModal('matrix-model-modal');populateMatrixSelectors();document.getElementById('matrix-category').value=cat;renderMatrixModels();document.getElementById('matrix-model').value=model;renderMatrixEditor();toast('Modelo adicionado localmente. Clique em Salvar tabela para gravar.','info')}
+function deleteMatrixModel(){if(!ST.canEditMatrix){toast('Seu perfil não pode alterar a tabela.','error');return}const cat=document.getElementById('matrix-category').value,model=document.getElementById('matrix-model').value;if(!confirm(`Excluir ${cat} / ${model} da tabela? A exclusão só será gravada ao clicar em Salvar tabela.`))return;ST.matrix[cat]=ST.matrix[cat].filter(x=>x.modelo!==model);if(!ST.matrix[cat].length)delete ST.matrix[cat];populateMatrixSelectors()}
+
+function exportSalesExcel(){
+  if(!window.XLSX){toast('Biblioteca Excel não carregada.','error');return}const rows=filteredSales().map(s=>{const l=liberationInfo(s);return {'NF':s.nf,'Data Venda':s.date,'Cliente':s.clientName,'CNPJ':s.clientCnpj||'','Vendedor':s.sellerName,'Valor Venda':s.saleValue,'Comissão':s.commissionValue,'Recebido':l.received,'% Recebido':l.receivedPercent,'Regra %':l.requiredPercent,'Data Liberação':l.liberatedAt||'','Ciclo':l.cycle?.label||'','Status':statusMeta(s.status)[0]}});const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Vendas');XLSX.writeFile(wb,`Comissoes_Beta_${today()}.xlsx`)
+}
+</script>
+<script type="module" src="core.js"></script>
+</body>
+</html>

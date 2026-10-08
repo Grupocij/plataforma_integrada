@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analítico - Despesas de Viagem - Grupo CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
+        .leadjet-logo-icon { width: 28px; height: 28px; display: inline-block; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .mega-menu { transition: all 0.2s ease-in-out; transform-origin: top; }
+        .group:hover .mega-menu { opacity: 1; visibility: visible; transform: scale(1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50">
+
+    <!-- TELA DE LOGIN / BLOQUEIO -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <div class="flex flex-col items-center justify-center gap-2">
+                <svg class="w-16 h-16" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#002D72"/>
+                    <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#0077C8" fill-opacity="0.8"/>
+                    <path d="M50 30 L65 45 L50 60 L35 45 Z" fill="#64B5F6"/>
+                </svg>
+                <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">PORTAL GRUPO CIJ</h1>
+                <p id="login-message" class="text-xs font-semibold text-slate-500">Sincronizando com o banco de dados...</p>
+            </div>
+            <form id="auth-form" class="space-y-4 text-left hidden" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail Corporativo</label>
+                    <input type="email" id="auth-email" required placeholder="seu.nome@grupocij.com.br" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-amber-600 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Senha</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-amber-600">
+                </div>
+                <button type="submit" class="w-full py-3 bg-[#002d72] hover:bg-blue-900 text-white font-extrabold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO SUPERIOR FIXO Z-9990 -->
+    <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800 sticky top-0 z-[9990] h-16 shrink-0 w-full">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex items-center justify-between h-full gap-4">
+                
+                <!-- LOGO E BADGE -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <div class="p-1.5 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 hidden sm:flex">
+                        <svg class="leadjet-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="#0077C8"/>
+                            <path d="M50 20 L75 45 L50 70 L25 45 Z" fill="#64B5F6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">COMERCIAL & GESTÃO</span>
+                            <span id="user-role-badge-top" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 bg-slate-800 text-slate-300 border-slate-600">Verificando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENU SUPERIOR DESKTOP -->
+                <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center h-full">
+                    
+                    <div id="top-nav-tecnica" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-wrench text-teal-400"></i> Técnica <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Módulos Operacionais</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Andamento de instalações</p></div></a>
+                                <a href="simulador.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calculator"></i></div><div><h4 class="text-xs font-bold text-slate-900">Simulador Financeiro</h4><p class="text-[10px] text-slate-500 mt-0.5">Projeção de consumos</p></div></a>
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Viagens e refeições</p></div></a>
+                                <a href="veiculos_mobile.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-car"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Mobile</h4><p class="text-[10px] text-slate-500 mt-0.5">Retirada de frota</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-vendas" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[38rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Área de Vendas & Comercial</span></div>
+                            <div class="p-2 grid grid-cols-3 gap-1 text-slate-800">
+                                <a href="solicitacao.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-signature"></i></div><div><h4 class="text-xs font-bold text-slate-900">Solicitação CIJ</h4><p class="text-[10px] text-slate-500 mt-0.5">Especificação técnica</p></div></a>
+                                <a href="solicitacoes-lista.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check"></i></div><div><h4 class="text-xs font-bold text-slate-900">Lista de Solicitações</h4><p class="text-[10px] text-slate-500 mt-0.5">Consulta e andamento</p></div></a>
+                                <a href="simulador.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-calculator"></i></div><div><h4 class="text-xs font-bold text-slate-900">Simulador Financeiro</h4><p class="text-[10px] text-slate-500 mt-0.5">Projeção para clientes</p></div></a>
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle de Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Lançamentos e reembolso</p></div></a>
+                                <a href="veiculos_mobile.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-car"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Mobile</h4><p class="text-[10px] text-slate-500 mt-0.5">Retirada da frota</p></div></a>
+                                <a href="tabelas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-pdf"></i></div><div><h4 class="text-xs font-bold text-slate-900">Documentos Oficiais</h4><p class="text-[10px] text-slate-500 mt-0.5">Manuais e arquivos</p></div></a>
+                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Acompanhamento vendas</p></div></a>
+                                <a href="estoque.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4 class="text-xs font-bold text-slate-900">Estoque Equipamentos</h4><p class="text-[10px] text-slate-500 mt-0.5">Consulta de máquinas</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-admin" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-shield-halved text-purple-400"></i> Admin <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 left-1/2 -translate-x-1/2 mt-1 w-[32rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Administrativo & Operações</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="estoque.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div><div><h4 class="text-xs font-bold text-slate-900">Estoque Equipamentos</h4><p class="text-[10px] text-slate-500 mt-0.5">Gestão de entradas e saídas</p></div></a>
+                                <a href="veiculos.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center shrink-0"><i class="fa-solid fa-car-tunnel"></i></div><div><h4 class="text-xs font-bold text-slate-900">Veículos Gerencial</h4><p class="text-[10px] text-slate-500 mt-0.5">Auditoria da frota</p></div></a>
+                                <a href="vendas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-cart-shopping"></i></div><div><h4 class="text-xs font-bold text-slate-900">Vendas (Saídas)</h4><p class="text-[10px] text-slate-500 mt-0.5">Registro faturado</p></div></a>
+                                <a href="painel_administrativo.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-shield-halved"></i></div><div><h4 class="text-xs font-bold text-slate-900">Painel Diretoria</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de comissões</p></div></a>
+                                <a href="usuarios.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-100 flex items-center justify-center shrink-0"><i class="fa-solid fa-users-gear"></i></div><div><h4 class="text-xs font-bold text-slate-900">Gerenciar Usuários</h4><p class="text-[10px] text-slate-500 mt-0.5">Permissões e senhas</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="top-nav-financeiro" class="relative group h-full flex items-center hidden">
+                        <button class="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro <i class="fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform group-hover:rotate-180"></i></button>
+                        <div class="mega-menu absolute top-14 right-0 mt-1 w-[28rem] bg-white rounded-2xl shadow-2xl border border-slate-200 opacity-0 invisible scale-95 z-[9999] overflow-hidden">
+                            <div class="bg-slate-50/80 px-4 py-2 border-b border-slate-100"><span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Gestão Financeira & Resultados</span></div>
+                            <div class="p-2 grid grid-cols-2 gap-1 text-slate-800">
+                                <a href="despesas.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-receipt"></i></div><div><h4 class="text-xs font-bold text-slate-900">Controle de Despesas</h4><p class="text-[10px] text-slate-500 mt-0.5">Aprovação de reembolsos</p></div></a>
+                                <a href="comissoes-azul.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></div><div><h4 class="text-xs font-bold text-slate-900">Comissões Azul</h4><p class="text-[10px] text-slate-500 mt-0.5">Liquidação de vendas</p></div></a>
+                                <a href="dashboard-equip.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-pie"></i></div><div><h4 class="text-xs font-bold text-slate-900">Dashboard Gerencial</h4><p class="text-[10px] text-slate-500 mt-0.5">Faturamento e lucros</p></div></a>
+                                <a href="comissoes-consumiveis.html" class="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div><div><h4 class="text-xs font-bold text-slate-900">Com. Consumíveis</h4><p class="text-[10px] text-slate-500 mt-0.5">Contratos e renovações</p></div></a>
+                            </div>
+                        </div>
+                    </div>
+
+                </nav>
+
+                <!-- BOTÕES DIREITA -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="index.html" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition items-center gap-1.5"><i class="fa-solid fa-house"></i> Home</a>
+                    <button onclick="fazerLogout()" class="hidden lg:flex px-3 py-1.5 rounded-lg text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+                    <!-- BOTÃO HAMBURGUER (MOBILE) -->
+                    <button onclick="toggleMobileMenu()" class="lg:hidden text-slate-300 hover:text-white text-xl p-1 px-2 border border-slate-700 rounded-lg bg-slate-800">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 relative w-full h-full">
+        
+        <!-- MENU LATERAL (OVERLAY APENAS MOBILE) -->
+        <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/60 z-[105] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm lg:hidden"></div>
+        <div id="mobile-sidebar" class="fixed inset-y-0 right-0 w-[280px] bg-[#0f172a] shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 border-l border-slate-700 flex flex-col lg:hidden">
+            <div class="p-5 flex justify-between items-center border-b border-slate-800 bg-[#0b1120]"><span class="font-bold text-white text-sm uppercase tracking-wider">Módulos do Sistema</span><button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white text-2xl"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                
+                <div id="mob-tecnica" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-tecnica')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700"><span class="flex items-center gap-2"><i class="fa-solid fa-wrench text-emerald-400"></i> Técnica</span><i id="sub-tecnica-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-tecnica" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="solicitacoes-lista.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-400"><i class="fa-solid fa-list-check text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Lista Solicitações</span></a>
+                        <a href="simulador.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-calculator text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Simulador Financeiro</span></a>
+                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle Despesas</span></a>
+                        <a href="veiculos_mobile.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-500"><i class="fa-solid fa-car text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Mobile</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-vendas" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-vendas')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-handshake text-blue-400"></i> Comercial</span><i id="sub-vendas-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-vendas" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="solicitacao.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-blue-900/50 flex items-center justify-center shrink-0 border border-blue-800 text-blue-400"><i class="fa-solid fa-file-signature text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Solicitação CIJ</span></a>
+                        <a href="solicitacoes-lista.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-400"><i class="fa-solid fa-list-check text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Lista de Solicitações</span></a>
+                        <a href="simulador.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-calculator text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Simulador Financeiro</span></a>
+                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle de Despesas</span></a>
+                        <a href="veiculos_mobile.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-500"><i class="fa-solid fa-car text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Mobile</span></a>
+                        <a href="tabelas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-400"><i class="fa-solid fa-file-pdf text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Documentos Oficiais</span></a>
+                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
+                        <a href="estoque.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-cyan-900/50 flex items-center justify-center shrink-0 border border-cyan-800 text-cyan-400"><i class="fa-solid fa-boxes-stacked text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Estoque Equipamentos</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-admin" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-admin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-purple-400"></i> Administração</span><i id="sub-admin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-admin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="estoque.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-cyan-900/50 flex items-center justify-center shrink-0 border border-cyan-800 text-cyan-400"><i class="fa-solid fa-boxes-stacked text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Estoque Equipamentos</span></a>
+                        <a href="veiculos.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-teal-900/50 flex items-center justify-center shrink-0 border border-teal-800 text-teal-400"><i class="fa-solid fa-car-tunnel text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Veículos Gerencial</span></a>
+                        <a href="vendas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-rose-900/50 flex items-center justify-center shrink-0 border border-rose-800 text-rose-400"><i class="fa-solid fa-cart-shopping text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Vendas (Saídas)</span></a>
+                        <a href="painel_administrativo.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-purple-900/50 flex items-center justify-center shrink-0 border border-purple-800 text-purple-400"><i class="fa-solid fa-shield-halved text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Painel Administrativo</span></a>
+                        <a href="usuarios.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center shrink-0 border border-slate-700 text-slate-200"><i class="fa-solid fa-users-gear text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Gerenciar Usuários</span></a>
+                    </div>
+                </div>
+
+                <div id="mob-financeiro" class="hidden">
+                    <button onclick="toggleMobSubmenu('sub-fin')" class="w-full flex items-center justify-between p-3 bg-slate-800 rounded-xl text-slate-200 text-sm font-bold border border-slate-700 mt-2"><span class="flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-emerald-400"></i> Financeiro</span><i id="sub-fin-icon" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i></button>
+                    <div id="sub-fin" class="hidden pl-2 pr-2 py-2 space-y-1 mt-1">
+                        <a href="despesas.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-sky-900/50 flex items-center justify-center shrink-0 border border-sky-800 text-sky-400"><i class="fa-solid fa-receipt text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Controle de Despesas</span></a>
+                        <a href="comissoes-azul.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-indigo-900/50 flex items-center justify-center shrink-0 border border-indigo-800 text-indigo-400"><i class="fa-solid fa-chart-line text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Comissões Azul</span></a>
+                        <a href="dashboard-equip.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-emerald-900/50 flex items-center justify-center shrink-0 border border-emerald-800 text-emerald-500"><i class="fa-solid fa-chart-pie text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Dashboard Gerencial</span></a>
+                        <a href="comissoes-consumiveis.html" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700 transition hover:scale-105 origin-left"><div class="w-6 h-6 rounded bg-amber-900/50 flex items-center justify-center shrink-0 border border-amber-800 text-amber-400"><i class="fa-solid fa-file-invoice-dollar text-[10px]"></i></div><span class="text-xs font-semibold text-slate-300">Com. Consumíveis</span></a>
+                    </div>
+                </div>
+
+            </div>
+            <div class="p-4 border-t border-slate-800 bg-[#0b1120]">
+                <button onclick="fazerLogout()" class="w-full py-2.5 rounded-xl text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 transition flex items-center justify-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
+            </div>
+        </div>
+
+        <!-- ÁREA CENTRAL DE CONTEÚDO (DASHBOARD) -->
+        <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
+            
+            <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 shrink-0">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded border border-emerald-300">Dashboard Gerencial</span>
+                        </div>
+                        <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <i class="fa-solid fa-chart-pie text-emerald-600"></i> Dashboard de Despesas
+                        </h1>
+                        <p class="text-slate-500 text-sm mt-1" id="file-status-label">
+                            Coletando lançamentos em tempo real do Módulo de Controle de Despesas.
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Gasto</p>
+                        <h2 class="text-2xl font-black text-slate-900 mt-1" id="kpi-total">R$ 0,00</h2>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qtd. Transações</p>
+                        <h2 class="text-2xl font-black text-slate-900 mt-1" id="kpi-count">0</h2>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                    <div class="min-w-0 flex-1 pr-2">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Maior Categoria</p>
+                        <h2 class="text-lg font-black text-slate-900 mt-1 truncate" id="kpi-top-category">-</h2>
+                        <p class="text-xs font-semibold text-slate-500" id="kpi-top-category-val">R$ 0,00</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition hover:-translate-y-1 hover:shadow-md duration-300">
+                    <div class="min-w-0 flex-1 pr-2">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Maior Cliente</p>
+                        <h2 class="text-lg font-black text-slate-900 mt-1 truncate" id="kpi-top-client">-</h2>
+                        <p class="text-xs font-semibold text-slate-500" id="kpi-top-client-val">R$ 0,00</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILTROS DO DASHBOARD -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4 shrink-0">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-filter text-emerald-600"></i> Filtros do Dashboard
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Técnico / Vendedor</label>
+                        <select id="filtro-tecnico" onchange="window.aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-emerald-600 cursor-pointer">
+                            <option value="">Todos os Técnicos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cliente</label>
+                        <select id="filtro-cliente" onchange="window.aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-emerald-600 cursor-pointer">
+                            <option value="">Todos os Clientes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria</label>
+                        <select id="filtro-categoria" onchange="window.aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-emerald-600 cursor-pointer">
+                            <option value="">Todas as Categorias</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data De</label>
+                        <input type="date" id="filtro-data-de" onchange="window.aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-emerald-600 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Até</label>
+                        <input type="date" id="filtro-data-ate" onchange="window.aplicarFiltrosDashboard()" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-emerald-600 cursor-pointer">
+                    </div>
+                    <div class="lg:col-span-5 flex flex-wrap gap-2 pt-2">
+                        <button onclick="window.setFiltroMesAtual()" class="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold rounded-xl text-xs transition shadow-sm border border-emerald-200 cursor-pointer">Mês Atual</button>
+                        <button onclick="window.limparFiltrosDashboard()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition shadow-sm cursor-pointer">Todo o Período (Limpar)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
+                
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 lg:col-span-2">
+                    <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-emerald-600"></i> Despesas por Categoria
+                    </h3>
+                    <div class="relative h-[300px] w-full">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-credit-card text-emerald-600"></i> Por Cartão Utilizado
+                    </h3>
+                    <div class="relative h-[300px] w-full flex justify-center">
+                        <canvas id="cardChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 lg:col-span-2">
+                    <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-emerald-600"></i> Evolução Diária dos Gastos
+                    </h3>
+                    <div class="relative h-[300px] w-full">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ol text-emerald-600"></i> Maiores Gastos Individuais
+                    </h3>
+                    <div class="overflow-y-auto flex-grow custom-scrollbar" style="max-height: 300px;">
+                        <ul class="space-y-3 pr-2" id="top-expenses-list"></ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TABELA DETALHADA COM PAGINAÇÃO -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-10 shrink-0">
+                <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-table text-emerald-600"></i> Detalhamento das Despesas
+                    </h3>
+                    
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <div class="relative flex-grow md:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="table-search" placeholder="Buscar na tabela..." onkeyup="window.filterTable()" class="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-slate-900">
+                        </div>
+                        
+                        <button onclick="window.exportarDashboardExcel()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 transition shadow-sm cursor-pointer">
+                            <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs min-w-[1000px]">
+                        <thead class="text-[11px] text-white uppercase bg-slate-900 font-bold border-b border-slate-200">
+                            <tr>
+                                <th scope="col" class="px-5 py-3">Relatório</th>
+                                <th scope="col" class="px-5 py-3">Data</th>
+                                <th scope="col" class="px-5 py-3">Técnico / Vendedor</th>
+                                <th scope="col" class="px-5 py-3">Cliente</th>
+                                <th scope="col" class="px-5 py-3">Descrição</th>
+                                <th scope="col" class="px-5 py-3">Categoria</th>
+                                <th scope="col" class="px-5 py-3">Cartão / Pagto</th>
+                                <th scope="col" class="px-5 py-3 text-right">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="divide-y divide-slate-100 font-medium text-slate-700 bg-white"></tbody>
+                    </table>
+                </div>
+
+                <!-- CONTROLES DE PAGINAÇÃO DA TABELA -->
+                <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                    <span class="text-[10px] font-bold text-slate-500" id="info-page-table">Pág. 1 de 1</span>
+                    <div class="flex gap-2">
+                        <button onclick="window.mudarPaginaTabela(-1)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition cursor-pointer shadow-sm disabled:opacity-50"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                        <button onclick="window.mudarPaginaTabela(1)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition cursor-pointer shadow-sm disabled:opacity-50"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- UI SCRIPTS DE INTERAÇÃO -->
+    <script>
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if(sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        };
+
+        window.toggleMobSubmenu = function(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        };
+
+        // FUNÇÃO DE PERMISSÕES PARA DESTRAVAR O MENU (Requisito do Core)
+        window.verificarPermissoesUsuario = function(isAdmin, isTecnico, isVendedor, nomeUsuario) {
+            const badgeTop = document.getElementById('user-role-badge-top');
+            const txt = (isAdmin ? 'Admin / Financeiro' : (isTecnico ? 'Técnico' : (isVendedor ? 'Vendedor' : 'Acesso Restrito')));
+            if(badgeTop) badgeTop.innerText = txt + ' • ' + nomeUsuario;
+            
+            const showTecnica = isAdmin || isTecnico;
+            const showVendas = isAdmin || isVendedor;
+            const showAdmin = isAdmin;
+            const showFin = isAdmin;
+
+            document.getElementById('top-nav-tecnica')?.classList.toggle('hidden', !showTecnica);
+            document.getElementById('top-nav-vendas')?.classList.toggle('hidden', !showVendas);
+            document.getElementById('top-nav-admin')?.classList.toggle('hidden', !showAdmin);
+            document.getElementById('top-nav-financeiro')?.classList.toggle('hidden', !showFin);
+
+            document.getElementById('mob-tecnica')?.classList.toggle('hidden', !showTecnica);
+            document.getElementById('mob-vendas')?.classList.toggle('hidden', !showVendas);
+            document.getElementById('mob-admin')?.classList.toggle('hidden', !showAdmin);
+            document.getElementById('mob-financeiro')?.classList.toggle('hidden', !showFin);
+        };
+    </script>
+
+    <!-- MOTOR CENTRAL DO SISTEMA -->
+    <script type="module" src="core.js"></script>
+
+    <!-- LÓGICA DO DASHBOARD (CHART.JS E FILTROS) -->
+    <script>
+        const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        let categoryChartInstance = null;
+        let cardChartInstance = null;
+        let timelineChartInstance = null;
+        
+        let currentExpenses = [];
+        let rawExpensesMaster = [];
+        
+        // Paginação State
+        window.tablePage = 1;
+        window.tablePerPage = 10;
+        window.filteredTableData = [];
+
+        // EXTRATORES BLINDADOS DO PADRÃO CORE
+        window.parseMoney = function(val) {
+            if (typeof val === 'number') return val;
+            if (!val) return 0;
+            let s = String(val).trim();
+            s = s.replace(/[^\d.,-]/g, '');
+            if (s.includes(',') && s.includes('.')) {
+                const lastComma = s.lastIndexOf(',');
+                const lastDot = s.lastIndexOf('.');
+                if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
+                else s = s.replace(/,/g, '');
+            } else if (s.includes(',')) {
+                s = s.replace(',', '.');
+            }
+            return parseFloat(s) || 0;
+        };
+
+        window.normalizeDate = function(d) {
+            if (!d) return '';
+            let s = String(d).trim();
+            if (s.includes('/')) {
+                const p = s.split('/');
+                if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+            }
+            if (!isNaN(Number(s)) && s.length > 10) {
+                return new Date(Number(s)).toISOString().split('T')[0];
+            }
+            return s.substring(0, 10);
+        };
+
+        window.setFiltroMesAtual = function() {
+            const date = new Date();
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(y, date.getMonth() + 1, 0).getDate();
+            
+            const elFrom = document.getElementById('filtro-data-de');
+            const elTo = document.getElementById('filtro-data-ate');
+            
+            if(elFrom) elFrom.value = `${y}-${m}-01`;
+            if(elTo) elTo.value = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+            
+            window.aplicarFiltrosDashboard();
+        };
+
+        // 1. INICIALIZAÇÃO DO MÓDULO PELO CORE.JS
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
+
+            if (document.getElementById('filtro-data-de') && !document.getElementById('filtro-data-de').value) {
+                window.setFiltroMesAtual();
+            }
+
+            const despesasCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'despesas_relatorio_novo');
+            
+            window.fsOnSnapshot(despesasCol, (snap) => {
+                const rawList = [];
+                snap.forEach(d => rawList.push(d.data()));
+                window.processarDadosFirebase(rawList);
+            });
+        };
+
+        window.processarDadosFirebase = function(firebaseList) {
+            const mapped = firebaseList.map(item => {
+                const cat = item.categoria === 'Outros' && item.categoria_outros ? `Outros (${item.categoria_outros})` : (item.categoria || 'Geral');
+                const crd = item.cartao && item.cartao !== 'Não se aplica' ? item.cartao : (item.pagamento || 'Dinheiro/Pix');
+                
+                // RESTRIÇÃO DE VISÃO GLOBAL PARA TÉCNICOS/VENDEDORES
+                if (window.userVisaoGlobal === false && item.autor !== window.currentUser.email) {
+                    return null;
+                }
+
+                const dateRaw = item.data_pagamento || item.data_vencimento || item.data || item.createdAt || new Date().toISOString();
+
+                return {
+                    num_relatorio: item.num_relatorio || 'REL-1001',
+                    date: window.normalizeDate(dateRaw),
+                    technician: item.tecnico || 'N/I',
+                    client: item.cliente ? `${item.cliente} (${item.cidade || 'N/I'})` : 'Diversos',
+                    clientOnly: item.cliente || 'Diversos',
+                    description: item.descricao || 'Despesa',
+                    category: cat,
+                    card: crd,
+                    amount: window.parseMoney(item.valor || item.value || item.valorDespesa || 0)
+                };
+            }).filter(Boolean);
+
+            rawExpensesMaster = mapped;
+            
+            const labelEl = document.getElementById('file-status-label');
+            if(labelEl) {
+                labelEl.innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Sincronizado com o Módulo de Despesas (${rawExpensesMaster.length} lançamentos)</span>`;
+            }
+
+            popularFiltrosSelects(rawExpensesMaster);
+            window.aplicarFiltrosDashboard();
+        };
+
+        function popularFiltrosSelects(data) {
+            const tecnicos = [...new Set(data.map(i => i.technician))].sort();
+            const clientes = [...new Set(data.map(i => i.clientOnly))].sort();
+            const categorias = [...new Set(data.map(i => i.category))].sort();
+
+            const selTec = document.getElementById('filtro-tecnico');
+            const selCli = document.getElementById('filtro-cliente');
+            const selCat = document.getElementById('filtro-categoria');
+
+            if(!selTec || !selCli || !selCat) return;
+
+            const currentTec = selTec.value;
+            const currentCli = selCli.value;
+            const currentCat = selCat.value;
+
+            selTec.innerHTML = '<option value="">Todos os Técnicos</option>';
+            tecnicos.forEach(t => selTec.innerHTML += `<option value="${t}">${t}</option>`);
+            selTec.value = currentTec;
+
+            selCli.innerHTML = '<option value="">Todos os Clientes</option>';
+            clientes.forEach(c => selCli.innerHTML += `<option value="${c}">${c}</option>`);
+            selCli.value = currentCli;
+
+            selCat.innerHTML = '<option value="">Todas as Categorias</option>';
+            categorias.forEach(cat => selCat.innerHTML += `<option value="${cat}">${cat}</option>`);
+            selCat.value = currentCat;
+        }
+
+        window.aplicarFiltrosDashboard = function() {
+            const fTec = document.getElementById('filtro-tecnico')?.value || '';
+            const fCli = document.getElementById('filtro-cliente')?.value || '';
+            const fCat = document.getElementById('filtro-categoria')?.value || '';
+            const fDe = document.getElementById('filtro-data-de')?.value || '';
+            const fAte = document.getElementById('filtro-data-ate')?.value || '';
+
+            currentExpenses = rawExpensesMaster.filter(item => {
+                if (fTec && item.technician !== fTec) return false;
+                if (fCli && item.clientOnly !== fCli) return false;
+                if (fCat && item.category !== fCat) return false;
+                if (fDe && item.date < fDe) return false;
+                if (fAte && item.date > fAte) return false;
+                return true;
+            });
+
+            renderDashboard(currentExpenses);
+            window.filterTable(); 
+        };
+
+        window.limparFiltrosDashboard = function() {
+            document.getElementById('filtro-tecnico').value = '';
+            document.getElementById('filtro-cliente').value = '';
+            document.getElementById('filtro-categoria').value = '';
+            document.getElementById('filtro-data-de').value = '';
+            document.getElementById('filtro-data-ate').value = '';
+            document.getElementById('table-search').value = '';
+            window.aplicarFiltrosDashboard();
+        };
+
+        function renderDashboard(data) {
+            if (!data) return;
+
+            const totalSpent = data.reduce((sum, item) => sum + (item.amount || 0), 0);
+            const transactionCount = data.length;
+
+            const categoryTotals = {};
+            const clientTotals = {};
+            const cardTotals = {};
+            const dateTotals = {};
+
+            data.forEach(item => {
+                const cat = item.category || 'Outros';
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + item.amount;
+
+                const cli = item.client || 'Não Informado';
+                clientTotals[cli] = (clientTotals[cli] || 0) + item.amount;
+
+                const card = item.card || 'Outros';
+                cardTotals[card] = (cardTotals[card] || 0) + item.amount;
+
+                const dt = item.date || 'Desconhecido';
+                dateTotals[dt] = (dateTotals[dt] || 0) + item.amount;
+            });
+
+            let topCategory = '-';
+            let topCategoryVal = 0;
+            for (let [cat, val] of Object.entries(categoryTotals)) {
+                if (val > topCategoryVal) { topCategoryVal = val; topCategory = cat; }
+            }
+
+            let topClient = '-';
+            let topClientVal = 0;
+            for (let [cli, val] of Object.entries(clientTotals)) {
+                if (val > topClientVal) { topClientVal = val; topClient = cli; }
+            }
+
+            const top5Expenses = [...data].sort((a, b) => b.amount - a.amount).slice(0, 5);
+
+            document.getElementById('kpi-total').textContent = brlFormatter.format(totalSpent);
+            document.getElementById('kpi-count').textContent = transactionCount;
+            document.getElementById('kpi-top-category').textContent = topCategory;
+            document.getElementById('kpi-top-category-val').textContent = brlFormatter.format(topCategoryVal);
+            document.getElementById('kpi-top-client').textContent = topClient;
+            document.getElementById('kpi-top-client-val').textContent = brlFormatter.format(topClientVal);
+
+            const topListEl = document.getElementById('top-expenses-list');
+            topListEl.innerHTML = '';
+            if(top5Expenses.length === 0) {
+                topListEl.innerHTML = '<li class="text-xs text-slate-400 text-center py-4">Nenhum gasto encontrado.</li>';
+            }
+            top5Expenses.forEach(item => {
+                const li = document.createElement('li');
+                li.className = "p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition border border-slate-100 flex justify-between items-center";
+                li.innerHTML = `
+                    <div class="min-w-0 pr-3">
+                        <p class="text-xs font-bold text-slate-800 truncate">${item.description}</p>
+                        <p class="text-[11px] font-medium text-slate-500 mt-1 truncate"><i class="fa-solid fa-user text-[10px] text-emerald-600 mr-0.5"></i> ${item.technician} | <i class="fa-solid fa-building text-[10px] text-indigo-500 mx-0.5"></i> ${item.client}</p>
+                    </div>
+                    <div class="text-xs font-black text-emerald-700 shrink-0 bg-emerald-100 px-2 py-1 rounded-lg">
+                        ${brlFormatter.format(item.amount)}
+                    </div>
+                `;
+                topListEl.appendChild(li);
+            });
+
+            renderCharts(categoryTotals, cardTotals, dateTotals);
+        }
+
+        // ==========================================
+        // LÓGICA DE PAGINAÇÃO DA TABELA DETALHADA
+        // ==========================================
+        window.filterTable = function() {
+            const query = document.getElementById('table-search').value.toLowerCase();
+            window.filteredTableData = currentExpenses.filter(item => 
+                (item.technician || '').toLowerCase().includes(query) ||
+                (item.client || '').toLowerCase().includes(query) ||
+                (item.description || '').toLowerCase().includes(query) ||
+                (item.category || '').toLowerCase().includes(query) ||
+                (item.card || '').toLowerCase().includes(query) ||
+                (item.num_relatorio || '').toLowerCase().includes(query)
+            );
+            
+            window.filteredTableData.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            
+            window.tablePage = 1; 
+            window.renderPaginatedTable();
+        };
+
+        window.renderPaginatedTable = function() {
+            const tableBody = document.getElementById('data-table-body');
+            if(!tableBody) return;
+            tableBody.innerHTML = '';
+
+            const data = window.filteredTableData;
+
+            if(data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="px-5 py-6 text-center text-slate-400 font-medium">Nenhum registro encontrado.</td></tr>`;
+                document.getElementById('info-page-table').innerText = 'Pág. 1 de 1';
+                return;
+            }
+
+            const totalPages = Math.ceil(data.length / window.tablePerPage) || 1;
+            if (window.tablePage > totalPages) window.tablePage = totalPages;
+            if (window.tablePage < 1) window.tablePage = 1;
+
+            const start = (window.tablePage - 1) * window.tablePerPage;
+            const paginatedItems = data.slice(start, start + window.tablePerPage);
+
+            paginatedItems.forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-white hover:bg-slate-50 transition border-b border-slate-100";
+
+                const dataPartes = item.date ? item.date.split('-') : [];
+                const dataFormatada = dataPartes.length === 3 ? `${dataPartes[2]}/${dataPartes[1]}/${dataPartes[0]}` : item.date;
+
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-bold text-slate-900"><span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg">${item.num_relatorio}</span></td>
+                    <td class="px-5 py-3 whitespace-nowrap text-slate-600">${dataFormatada}</td>
+                    <td class="px-5 py-3 font-bold text-emerald-800">${item.technician}</td>
+                    <td class="px-5 py-3 font-semibold text-slate-800">${item.client}</td>
+                    <td class="px-5 py-3 text-slate-600">${item.description}</td>
+                    <td class="px-5 py-3">
+                        <span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-md border border-indigo-100">${item.category}</span>
+                    </td>
+                    <td class="px-5 py-3 text-slate-600">${item.card}</td>
+                    <td class="px-5 py-3 text-right font-black text-emerald-700">${brlFormatter.format(item.amount)}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            document.getElementById('info-page-table').innerText = `Pág. ${window.tablePage} de ${totalPages}`;
+        };
+
+        window.mudarPaginaTabela = function(dir) {
+            window.tablePage += dir;
+            window.renderPaginatedTable();
+        };
+
+        // ==========================================
+        // GRÁFICOS
+        // ==========================================
+        function renderCharts(categoryTotals, cardTotals, dateTotals) {
+            const palette = ['#059669', '#0284c7', '#4f46e5', '#d97706', '#dc2626', '#0891b2', '#7c3aed'];
+
+            const sortedCat = Object.entries(categoryTotals).sort((a,b) => b[1] - a[1]);
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'bar',
+                data: {
+                    labels: sortedCat.map(x => x[0]),
+                    datasets: [{
+                        label: 'Gasto por Categoria',
+                        data: sortedCat.map(x => x[1]),
+                        backgroundColor: palette,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (c) => ' ' + brlFormatter.format(c.raw) } }
+                    },
+                    scales: {
+                        x: { grid: { borderDash: [2, 4], color: '#f1f5f9' }, ticks: { font: { family: 'Inter' } } },
+                        y: { grid: { display: false }, ticks: { font: { family: 'Inter', weight: 'bold' } } }
+                    }
+                }
+            });
+
+            const ctxCard = document.getElementById('cardChart').getContext('2d');
+            if (cardChartInstance) cardChartInstance.destroy();
+
+            cardChartInstance = new Chart(ctxCard, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(cardTotals),
+                    datasets: [{
+                        data: Object.values(cardTotals),
+                        backgroundColor: ['#059669', '#0284c7', '#d97706', '#dc2626', '#64748b'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { family: 'Inter', size: 11, weight: 'bold' } } },
+                        tooltip: { callbacks: { label: (c) => ` ${c.label}: ${brlFormatter.format(c.raw)}` } }
+                    }
+                }
+            });
+
+            const sortedDates = Object.keys(dateTotals).sort();
+            const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+            if (timelineChartInstance) timelineChartInstance.destroy();
+
+            timelineChartInstance = new Chart(ctxTimeline, {
+                type: 'line',
+                data: {
+                    labels: sortedDates.map(d => {
+                        const parts = d.split('-');
+                        return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+                    }),
+                    datasets: [{
+                        label: 'Gasto Diário',
+                        data: sortedDates.map(d => dateTotals[d]),
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#064e3b',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (c) => ' ' + brlFormatter.format(c.raw) } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [2, 4], color: '#f1f5f9' },
+                            ticks: { font: { family: 'Inter' }, callback: (v) => 'R$ ' + v }
+                        },
+                        x: { grid: { display: false }, ticks: { font: { family: 'Inter', weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+        function getColumnLetter(colIndex) {
+            let letter = '';
+            while (colIndex > 0) {
+                let remainder = (colIndex - 1) % 26;
+                letter = String.fromCharCode(65 + remainder) + letter;
+                colIndex = Math.floor((colIndex - 1) / 26);
+            }
+            return letter;
+        }
+
+        window.exportarDashboardExcel = async function() {
+            if (typeof ExcelJS === 'undefined') { alert('Carregando ExcelJS...'); return; }
+            if (!currentExpenses || currentExpenses.length === 0) { alert('Nenhum dado disponível para exportar com os filtros atuais.'); return; }
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Despesas Filtradas');
+
+            const columnsDef = [
+                { header: 'Relatório', key: 'c1', width: 14 },
+                { header: 'Data', key: 'c2', width: 14 },
+                { header: 'Técnico / Vendedor', key: 'c3', width: 22 },
+                { header: 'Cliente', key: 'c4', width: 25 },
+                { header: 'Descrição', key: 'c5', width: 30 },
+                { header: 'Categoria', key: 'c6', width: 22 },
+                { header: 'Cartão / Pagto', key: 'c7', width: 25 },
+                { header: 'Valor (R$)', key: 'c8', width: 16 }
+            ];
+
+            const dataRows = currentExpenses.map(i => [
+                i.num_relatorio || 'REL-1001',
+                i.date ? i.date.split('-').reverse().join('/') : '',
+                i.technician,
+                i.client,
+                i.description,
+                i.category,
+                i.card,
+                parseFloat(i.amount) || 0
+            ]);
+
+            const lastColLetter = getColumnLetter(columnsDef.length);
+            ws.mergeCells(`A1:${lastColLetter}1`);
+            const titleCell = ws.getCell('A1');
+            titleCell.value = "Dashboard Analítico - Despesas de Viagem - Grupo CIJ";
+            titleCell.font = { name: 'Inter', size: 13, bold: true, color: { argb: 'FFFFFF' } };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F172A' } };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            ws.getRow(1).height = 32;
+
+            ws.addRow([]);
+
+            ws.columns = columnsDef;
+            
+            const headerRow = ws.getRow(3);
+            headerRow.height = 26;
+            headerRow.font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '059669' } };
+            headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            headerRow.eachCell(cell => {
+                cell.border = { top: { style: 'thin', color: { argb: '0F172A' } }, bottom: { style: 'medium', color: { argb: '0F172A' } }, left: { style: 'thin', color: { argb: 'CBD5E1' } }, right: { style: 'thin', color: { argb: 'CBD5E1' } } };
+            });
+
+            dataRows.forEach(rowData => {
+                const row = ws.addRow(rowData);
+                row.height = 20;
+                row.eachCell((cell, colNumber) => {
+                    cell.font = { name: 'Inter', size: 9, color: { argb: '0F172A' } };
+                    cell.border = { top: { style: 'thin', color: { argb: 'E2E8F0' } }, bottom: { style: 'thin', color: { argb: 'E2E8F0' } }, left: { style: 'thin', color: { argb: 'E2E8F0' } }, right: { style: 'thin', color: { argb: 'E2E8F0' } } };
+                    if (colNumber === 8) { cell.numFmt = '"R$ "#,##0.00'; cell.alignment = { horizontal: 'right', vertical: 'middle' }; } 
+                    else if (colNumber === 1 || colNumber === 2) { cell.alignment = { horizontal: 'center', vertical: 'middle' }; } 
+                    else { cell.alignment = { horizontal: 'left', vertical: 'middle' }; }
+                });
+            });
+
+            const totalsRowData = new Array(columnsDef.length).fill('');
+            totalsRowData[0] = 'TOTAL GERAL';
+            let sumVal = 0;
+            dataRows.forEach(r => sumVal += parseFloat(r[7]) || 0);
+            totalsRowData[7] = sumVal;
+
+            const tRow = ws.addRow(totalsRowData);
+            tRow.height = 24;
+            tRow.font = { name: 'Inter', size: 10, bold: true, color: { argb: '0F172A' } };
+            tRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+            tRow.eachCell((cell, colNumber) => {
+                cell.border = { top: { style: 'thin', color: { argb: '0F172A' } }, bottom: { style: 'double', color: { argb: '0F172A' } }, left: { style: 'thin', color: { argb: 'CBD5E1' } }, right: { style: 'thin', color: { argb: 'CBD5E1' } } };
+                if (colNumber === 8) { cell.numFmt = '"R$ "#,##0.00'; cell.alignment = { horizontal: 'right', vertical: 'middle' }; } 
+                else { cell.alignment = { horizontal: 'left', vertical: 'middle' }; }
+            });
+
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Dashboard_Despesas_GrupoCIJ_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        };
+    </script>
+</body>
+</html>

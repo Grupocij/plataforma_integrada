@@ -1,0 +1,25 @@
+// FRAGMENTO: inserir dentro de match /b/{bucket}/o.
+// Evitar um allow geral que também libere despesas_comprovantes. Veja LEIA-ME.txt.
+function dv2StorageEmail() { return request.auth.token.email.lower(); }
+function dv2StorageGrant() {
+  return firestore.get(/databases/(default)/documents/artifacts/plataforma-cij/public/data/despesas_permissoes/$(dv2StorageEmail())).data;
+}
+function dv2StorageMaster() {
+  return request.auth != null &&
+    (dv2StorageEmail() in ['marcos@grupocij.com', 'marcos@grupocij.com.br',
+      'marcos.bazacas@grupocij.com', 'marcos.bazacas@grupocij.com.br',
+      'adm@grupocij.com', 'adm@grupocij.com.br'] || dv2StorageGrant().master == true);
+}
+function dv2StorageModule() {
+  return request.auth != null && (dv2StorageMaster() || dv2StorageGrant().moduloAtivo == true);
+}
+match /despesas_comprovantes/{uid}/{expenseId}/{file} {
+  allow read: if dv2StorageModule() && (request.auth.uid == uid || dv2StorageMaster() ||
+    dv2StorageGrant().verTodos == true || dv2StorageGrant().gerenciarRelatorios == true);
+  allow create: if dv2StorageModule() && request.auth.uid == uid &&
+    request.resource.size > 0 && request.resource.size <= 8 * 1024 * 1024 &&
+    request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+  allow update: if false;
+  allow delete: if dv2StorageModule() && (request.auth.uid == uid || dv2StorageMaster() ||
+    dv2StorageGrant().gerenciarRelatorios == true);
+}

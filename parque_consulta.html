@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Consulta Parque - Portal CIJ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{font-family:Inter,sans-serif;background:#f8fafc;color:#0f172a}
+.ro-card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.ro-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:36px;padding:.5rem .72rem;border-radius:.75rem;font-size:.68rem;font-weight:800;transition:.15s}
+.ro-btn-light{background:#fff;border:1px solid #cbd5e1;color:#334155}.ro-btn-light:hover{background:#f8fafc}.ro-btn-primary{background:#2563eb;color:#fff}.ro-btn-primary:hover{background:#1d4ed8}
+.ro-input{width:100%;height:38px;border:1px solid #cbd5e1;background:#fff;border-radius:.75rem;padding:.5rem .7rem;font-size:.72rem;outline:none}.ro-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.ro-label{display:block;font-size:.55rem;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.ro-pill{display:inline-flex;align-items:center;gap:.32rem;border-radius:999px;padding:.24rem .55rem;font-size:.57rem;font-weight:900}
+.ro-table th{background:#f1f5f9;color:#64748b;text-transform:uppercase;font-size:.55rem;letter-spacing:.025em;padding:.55rem .62rem;text-align:left;position:sticky;top:0;z-index:2}.ro-table td{padding:.58rem .62rem;border-top:1px solid #f1f5f9;font-size:.68rem;vertical-align:middle}
+.ro-scroll::-webkit-scrollbar{width:6px;height:6px}.ro-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+.ro-modal{position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,.68);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:.55rem}.ro-modal.hidden{display:none}.ro-modal-card{width:min(980px,98vw);max-height:95vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:1.1rem;box-shadow:0 25px 70px rgba(15,23,42,.3)}
+.ro-kpi{padding:.65rem .75rem}.ro-kpi span{font-size:.52rem;color:#94a3b8;text-transform:uppercase;font-weight:900}.ro-kpi b{display:block;font-size:1.05rem;margin-top:.06rem}
+.ro-timeline{position:relative;padding-left:1rem}.ro-timeline:before{content:"";position:absolute;left:.28rem;top:.35rem;bottom:.35rem;width:2px;background:#e2e8f0}.ro-event{position:relative;padding:0 0 .85rem .9rem}.ro-event:before{content:"";position:absolute;left:-.91rem;top:.28rem;width:.5rem;height:.5rem;background:#3b82f6;border-radius:99px;box-shadow:0 0 0 3px #eff6ff}.ro-event.osr:before{background:#7c3aed;box-shadow:0 0 0 3px #f5f3ff}.ro-event.transfer:before{background:#f59e0b;box-shadow:0 0 0 3px #fffbeb}
+.ro-pager{display:flex;align-items:center;justify-content:space-between;gap:.65rem;padding:.55rem .7rem;border-top:1px solid #e2e8f0;flex-wrap:wrap}.ro-pager span,.ro-pager label{font-size:.62rem;color:#64748b;font-weight:700}
+.readonly-watermark{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857}
+@media(max-width:720px){#ro-shell{padding:.4rem!important}.ro-modal{padding:.25rem}.ro-modal-card{border-radius:.9rem}.ro-pager{align-items:flex-start;flex-direction:column}.mobile-stack{grid-template-columns:1fr!important}}
+
+.qr-camera-box{position:relative;background:#020617;border-radius:1rem;overflow:hidden;min-height:280px}
+#qr-reader{width:100%;min-height:280px;background:#020617}
+#qr-reader video{object-fit:cover!important;border-radius:.9rem}
+#qr-reader__scan_region{background:#020617!important}
+#qr-reader__dashboard{background:#fff!important;padding:.65rem!important}
+#qr-reader__dashboard_section_swaplink{color:#2563eb!important;font-size:11px!important;font-weight:800!important}
+.qr-guide{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(66vw,260px);aspect-ratio:1;border:3px solid rgba(255,255,255,.88);border-radius:1rem;box-shadow:0 0 0 9999px rgba(2,6,23,.18);pointer-events:none;z-index:5}
+.qr-guide:before,.qr-guide:after{content:"";position:absolute;width:38px;height:38px;border-color:#22c55e}
+.qr-guide:before{left:-4px;top:-4px;border-left:5px solid #22c55e;border-top:5px solid #22c55e;border-radius:12px 0 0 0}
+.qr-guide:after{right:-4px;bottom:-4px;border-right:5px solid #22c55e;border-bottom:5px solid #22c55e;border-radius:0 0 12px 0}
+.qr-status{border-radius:.8rem;padding:.65rem .75rem;font-size:11px;font-weight:700}
+.qr-status.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8}
+.qr-status.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857}
+.qr-status.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.qr-status.error{background:#fff1f2;border:1px solid #fecdd3;color:#be123c}
+
+
+/* V1.2 — experiência mobile */
+.mobile-only{display:none}
+.mobile-machine-card{
+  background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:.85rem;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);transition:.15s
+}
+.mobile-machine-card:active{transform:scale(.985);background:#f8fafc}
+.mobile-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem}
+.mobile-card-model{font-size:.86rem;line-height:1.2;font-weight:900;color:#0f172a}
+.mobile-card-serial{font-size:.68rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;color:#4f46e5;margin-top:.22rem}
+.mobile-card-client{font-size:.7rem;font-weight:800;color:#334155;margin-top:.65rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-card-meta{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-top:.65rem}
+.mobile-card-meta>div{background:#f8fafc;border:1px solid #f1f5f9;border-radius:.7rem;padding:.48rem .55rem;min-width:0}
+.mobile-card-meta span{display:block;font-size:.5rem;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.035em}
+.mobile-card-meta b{display:block;margin-top:.1rem;font-size:.62rem;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-card-footer{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-top:.7rem;padding-top:.65rem;border-top:1px solid #f1f5f9}
+.mobile-kpi-strip{scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.mobile-kpi-strip>.ro-card{scroll-snap-align:start}
+.mobile-bottom-nav{
+  display:none;position:fixed;left:0;right:0;bottom:0;z-index:9000;
+  padding:.38rem max(.45rem,env(safe-area-inset-right)) calc(.38rem + env(safe-area-inset-bottom)) max(.45rem,env(safe-area-inset-left));
+  background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border-top:1px solid #e2e8f0;
+  box-shadow:0 -8px 24px rgba(15,23,42,.08)
+}
+.mobile-bottom-nav-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:.25rem;max-width:520px;margin:0 auto}
+.mobile-nav-btn{
+  min-height:52px;border-radius:.85rem;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.18rem;color:#64748b;font-size:.54rem;font-weight:900
+}
+.mobile-nav-btn i{font-size:1rem}.mobile-nav-btn.primary{background:#2563eb;color:#fff}
+.detail-tabs{display:none}
+.detail-tab-btn{
+  flex:1;min-height:42px;border-radius:.72rem;font-size:.64rem;font-weight:900;color:#64748b;
+  display:flex;align-items:center;justify-content:center;gap:.35rem
+}
+.detail-tab-btn.active{background:#eef2ff;color:#4338ca}
+.detail-panel{display:block}
+.mobile-filter-toggle{display:none}
+.mobile-quickbar{display:none}
+
+@media(max-width:720px){
+  body{background:#f1f5f9}
+  #main-content{height:calc(100vh - 56px)!important;padding-bottom:78px;scroll-behavior:smooth}
+  #ro-shell{padding:.45rem!important;space-y:.5rem}
+  .mobile-only{display:block}
+  .desktop-only{display:none!important}
+  .mobile-bottom-nav{display:block}
+
+  /* topo menor */
+  #ro-hero{padding:.65rem .75rem!important;border-radius:.9rem}
+  #ro-hero .hero-icon{width:32px!important;height:32px!important;border-radius:.7rem!important}
+  #ro-hero h1{font-size:.92rem!important;margin-top:.2rem!important}
+  #ro-hero .hero-subtitle{display:none}
+  #ro-hero .hero-qr{display:none}
+
+  /* busca como ação principal */
+  #ro-filters{padding:.65rem!important;border-radius:.9rem}
+  #ro-filters{grid-template-columns:1fr!important}
+  #ro-filters label:first-child{grid-column:1/-1}
+  #ro-filters .filter-secondary{display:none}
+  #ro-filters.mobile-filters-open .filter-secondary{display:block}
+  .mobile-filter-toggle{display:flex!important;width:100%;margin-top:.45rem}
+  .mobile-quickbar{display:grid!important;grid-template-columns:1fr 54px;gap:.45rem;margin-bottom:.5rem}
+  .mobile-quickbar .ro-input{height:46px;font-size:.8rem;border-radius:.9rem;padding-left:2.3rem!important}
+  .mobile-quickbar .quick-qr{height:46px;width:54px;border-radius:.9rem;font-size:1.05rem}
+  #ro-filters .desktop-search{display:none!important}
+
+  /* indicadores horizontais, menos poluição */
+  #ro-kpis{display:flex!important;overflow-x:auto;gap:.5rem;padding:.05rem 0 .12rem;scrollbar-width:none}
+  #ro-kpis::-webkit-scrollbar{display:none}
+  #ro-kpis .ro-card{min-width:138px;flex:0 0 138px;border-radius:.9rem}
+  #ro-kpis .ro-kpi{padding:.65rem}
+  #ro-kpis .ro-kpi b{font-size:1.05rem}
+
+  /* cards substituem tabela */
+  #machine-table-section{background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+  #machine-table-wrap{display:none!important}
+  #machine-cards{display:grid!important;gap:.55rem}
+  #pager{background:#fff;border:1px solid #e2e8f0;border-radius:.9rem;margin-top:.55rem;padding:.65rem}
+  .ro-pager{align-items:center!important;flex-direction:row!important;justify-content:space-between!important}
+  .ro-pager>div label{display:none}
+  .ro-pager span{font-size:.58rem}
+  .ro-pager .ro-btn{min-width:38px;min-height:38px!important}
+
+  /* modal de equipamento em tela cheia */
+  #machine-modal{padding:0!important;align-items:stretch!important;background:#fff!important}
+  #machine-modal .ro-modal-card{
+    width:100vw!important;height:100dvh!important;max-height:none!important;border:0!important;border-radius:0!important;
+    box-shadow:none!important;display:flex;flex-direction:column;overflow:hidden
+  }
+  #machine-modal .detail-header{padding:.7rem .8rem!important;flex:0 0 auto}
+  #machine-modal .detail-header h2{font-size:1rem!important}
+  #machine-modal .detail-header #detail-subtitle{font-size:.58rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78vw}
+  #machine-modal .detail-body{padding:.55rem .6rem 5rem!important;overflow-y:auto!important;flex:1 1 auto;min-height:0}
+  #machine-modal #detail-kpis{display:flex!important;overflow-x:auto;gap:.45rem;scrollbar-width:none;padding-bottom:.1rem}
+  #machine-modal #detail-kpis::-webkit-scrollbar{display:none}
+  #machine-modal #detail-kpis>.ro-card{min-width:128px;flex:0 0 128px}
+  .detail-tabs{display:flex!important;gap:.3rem;background:#fff;border-bottom:1px solid #e2e8f0;padding:.4rem .55rem;position:sticky;top:0;z-index:18}
+  .detail-panel{display:none!important}
+  .detail-panel.active{display:block!important}
+  #detail-overview-grid{display:block!important}
+  #detail-overview-grid>section{margin-bottom:.55rem}
+  #detail-machine{grid-template-columns:1fr 1fr!important}
+  #detail-history-panel .ro-card{border:0!important;box-shadow:none!important;padding:.15rem .2rem!important}
+  #detail-history{margin-top:.65rem!important}
+  .ro-event{padding-bottom:1rem!important}
+  .ro-event .text-\[10px\]{font-size:.68rem!important;line-height:1.4!important}
+
+  /* QR full screen mais limpo */
+  #qr-modal{padding:0!important;align-items:stretch!important;background:#020617!important}
+  #qr-modal .ro-modal-card{width:100vw!important;height:100dvh!important;max-height:none!important;border:0!important;border-radius:0!important;display:flex;flex-direction:column}
+  #qr-modal .qr-modal-body{overflow-y:auto;flex:1;padding:.65rem!important}
+  .qr-camera-box,#qr-reader{min-height:58vh!important;border-radius:1rem}
+  .qr-guide{width:min(72vw,290px)}
+  #qr-modal .qr-actions{display:grid!important;grid-template-columns:1fr 1fr!important}
+  #qr-modal .qr-actions>*{width:100%!important;min-height:44px}
+
+  /* toque */
+  .ro-btn{min-height:42px;font-size:.7rem}
+  .ro-input{height:42px;font-size:.74rem}
+  .ro-pill{font-size:.55rem}
+}
+
+</style>
+</head>
+<body class="h-full overflow-hidden">
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto ro-scroll">
+<div id="ro-shell" class="max-w-[1500px] mx-auto p-2 md:p-3 space-y-2.5">
+  <section id="ro-hero" class="ro-card px-3 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <div class="hero-icon w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-industry"></i></div>
+      <div class="min-w-0"><div class="flex flex-wrap gap-1.5 items-center"><span class="ro-pill readonly-watermark"><i class="fa-solid fa-eye"></i>SOMENTE LEITURA</span><span class="text-[9px] text-slate-400 font-bold">V1.2</span></div><h1 class="text-base font-black mt-1">Consulta Parque</h1><p class="hero-subtitle text-[10px] text-slate-500">Pesquisa de máquinas e histórico de OS/OSR para técnicos.</p></div>
+    </div>
+    <button class="hero-qr ro-btn ro-btn-primary" onclick="scanSerial()"><i class="fa-solid fa-qrcode"></i> Ler QR Code</button>
+  </section>
+
+  <section id="ro-filters" class="ro-card p-2.5 grid md:grid-cols-[1fr_220px_180px] gap-2 items-end mobile-stack">
+    <div class="mobile-quickbar">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-[15px] text-slate-400 text-sm"></i>
+        <input id="q-mobile" class="ro-input !pl-9" oninput="syncMobileSearch(this.value)" placeholder="Buscar máquina, cliente ou série">
+      </div>
+      <button class="quick-qr ro-btn ro-btn-primary !p-0" onclick="scanSerial()" aria-label="Ler QR Code"><i class="fa-solid fa-qrcode"></i></button>
+    </div>
+    <label class="desktop-search"><span class="ro-label">Pesquisar</span><div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i><input id="q" class="ro-input !pl-9" oninput="syncDesktopSearch(this.value)" placeholder="Cliente, modelo, marca ou número de série"></div></label>
+    <label class="filter-secondary"><span class="ro-label">Cliente</span><select id="client-filter" class="ro-input" onchange="filterChanged()"><option value="">Todos os clientes</option></select></label>
+    <label class="filter-secondary"><span class="ro-label">Status</span><select id="status-filter" class="ro-input" onchange="filterChanged()"><option value="">Todos</option><option value="OPERACIONAL">Operacional</option><option value="MANUTENCAO">Manutenção</option><option value="INATIVO">Inativo</option></select></label>
+    <button type="button" class="mobile-filter-toggle ro-btn ro-btn-light" onclick="toggleMobileFilters()"><i class="fa-solid fa-sliders"></i> Filtros por cliente e status</button>
+  </section>
+
+  <section id="ro-kpis" class="mobile-kpi-strip grid grid-cols-2 md:grid-cols-4 gap-2">
+    <div class="ro-card ro-kpi"><span>Máquinas encontradas</span><b id="kpi-total">0</b></div>
+    <div class="ro-card ro-kpi"><span>Clientes</span><b id="kpi-clients">0</b></div>
+    <div class="ro-card ro-kpi"><span>Em manutenção</span><b id="kpi-maint" class="text-amber-700">0</b></div>
+    <div class="ro-card ro-kpi"><span>Garantia vigente</span><b id="kpi-warranty" class="text-emerald-700">0</b></div>
+  </section>
+
+  <section id="machine-table-section" class="ro-card overflow-hidden">
+    <div id="machine-cards" class="hidden"></div>
+    <div id="machine-table-wrap" class="overflow-auto ro-scroll max-h-[61vh]">
+      <table class="ro-table w-full min-w-[980px]"><thead><tr><th>Nº série</th><th>Equipamento</th><th>Cliente</th><th>Local</th><th>Garantia</th><th>Status</th><th></th></tr></thead><tbody id="machine-body"></tbody></table>
+    </div>
+    <div id="pager" class="ro-pager"></div>
+  </section>
+</div>
+</main>
+
+<nav id="mobile-bottom-nav" class="mobile-bottom-nav">
+  <div class="mobile-bottom-nav-inner">
+    <button class="mobile-nav-btn" onclick="mobileHome()"><i class="fa-solid fa-house"></i><span>Início</span></button>
+    <button class="mobile-nav-btn" onclick="mobileFocusSearch()"><i class="fa-solid fa-magnifying-glass"></i><span>Buscar</span></button>
+    <button class="mobile-nav-btn primary" onclick="scanSerial()"><i class="fa-solid fa-qrcode"></i><span>QR Code</span></button>
+    <a class="mobile-nav-btn" href="index.html"><i class="fa-solid fa-table-columns"></i><span>Portal</span></a>
+  </div>
+</nav>
+
+
+
+<div id="qr-modal" class="ro-modal hidden">
+  <div class="ro-modal-card !max-w-xl">
+    <div class="p-4 border-b flex justify-between gap-3 sticky top-0 bg-white z-20">
+      <div>
+        <div class="flex flex-wrap gap-1.5"><span class="ro-pill bg-blue-50 text-blue-700"><i class="fa-solid fa-qrcode"></i>LEITURA QR</span><span class="ro-pill readonly-watermark"><i class="fa-solid fa-eye"></i>Somente leitura</span></div>
+        <h2 class="font-black text-lg mt-1">Localizar equipamento</h2>
+        <p class="text-[10px] text-slate-500">Aponte a câmera para o QR Code da máquina.</p>
+      </div>
+      <button class="ro-btn ro-btn-light !w-9 !px-0 shrink-0" onclick="closeQrScanner()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="qr-modal-body p-4 space-y-3">
+      <div id="qr-secure-warning" class="hidden qr-status warn"></div>
+
+      <div class="qr-camera-box">
+        <div id="qr-reader"></div>
+        <div id="qr-guide" class="qr-guide"></div>
+      </div>
+
+      <div id="qr-status" class="qr-status info">
+        <i class="fa-solid fa-camera mr-1"></i>Preparando a câmera traseira...
+      </div>
+
+      <div class="qr-actions flex flex-wrap gap-2">
+        <button id="qr-retry-btn" type="button" class="ro-btn ro-btn-primary" onclick="startQrCamera()">
+          <i class="fa-solid fa-camera-rotate"></i> Ativar câmera
+        </button>
+        <label class="ro-btn ro-btn-light cursor-pointer">
+          <i class="fa-solid fa-image"></i> Ler QR de uma foto
+          <input id="qr-image-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="scanQrImage(this.files[0])">
+        </label>
+      </div>
+
+      <div class="rounded-xl border bg-slate-50 p-3">
+        <div class="text-[10px] font-black text-slate-700 mb-2">Ou informe o número de série</div>
+        <div class="flex gap-2">
+          <input id="qr-manual-serial" class="ro-input font-mono uppercase" placeholder="Número de série" onkeydown="if(event.key==='Enter'){event.preventDefault();manualSerialLookup()}">
+          <button type="button" class="ro-btn ro-btn-light shrink-0" onclick="manualSerialLookup()"><i class="fa-solid fa-magnifying-glass"></i> Localizar</button>
+        </div>
+      </div>
+
+      <p class="text-[9px] text-slate-400 leading-4">
+        A leitura reconhece QR contendo apenas o número de série e também formatos como
+        <b>SN: 123456</b>, <b>SERIAL=123456</b>, JSON ou URL com parâmetro de série.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="qr-file-reader" class="hidden"></div>
+
+<div id="machine-modal" class="ro-modal hidden"><div class="ro-modal-card">
+  <div class="detail-header p-4 border-b flex justify-between gap-3 sticky top-0 bg-white z-20">
+    <div class="min-w-0"><div class="flex flex-wrap gap-1.5"><span class="ro-pill readonly-watermark"><i class="fa-solid fa-lock"></i>Consulta</span><span id="detail-status" class="ro-pill bg-slate-100 text-slate-700">-</span></div><h2 id="detail-title" class="font-black text-lg mt-1 truncate">Equipamento</h2><p id="detail-subtitle" class="text-[10px] text-slate-500"></p></div>
+    <button class="ro-btn ro-btn-light !w-9 !px-0 shrink-0" onclick="closeMachine()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div class="detail-tabs">
+    <button id="detail-tab-overview" class="detail-tab-btn active" onclick="setDetailTab('overview')"><i class="fa-solid fa-industry"></i>Resumo</button>
+    <button id="detail-tab-client" class="detail-tab-btn" onclick="setDetailTab('client')"><i class="fa-solid fa-building"></i>Cliente</button>
+    <button id="detail-tab-history" class="detail-tab-btn" onclick="setDetailTab('history')"><i class="fa-solid fa-clock-rotate-left"></i>Histórico</button>
+  </div>
+
+  <div class="detail-body p-4 space-y-3">
+    <div id="detail-overview-panel" class="detail-panel active">
+      <div id="detail-kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-2"></div>
+      <div id="detail-overview-grid" class="grid xl:grid-cols-2 gap-3 mt-3">
+        <section class="ro-card p-3"><h3 class="font-black text-xs"><i class="fa-solid fa-industry text-indigo-600 mr-1"></i>Dados da máquina</h3><div id="detail-machine" class="mt-2 grid grid-cols-2 gap-2 text-[10px]"></div></section>
+        <section class="ro-card p-3 desktop-client-panel"><h3 class="font-black text-xs"><i class="fa-solid fa-building text-blue-600 mr-1"></i>Cliente atual</h3><div id="detail-client-desktop" class="mt-2 text-[10px] text-slate-600 leading-5"></div></section>
+      </div>
+    </div>
+
+    <div id="detail-client-panel" class="detail-panel">
+      <section class="ro-card p-3"><h3 class="font-black text-xs"><i class="fa-solid fa-building text-blue-600 mr-1"></i>Cliente atual</h3><div id="detail-client" class="mt-2 text-[11px] text-slate-600 leading-6"></div></section>
+    </div>
+
+    <div id="detail-history-panel" class="detail-panel">
+      <section class="ro-card p-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2"><div><h3 class="font-black text-xs"><i class="fa-solid fa-clock-rotate-left text-slate-600 mr-1"></i>Histórico de OS e OSR</h3><p class="text-[10px] text-slate-500">Busca pelo vínculo do Parque e pelo número de série. Nenhum registro é alterado.</p></div><span id="history-loading" class="text-[10px] text-blue-600 font-bold"></span></div>
+        <div id="detail-history" class="ro-timeline mt-4"></div>
+      </section>
+    </div>
+  </div>
+</div></div>
+
+<div id="toast" class="fixed right-4 bottom-4 z-[12000]"></div>
+
+<script>
+const ROOT=['artifacts','plataforma-cij','public','data'];
+const ST={machines:[],clients:[],os:[],osr:[],page:1,pageSize:10,selected:null,osEqCache:new Map(),historyToken:0,qrScanner:null,qrFileScanner:null,qrRunning:false,qrBusy:false};
+const col=n=>window.fsCollection(window.AppDB,...ROOT,n);
+const sub=(osId,n)=>window.fsCollection(window.AppDB,...ROOT,'os_ordens',osId,n);
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+const snorm=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const fmtDate=v=>{if(!v)return'-';const d=new Date(v);if(!isNaN(d))return d.toLocaleString('pt-BR');const p=String(v).slice(0,10).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(v)};
+const active=x=>x&&x.is_deleted!==true&&x.ativo!==false;
+function machineSerial(m){return m?.numeroSerie||m?.numero_serie||m?.serial||m?.sn||m?.serie||''}
+function machineModel(m){return m?.modelo||m?.equipamento||m?.nomeEquipamento||m?.descricao||'Equipamento'}
+function clientName(c){return c?.fantasia||c?.nomeFantasia||c?.razao_social||c?.razaoSocial||'Cliente'}
+function machineClientName(m){const c=ST.clients.find(x=>String(x.id)===String(m?.clienteId||''));return c?clientName(c):(m?.clienteNome||m?.cliente_atual||m?.clienteAtual||'-')}
+function addMonths(dateStr,n){if(!dateStr||!n)return'';const d=new Date(dateStr+'T12:00:00');if(isNaN(d))return'';d.setMonth(d.getMonth()+Number(n||0));return d.toISOString().slice(0,10)}
+function warranty(m){const end=m?.garantiaFimISO||addMonths(m?.dataVenda,Number(m?.garantiaMeses||0));if(!end)return{label:'Não informada',cls:'bg-slate-100 text-slate-600',active:false,end:''};const ok=new Date(end+'T23:59:59')>=new Date();return{label:ok?'Vigente':'Expirada',cls:ok?'bg-emerald-50 text-emerald-700':'bg-slate-100 text-slate-600',active:ok,end}}
+function statusMeta(v){const s=String(v||'OPERACIONAL').toUpperCase();if(s==='MANUTENCAO')return['Manutenção','bg-amber-50 text-amber-700'];if(s==='INATIVO')return['Inativo','bg-slate-100 text-slate-600'];return['Operacional','bg-emerald-50 text-emerald-700']}
+function toast(msg){const e=document.getElementById('toast');e.innerHTML=`<div class="rounded-xl bg-slate-900 text-white px-4 py-3 shadow-xl text-xs font-bold">${esc(msg)}</div>`;setTimeout(()=>e.innerHTML='',3000)}
+
+window.initModule=function(){
+  document.getElementById('main-content')?.classList.remove('hidden');
+  window.fsOnSnapshot(col('parque_maquinas'),snap=>{ST.machines=[];snap.forEach(d=>{const x={id:d.id,...d.data()};if(active(x))ST.machines.push(x)});ST.machines.sort((a,b)=>machineClientName(a).localeCompare(machineClientName(b),'pt-BR')||machineModel(a).localeCompare(machineModel(b),'pt-BR'));renderAll()});
+  window.fsOnSnapshot(col('cadastros_clientes'),snap=>{ST.clients=[];snap.forEach(d=>{const x={id:d.id,...d.data()};if(active(x))ST.clients.push(x)});ST.clients.sort((a,b)=>clientName(a).localeCompare(clientName(b),'pt-BR'));populateClients();renderAll()});
+  window.fsOnSnapshot(col('os_ordens'),snap=>{ST.os=[];snap.forEach(d=>{const x={id:d.id,...d.data()};if(x.is_deleted!==true)ST.os.push(x)});if(ST.selected)loadHistory(ST.selected)});
+  window.fsOnSnapshot(col('suportes_osr'),snap=>{ST.osr=[];snap.forEach(d=>{const x={id:d.id,...d.data()};if(x.is_deleted!==true)ST.osr.push(x)});if(ST.selected)loadHistory(ST.selected)});
+};
+function populateClients(){const e=document.getElementById('client-filter');if(!e)return;const v=e.value;e.innerHTML='<option value="">Todos os clientes</option>'+ST.clients.map(c=>`<option value="${esc(c.id)}">${esc(clientName(c))}</option>`).join('');if([...e.options].some(o=>o.value===v))e.value=v}
+function filtered(){const q=norm(document.getElementById('q')?.value||''),cid=document.getElementById('client-filter')?.value||'',st=document.getElementById('status-filter')?.value||'';return ST.machines.filter(m=>(!cid||String(m.clienteId||'')===cid)&&(!st||String(m.statusOperacional||'OPERACIONAL').toUpperCase()===st)&&(!q||norm([machineSerial(m),machineModel(m),m.fabricante,m.marca,m.tipoEquipamento,m.localInstalacao,m.identificacaoLocal,machineClientName(m)].join(' ')).includes(q)))}
+
+function syncMobileSearch(v){
+  const d=document.getElementById('q');if(d)d.value=v;
+  filterChanged();
+}
+function syncDesktopSearch(v){
+  const m=document.getElementById('q-mobile');if(m)m.value=v;
+  filterChanged();
+}
+function toggleMobileFilters(){
+  const box=document.getElementById('ro-filters');if(!box)return;
+  box.classList.toggle('mobile-filters-open');
+}
+function mobileHome(){
+  document.getElementById('main-content')?.scrollTo({top:0,behavior:'smooth'});
+}
+function mobileFocusSearch(){
+  document.getElementById('main-content')?.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(()=>document.getElementById('q-mobile')?.focus(),250);
+}
+function setDetailTab(tab){
+  ['overview','client','history'].forEach(k=>{
+    document.getElementById('detail-'+k+'-panel')?.classList.toggle('active',k===tab);
+    document.getElementById('detail-tab-'+k)?.classList.toggle('active',k===tab);
+  });
+}
+
+function filterChanged(){ST.page=1;renderAll()}
+function renderAll(){const rows=filtered(),clients=new Set(rows.map(m=>String(m.clienteId||machineClientName(m)))),maint=rows.filter(m=>String(m.statusOperacional||'').toUpperCase()==='MANUTENCAO').length,warr=rows.filter(m=>warranty(m).active).length;document.getElementById('kpi-total').textContent=rows.length;document.getElementById('kpi-clients').textContent=clients.size;document.getElementById('kpi-maint').textContent=maint;document.getElementById('kpi-warranty').textContent=warr;renderTable(rows)}
+function renderTable(rows){
+  const pages=Math.max(1,Math.ceil(rows.length/ST.pageSize));
+  ST.page=Math.max(1,Math.min(ST.page,pages));
+  const start=(ST.page-1)*ST.pageSize,view=rows.slice(start,start+ST.pageSize),tb=document.getElementById('machine-body'),cards=document.getElementById('machine-cards');
+
+  if(tb){
+    tb.innerHTML=view.length?view.map(m=>{
+      const w=warranty(m),sm=statusMeta(m.statusOperacional);
+      return `<tr>
+        <td><button class="font-mono font-black text-indigo-700 hover:underline" onclick="openMachine('${esc(m.id)}')"><i class="fa-solid fa-qrcode mr-1 text-slate-400"></i>${esc(machineSerial(m)||'-')}</button></td>
+        <td><b>${esc(m.fabricante||m.marca||'')}</b><div class="text-blue-700 font-black">${esc(machineModel(m))}</div><div class="text-[9px] text-slate-500">${esc(m.tipoEquipamento||m.categoriaEquipamento||'')}</div></td>
+        <td><b>${esc(machineClientName(m))}</b></td>
+        <td>${esc(m.localInstalacao||m.identificacaoLocal||'-')}</td>
+        <td><span class="ro-pill ${w.cls}">${esc(w.label)}</span><div class="text-[9px] text-slate-400 mt-1">${w.end?fmtDate(w.end):''}</div></td>
+        <td><span class="ro-pill ${sm[1]}">${sm[0]}</span></td>
+        <td><button class="ro-btn ro-btn-light !min-h-8" onclick="openMachine('${esc(m.id)}')"><i class="fa-solid fa-clock-rotate-left"></i> Histórico</button></td>
+      </tr>`;
+    }).join(''):'<tr><td colspan="7" class="text-center text-slate-400 py-10">Nenhuma máquina encontrada.</td></tr>';
+  }
+
+  if(cards){
+    cards.innerHTML=view.length?view.map(m=>{
+      const w=warranty(m),sm=statusMeta(m.statusOperacional),serial=machineSerial(m)||'-',local=m.localInstalacao||m.identificacaoLocal||'Não informado';
+      return `<button type="button" class="mobile-machine-card text-left w-full" onclick="openMachine('${esc(m.id)}')">
+        <div class="mobile-card-top">
+          <div class="min-w-0">
+            <div class="mobile-card-model">${esc(machineModel(m))}</div>
+            <div class="text-[10px] text-slate-500 font-bold mt-1">${esc(m.fabricante||m.marca||'')}</div>
+            <div class="mobile-card-serial"><i class="fa-solid fa-qrcode mr-1 text-slate-400"></i>SN ${esc(serial)}</div>
+          </div>
+          <span class="ro-pill ${sm[1]} shrink-0">${sm[0]}</span>
+        </div>
+        <div class="mobile-card-client"><i class="fa-solid fa-building mr-1 text-blue-500"></i>${esc(machineClientName(m))}</div>
+        <div class="mobile-card-meta">
+          <div><span>Local</span><b>${esc(local)}</b></div>
+          <div><span>Garantia</span><b class="${w.active?'text-emerald-700':''}">${esc(w.label)}</b></div>
+        </div>
+        <div class="mobile-card-footer">
+          <span class="text-[10px] text-slate-500">${esc(m.tipoEquipamento||m.categoriaEquipamento||'Equipamento')}</span>
+          <span class="text-[10px] font-black text-indigo-700">Ver histórico <i class="fa-solid fa-chevron-right ml-1"></i></span>
+        </div>
+      </button>`;
+    }).join(''):'<div class="ro-card p-8 text-center text-xs text-slate-400">Nenhuma máquina encontrada.</div>';
+  }
+
+  document.getElementById('pager').innerHTML=`<span>Mostrando <b>${rows.length?start+1:0}</b>–<b>${Math.min(start+ST.pageSize,rows.length)}</b> de <b>${rows.length}</b></span>
+    <div class="flex gap-2 items-center">
+      <label>Exibir <select class="ro-input !w-auto !h-8 !py-1" onchange="ST.pageSize=Number(this.value);ST.page=1;renderAll()">${[10,25,50,100].map(n=>`<option ${ST.pageSize===n?'selected':''}>${n}</option>`).join('')}</select></label>
+      <button class="ro-btn ro-btn-light !min-h-8 !w-8 !p-0" ${ST.page<=1?'disabled':''} onclick="ST.page--;renderAll()"><i class="fa-solid fa-chevron-left"></i></button>
+      <span>Página ${ST.page}/${pages}</span>
+      <button class="ro-btn ro-btn-light !min-h-8 !w-8 !p-0" ${ST.page>=pages?'disabled':''} onclick="ST.page++;renderAll()"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>`;
+}
+
+function machineOwnerIds(m){const ids=new Set([String(m.clienteId||'')].filter(Boolean));for(const t of m.historico_transferencias||[]){[t.clienteAntigoId,t.clienteNovoId,t.clienteIdAnterior,t.clienteIdNovo].forEach(x=>{if(x)ids.add(String(x))})}return ids}
+function osTopMatch(o,m){const sn=snorm(machineSerial(m));return (m.id&&String(o.parqueMaquinaId||'')===String(m.id))||(sn&&[o.equipamentoNumeroSerie,o.numeroSerie,o.serial].some(x=>snorm(x)===sn))}
+function eqMatch(eq,m){const sn=snorm(machineSerial(m));return (m.id&&String(eq.parqueMaquinaId||'')===String(m.id))||(sn&&snorm(eq.numeroSerie||eq.serial||eq.sn)===sn)}
+async function matchingOS(m,token){const owners=machineOwnerIds(m),direct=ST.os.filter(o=>osTopMatch(o,m)),candidate=ST.os.filter(o=>direct.includes(o)||owners.has(String(o.clienteId||'')));const found=new Map(direct.map(o=>[o.id,{os:o,eq:null}]));const todo=candidate.filter(o=>!found.has(o.id));let index=0;const workers=Array.from({length:Math.min(8,todo.length)},async()=>{while(index<todo.length){const o=todo[index++];if(token!==ST.historyToken)return;try{let arr=ST.osEqCache.get(o.id);if(!arr){const snap=await window.fsGetDocs(sub(o.id,'equipamentos'));arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));ST.osEqCache.set(o.id,arr)}const eq=arr.find(x=>x.is_deleted!==true&&eqMatch(x,m));if(eq)found.set(o.id,{os:o,eq})}catch(e){console.warn('[Consulta Parque] equipamentos da OS',o.id,e)}}});await Promise.all(workers);return [...found.values()]}
+function osEntry(x){const o=x.os,eq=x.eq;return{kind:'OS',date:o.createdAtISO||o.createdAt||o.updatedAtISO||'',number:o.osNumber||o.numero||o.id,status:eq?.statusEquipamento||o.status||o.etapaKanban||'',title:'Ordem de Serviço',description:eq?.diagnosticoTecnico||eq?.observacao||o.descricaoInicial||o.descricao||'',technician:(Array.isArray(o.tecnicoNomes)?o.tecnicoNomes.join(', '):(o.tecnicoNome||o.tecnico||'')),extra:eq?`Equipamento: ${eq.modelo||machineModel(ST.selected)}${eq.numeroSerie?' · SN '+eq.numeroSerie:''}`:''}}
+function osrEntry(r){return{kind:'OSR',date:r.timestamp||r.createdAtISO||r.data_formatada||r.updatedAtISO||'',number:r.osr||r.osNumber||r.numero||r.id,status:r.conclusao||r.status||'',title:'Suporte OSR',description:r.solucao||r.parecer||r.defeito||'',technician:r.tecnico||r.tecnicoNome||'',extra:[r.contato,r.pecas].filter(Boolean).join(' · ')}}
+function transferEntries(m){return (m.historico_transferencias||[]).map(t=>({kind:'TRANSFERENCIA',date:t.createdAtISO||t.data||'',number:'',status:'',title:'Transferência de máquina',description:t.motivo||'',technician:t.responsavel||'',extra:`${t.cliente_antigo||t.clienteAntigo||''} → ${t.cliente_novo||t.clienteNovo||''}`}))}
+async function loadHistory(m){const token=++ST.historyToken,box=document.getElementById('detail-history'),load=document.getElementById('history-loading');if(!box)return;load.textContent='Carregando histórico completo...';box.innerHTML='<div class="text-xs text-slate-400 py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Consultando OS e OSR vinculadas à máquina.</div>';try{const matches=await matchingOS(m,token);if(token!==ST.historyToken)return;const sn=snorm(machineSerial(m)),osrs=ST.osr.filter(r=>sn&&snorm(r.serial||r.numeroSerie||r.equipamentoNumeroSerie)===sn),events=[...matches.map(osEntry),...osrs.map(osrEntry),...transferEntries(m)].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));load.textContent=`${matches.length} OS · ${osrs.length} OSR`;const ht=document.getElementById('detail-tab-history');if(ht)ht.innerHTML=`<i class="fa-solid fa-clock-rotate-left"></i>Histórico <span class="text-[9px] opacity-70">(${matches.length+osrs.length})</span>`;box.innerHTML=events.length?events.map(e=>`<div class="ro-event ${e.kind==='OSR'?'osr':e.kind==='TRANSFERENCIA'?'transfer':''}"><div class="flex flex-wrap justify-between gap-2"><div><span class="ro-pill ${e.kind==='OSR'?'bg-violet-50 text-violet-700':e.kind==='TRANSFERENCIA'?'bg-amber-50 text-amber-700':'bg-blue-50 text-blue-700'}">${esc(e.kind)}</span> <b class="text-xs">${esc(e.number||e.title)}</b></div><span class="text-[9px] text-slate-400">${esc(fmtDate(e.date))}</span></div>${e.status?`<div class="text-[9px] font-bold text-slate-500 mt-1">Status: ${esc(e.status)}</div>`:''}${e.description?`<div class="text-[10px] text-slate-700 mt-1">${esc(e.description)}</div>`:''}${e.extra?`<div class="text-[9px] text-slate-500 mt-1">${esc(e.extra)}</div>`:''}${e.technician?`<div class="text-[9px] text-slate-400 mt-1"><i class="fa-solid fa-user-wrench mr-1"></i>${esc(e.technician)}</div>`:''}</div>`).join(''):'<div class="text-xs text-slate-400 py-5">Nenhuma OS, OSR ou transferência encontrada para esta máquina.</div>'}catch(e){console.error(e);load.textContent='';box.innerHTML='<div class="text-xs text-rose-600 py-5">Não foi possível carregar o histórico completo. Tente novamente.</div>'}}
+function openMachine(id){
+  const m=ST.machines.find(x=>String(x.id)===String(id));if(!m)return;
+  ST.selected=m;
+  const c=ST.clients.find(x=>String(x.id)===String(m.clienteId||'')),w=warranty(m),sm=statusMeta(m.statusOperacional);
+
+  document.getElementById('detail-status').className='ro-pill '+sm[1];
+  document.getElementById('detail-status').textContent=sm[0];
+  document.getElementById('detail-title').textContent=machineModel(m);
+  document.getElementById('detail-subtitle').textContent=`SN ${machineSerial(m)||'-'} · ${machineClientName(m)}`;
+
+  document.getElementById('detail-kpis').innerHTML=[
+    ['Série',machineSerial(m)||'-'],
+    ['Garantia',w.label],
+    ['Venda',m.dataVenda?fmtDate(m.dataVenda):'-'],
+    ['Instalação',m.dataInstalacaoAtual||m.data_instalacao?fmtDate(m.dataInstalacaoAtual||m.data_instalacao):'-']
+  ].map(x=>`<div class="ro-card ro-kpi"><span>${esc(x[0])}</span><b class="!text-sm">${esc(x[1])}</b></div>`).join('');
+
+  document.getElementById('detail-machine').innerHTML=[
+    ['Fabricante',m.fabricante||m.marca],
+    ['Modelo',machineModel(m)],
+    ['Tipo',m.tipoEquipamento],
+    ['Categoria',m.categoriaEquipamento],
+    ['Local',m.localInstalacao||m.identificacaoLocal],
+    ['Vínculo',m.tipoVinculo||m.modalidade],
+    ['Garantia até',w.end?fmtDate(w.end):'-'],
+    ['Observações',m.observacoes||'-']
+  ].map(x=>`<div class="rounded-lg bg-slate-50 border p-2"><span class="ro-label">${esc(x[0])}</span><b class="text-[10px]">${esc(x[1]||'-')}</b></div>`).join('');
+
+  const cp=c?(Array.isArray(c.contatos)?(c.contatos.find(x=>x?.principal)||c.contatos[0]):null):null;
+  const clientHtml=c
+    ?`<div class="space-y-2">
+        <div><b class="text-slate-900 text-xs">${esc(c.razao_social||clientName(c))}</b>${c.cnpj?`<div class="text-[10px] text-slate-400 mt-0.5">CNPJ ${esc(c.cnpj)}</div>`:''}</div>
+        <div class="rounded-lg bg-slate-50 border p-2.5"><div class="ro-label">Endereço</div><div class="text-[10px] text-slate-700">${esc(c.enderecoCompleto||c.endereco_completo||[c.logradouro,c.numero,c.bairro,c.cidade,c.uf||c.estado].filter(Boolean).join(' · ')||'Não informado')}</div></div>
+        <div class="rounded-lg bg-slate-50 border p-2.5"><div class="ro-label">Contato principal</div><div class="text-[10px] font-bold text-slate-800">${esc(cp?.nome||c.contatoPrincipalNome||c.contato||'-')}</div><div class="text-[10px] text-blue-700 mt-0.5">${esc(cp?.telefone||c.contatoPrincipalTelefone||c.telefone||'-')}</div></div>
+      </div>`
+    :`${esc(machineClientName(m))}<br><span class="text-slate-400">Cadastro atual do cliente não localizado.</span>`;
+
+  document.getElementById('detail-client').innerHTML=clientHtml;
+  document.getElementById('detail-client-desktop').innerHTML=clientHtml;
+
+  setDetailTab('overview');
+  document.getElementById('machine-modal').classList.remove('hidden');
+  loadHistory(m);
+}function closeMachine(){ST.historyToken++;ST.selected=null;setDetailTab('overview');document.getElementById('machine-modal')?.classList.add('hidden')}
+function qrSetStatus(message,type='info'){
+  const e=document.getElementById('qr-status');if(!e)return;
+  e.className='qr-status '+type;
+  const icon=type==='ok'?'fa-circle-check':type==='error'?'fa-circle-exclamation':type==='warn'?'fa-triangle-exclamation':'fa-camera';
+  e.innerHTML=`<i class="fa-solid ${icon} mr-1"></i>${esc(message)}`;
+}
+function qrSerialCandidates(decoded){
+  const raw=String(decoded||'').trim(),out=[];
+  const push=v=>{v=String(v||'').trim();if(v&&!out.includes(v))out.push(v)};
+  push(raw);
+
+  // JSON: {"serial":"..."} / {"sn":"..."} / {"numeroSerie":"..."}
+  try{
+    const obj=JSON.parse(raw);
+    if(obj&&typeof obj==='object'){
+      ['serial','serie','sn','numeroSerie','numero_serie','serialNumber','serial_number'].forEach(k=>push(obj[k]));
+    }
+  }catch(_){}
+
+  // URL: ?serial=... / ?sn=... and last path segment.
+  try{
+    const u=new URL(raw);
+    ['serial','serie','sn','numeroSerie','numero_serie'].forEach(k=>push(u.searchParams.get(k)));
+    const parts=u.pathname.split('/').filter(Boolean);
+    if(parts.length)push(decodeURIComponent(parts[parts.length-1]));
+  }catch(_){}
+
+  // Text prefixes.
+  const patterns=[
+    /(?:^|[\s;|,])(?:SN|S\/N)\s*[:=#-]?\s*([A-Z0-9._\/-]{3,})/i,
+    /(?:^|[\s;|,])SERIAL\s*[:=#-]?\s*([A-Z0-9._\/-]{3,})/i,
+    /(?:^|[\s;|,])S[EÉ]RIE\s*[:=#-]?\s*([A-Z0-9._\/-]{3,})/i,
+    /(?:N[ÚU]MERO\s*(?:DE\s*)?S[EÉ]RIE)\s*[:=#-]?\s*([A-Z0-9._\/-]{3,})/i
+  ];
+  for(const p of patterns){const m=raw.match(p);if(m)push(m[1])}
+
+  // Linhas simples do QR também podem conter apenas a série.
+  raw.split(/[\r\n;|]+/).map(x=>x.trim()).filter(Boolean).forEach(push);
+  return out;
+}
+function resolveMachineFromQr(decoded){
+  const candidates=qrSerialCandidates(decoded);
+
+  // Primeiro: correspondência exata por candidato.
+  for(const candidate of candidates){
+    const key=snorm(candidate);if(!key)continue;
+    const exact=ST.machines.filter(m=>snorm(machineSerial(m))===key);
+    if(exact.length===1)return {machine:exact[0],serial:machineSerial(exact[0]),mode:'exact'};
+    if(exact.length>1)return {ambiguous:exact,serial:candidate,mode:'duplicate'};
+  }
+
+  // Segundo: QR pode conter prefixos/URL/texto em volta da série.
+  const rawKey=snorm(decoded);
+  const contained=ST.machines.filter(m=>{
+    const s=snorm(machineSerial(m));
+    return s.length>=4 && rawKey.includes(s);
+  });
+  if(contained.length===1)return {machine:contained[0],serial:machineSerial(contained[0]),mode:'contained'};
+  if(contained.length>1)return {ambiguous:contained,serial:String(decoded||''),mode:'multiple'};
+  return {machine:null,serial:candidates.find(x=>snorm(x))||String(decoded||'').trim(),mode:'not_found'};
+}
+async function stopQrCamera(){
+  if(!ST.qrScanner||!ST.qrRunning)return;
+  try{await ST.qrScanner.stop()}catch(e){console.warn('[Consulta Parque] parar câmera QR',e)}
+  try{await ST.qrScanner.clear()}catch(_){}
+  ST.qrRunning=false;
+}
+async function closeQrScanner(){
+  ST.qrBusy=true;
+  await stopQrCamera();
+  document.getElementById('qr-modal')?.classList.add('hidden');
+  ST.qrBusy=false;
+}
+async function processQrResult(decoded){
+  if(ST.qrBusy)return;
+  ST.qrBusy=true;
+  const result=resolveMachineFromQr(decoded);
+
+  if(result.machine){
+    qrSetStatus(`Equipamento localizado: ${machineSerial(result.machine)}.`,'ok');
+    await stopQrCamera();
+    document.getElementById('qr-modal')?.classList.add('hidden');
+    ST.qrBusy=false;
+    openMachine(result.machine.id);
+    return;
+  }
+
+  if(result.ambiguous?.length){
+    qrSetStatus('O código corresponde a mais de um cadastro. Revise os números de série duplicados no Parque.','error');
+    document.getElementById('q').value=result.serial||decoded||'';
+    filterChanged();
+    ST.qrBusy=false;
+    return;
+  }
+
+  qrSetStatus('QR lido, mas o número de série não foi localizado no Parque. A pesquisa foi preenchida para conferência.','warn');
+  document.getElementById('q').value=result.serial||decoded||'';
+  filterChanged();
+  ST.qrBusy=false;
+}
+async function startQrCamera(){
+  if(ST.qrRunning)return;
+  if(!window.isSecureContext){
+    const w=document.getElementById('qr-secure-warning');
+    if(w){w.classList.remove('hidden');w.innerHTML='<i class="fa-solid fa-lock mr-1"></i>A câmera exige HTTPS. Use a versão publicada do Portal ou escolha “Ler QR de uma foto”.'}
+    qrSetStatus('Câmera indisponível fora de conexão segura (HTTPS).','warn');
+    return;
+  }
+  if(typeof Html5Qrcode==='undefined'){
+    qrSetStatus('Leitor de QR não carregou. Verifique a internet ou use a leitura por foto / série manual.','error');
+    return;
+  }
+
+  ST.qrBusy=false;
+  qrSetStatus('Solicitando acesso à câmera traseira...','info');
+
+  try{
+    if(!ST.qrScanner)ST.qrScanner=new Html5Qrcode('qr-reader',{verbose:false});
+    let cameraConfig={facingMode:'environment'};
+
+    // Em alguns aparelhos, escolher explicitamente a câmera traseira é mais estável.
+    try{
+      const cameras=await Html5Qrcode.getCameras();
+      if(cameras?.length){
+        const preferred=[...cameras].reverse().find(c=>/back|rear|traseira|environment/i.test(c.label||'')) || cameras[cameras.length-1];
+        if(preferred?.id)cameraConfig=preferred.id;
+      }
+    }catch(_){}
+
+    await ST.qrScanner.start(
+      cameraConfig,
+      {fps:12,qrbox:{width:250,height:250},aspectRatio:1.0,disableFlip:false},
+      decoded=>processQrResult(decoded),
+      ()=>{}
+    );
+    ST.qrRunning=true;
+    qrSetStatus('Câmera ativa. Centralize o QR Code dentro do quadro.','ok');
+  }catch(err){
+    console.error('[Consulta Parque] câmera QR',err);
+    ST.qrRunning=false;
+    const msg=String(err?.message||err||'');
+    if(/permission|notallowed|denied/i.test(msg))qrSetStatus('Permissão da câmera foi negada. Libere a câmera no navegador ou use “Ler QR de uma foto”.','error');
+    else if(/notfound|devicesnotfound/i.test(msg))qrSetStatus('Nenhuma câmera foi encontrada neste dispositivo.','error');
+    else qrSetStatus('Não foi possível iniciar a câmera. Use “Ativar câmera” novamente ou leia o QR por uma foto.','error');
+  }
+}
+async function scanQrImage(file){
+  const input=document.getElementById('qr-image-input');
+  if(!file)return;
+  if(typeof Html5Qrcode==='undefined'){qrSetStatus('Leitor de QR não carregou.','error');if(input)input.value='';return}
+  try{
+    await stopQrCamera();
+    qrSetStatus('Analisando a imagem do QR Code...','info');
+    if(!ST.qrFileScanner)ST.qrFileScanner=new Html5Qrcode('qr-file-reader',{verbose:false});
+    const decoded=await ST.qrFileScanner.scanFile(file,true);
+    if(input)input.value='';
+    await processQrResult(decoded);
+  }catch(err){
+    console.error('[Consulta Parque] leitura de foto QR',err);
+    qrSetStatus('Não encontrei um QR Code legível nessa imagem. Tente aproximar mais a câmera ou tirar outra foto.','error');
+    if(input)input.value='';
+  }
+}
+function manualSerialLookup(){
+  const val=document.getElementById('qr-manual-serial')?.value.trim();
+  if(!val){qrSetStatus('Informe o número de série para localizar.','warn');return}
+  processQrResult(val);
+}
+async function scanSerial(){
+  document.getElementById('qr-manual-serial').value='';
+  document.getElementById('qr-secure-warning')?.classList.add('hidden');
+  document.getElementById('qr-modal')?.classList.remove('hidden');
+  qrSetStatus('Preparando a câmera traseira...','info');
+  ST.qrBusy=false;
+  await startQrCamera();
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopQrCamera()});
+
+</script>
+<script type="module" src="core.js?v=20260929-1520"></script>
+</body>
+</html>

@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestão de O.S. - Portal CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+        
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 700; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; font-weight: 500; hover:color: #3b82f6; }
+
+        .kanban-col.drag-over { background-color: #f8fafc !important; border-color: #3b82f6 !important; border-style: dashed; }
+        .dragging { opacity: 0.5; transform: scale(0.98); }
+
+        .input-delicate {
+            width: 100%; padding: 0.5rem 0.75rem; font-size: 0.75rem; line-height: 1rem;
+            color: #334155; background-color: #ffffff; border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; outline: none; transition: all 0.2s;
+        }
+        .input-delicate:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+
+        #print-area { display: none; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 15mm; }
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { display: block; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; font-family: 'Inter', sans-serif; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased bg-slate-50">
+
+    <datalist id="list-clientes"></datalist>
+    <datalist id="list-maquinas"></datalist>
+
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Sincronizando Ordens de Serviço...</p>
+        </div>
+    </div>
+
+    <main class="flex-1 w-full flex flex-col px-4 md:px-6 py-4 relative gap-4 overflow-hidden h-[calc(100vh-64px)] hidden" id="main-content">
+        
+        <!-- CABEÇALHO -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shrink-0">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0 border border-blue-100">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-[9px] font-extrabold uppercase tracking-wider text-blue-800 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">V2</span>
+                    </div>
+                    <h1 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-none">Gestão de Ordens de Serviço</h1>
+                    <p class="text-slate-500 text-[11px] mt-1">Painel central de O.S, Kanban de fluxo e faturamento.</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+                <!-- Botão Alertas e Automação Kanban -->
+                <button onclick="window.abrirModalConfigAlertas()" class="p-2 text-slate-400 hover:text-amber-500 transition cursor-pointer" title="Alertas de Notificação">
+                    <i class="fa-regular fa-bell text-lg"></i>
+                </button>
+                <button onclick="window.abrirModalAutomacaoKanban()" class="p-2 text-slate-400 hover:text-blue-600 transition cursor-pointer" title="Automação Kanban">
+                    <i class="fa-solid fa-robot text-lg"></i>
+                </button>
+
+                <div class="w-px h-6 bg-slate-200 mx-1"></div>
+
+                <!-- Visões -->
+                <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <button onclick="window.mudarVisao('kanban')" id="btn-visao-kanban" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-blue-600 shadow-sm transition">
+                        <i class="fa-solid fa-columns mr-1.5"></i> Kanban
+                    </button>
+                    <button onclick="window.mudarVisao('lista')" id="btn-visao-lista" class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-500 hover:text-slate-800 transition">
+                        <i class="fa-solid fa-list-check mr-1.5"></i> Lista
+                    </button>
+                </div>
+                
+                <button onclick="window.abrirModalOS()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-sm transition text-xs flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> Nova O.S.
+                </button>
+            </div>
+        </div>
+
+        <!-- BARRA DE FILTROS -->
+        <div class="bg-transparent flex flex-col md:flex-row items-center gap-3 shrink-0 px-1">
+            <div class="relative flex-1 w-full">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="filtro-busca" onkeyup="window.renderizarVisoes()" placeholder="Buscar rápida por OS, Cliente, Técnico ou Máquina..." class="w-full pl-8 pr-3 py-2 text-xs bg-transparent border-b border-slate-300 focus:border-blue-600 outline-none transition text-slate-700 font-medium">
+            </div>
+            
+            <div class="w-full md:w-48 flex items-center border-b border-slate-300 focus-within:border-blue-600 transition">
+                <select id="filtro-tipo-os" onchange="window.renderizarVisoes()" class="w-full py-2 text-xs bg-transparent outline-none cursor-pointer text-slate-700 font-medium">
+                    <option value="ALL">Todas (OS e OSR)</option>
+                    <option value="OS">Somente O.S. (Implantação)</option>
+                    <option value="OSR">Somente O.S.R. (Assistência)</option>
+                </select>
+            </div>
+
+            <div class="w-full md:w-56 flex items-center border-b border-slate-300 focus-within:border-blue-600 transition">
+                <select id="filtro-status" onchange="window.renderizarVisoes()" class="w-full py-2 text-xs bg-transparent outline-none cursor-pointer text-slate-700 font-medium">
+                    <option value="ALL">Todos os Status</option>
+                    <option value="ABERTURA">Abertura OS</option>
+                    <option value="DIAGNOSTICO">Diagnóstico / Orçamento</option>
+                    <option value="AGENDAMENTO">Agendamento</option>
+                    <option value="EXECUCAO">Execução</option>
+                    <option value="CONCLUIDO">Concluído</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- KANBAN (FULL-WIDTH) -->
+        <div id="visao-kanban" class="flex-1 min-h-0 overflow-x-auto overflow-y-hidden pb-2 w-full">
+            <div id="kanban-board" class="flex gap-4 h-full min-w-full">
+                <!-- Colunas Geradas via JS com flex-1 para preencher a tela -->
+            </div>
+        </div>
+
+        <!-- LISTA -->
+        <div id="visao-lista" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col min-h-[300px] hidden">
+            <div class="flex-1 overflow-auto custom-scrollbar">
+                <table class="w-full text-left text-xs min-w-[900px]">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold sticky top-0 z-10 border-b border-slate-200 text-[10px]">
+                        <tr>
+                            <th class="p-3">Nº O.S. / Data</th>
+                            <th class="p-3">Cliente Solicitante</th>
+                            <th class="p-3">Técnico Designado</th>
+                            <th class="p-3 text-center">Etapa Atual</th>
+                            <th class="p-3 text-right">Orçamento (R$)</th>
+                            <th class="p-3 text-center">Coluna Kanban</th>
+                            <th class="p-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-os-body" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODAL PRINCIPAL: ORDEM DE SERVIÇO -->
+    <!-- ========================================== -->
+    <div id="modal-os" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-hidden">
+        
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[95vh] flex flex-col overflow-hidden relative border border-slate-200 transform transition-all">
+            
+            <div class="bg-white px-5 py-4 flex justify-between items-center shrink-0 border-b border-slate-200">
+                <h3 class="font-black text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-file-invoice text-blue-500"></i> <span id="titulo-modal-os">Ordem de Serviço</span></h3>
+                <button onclick="window.fecharModalOS()" class="text-slate-400 hover:text-red-500 transition cursor-pointer"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+                
+            <div class="px-5 pt-3 bg-slate-50 border-b border-slate-200 shrink-0">
+                <div class="flex gap-6 text-xs overflow-x-auto custom-scrollbar">
+                    <button type="button" onclick="window.mudarAbaOS('aba1')" id="btn-aba1" class="tab-active pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-user"></i> Dados e Agenda</button>
+                    <button type="button" onclick="window.mudarAbaOS('aba2')" id="btn-aba2" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-print"></i> Máquinas <span id="badge-equip-count" class="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[9px] ml-1">0</span></button>
+                    <button type="button" onclick="window.mudarAbaOS('aba3')" id="btn-aba3" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-calculator text-emerald-600"></i> Orçamentos <span id="badge-orc-count" class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[9px] ml-1">0</span></button>
+                    <button type="button" onclick="window.mudarAbaOS('aba4')" id="btn-aba4" class="tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"><i class="fa-solid fa-list-check text-purple-500"></i> Formulários <span id="badge-form-count" class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-[9px] ml-1">0</span></button>
+                </div>
+            </div>
+
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 bg-white">
+                <form id="form-nova-os" onsubmit="event.preventDefault();" class="h-full">
+                    <input type="hidden" id="os-id-oculto" value="">
+                    
+                    <!-- ABA 1: DADOS -->
+                    <div id="aba1" class="space-y-5 max-w-4xl mx-auto pb-6">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente *</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="os-cliente" list="list-clientes" required oninput="window.preencherCardCliente(this.value)" placeholder="Digite o nome do cliente..." class="input-delicate pl-8 font-semibold text-sm shadow-sm">
+                            </div>
+                            
+                            <div id="card-cliente-info" class="hidden mt-2 bg-slate-50 border border-slate-200 rounded-lg p-3 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                                <div class="space-y-1 text-xs">
+                                    <p id="card-end" class="text-slate-600"><i class="fa-solid fa-location-dot w-4 text-blue-400"></i> <span id="card-end-txt"></span></p>
+                                    <p id="card-tel" class="text-slate-600"><i class="fa-solid fa-phone w-4 text-blue-400"></i> <span id="card-tel-txt"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                            <label class="block text-[10px] font-black text-blue-800 uppercase tracking-wider mb-2"><i class="fa-solid fa-stairs text-blue-500 mr-1"></i> Etapa Técnica Atual da O.S.</label>
+                            <select id="os-etapa" class="input-delicate cursor-pointer font-bold text-slate-800 border-blue-300 shadow-sm"></select>
+                            <p class="text-[9px] text-blue-600 mt-1">A mudança desta etapa move a O.S. de coluna no Kanban automaticamente conforme a Automação do Robô.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Solicitante</label><input type="text" id="os-solicitante" placeholder="Nome..." class="input-delicate shadow-sm"></div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Atendimento *</label>
+                                <select id="os-tipo" class="input-delicate cursor-pointer shadow-sm">
+                                    <option value="Externo">Externo (No Cliente)</option><option value="Interno">Interno (Lab)</option><option value="Remoto">Remoto (Online)</option>
+                                </select>
+                            </div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Data Agendamento *</label><input type="date" id="os-data" required class="input-delicate cursor-pointer shadow-sm"></div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Técnico Designado</label>
+                                <select id="os-tecnico" class="input-delicate cursor-pointer shadow-sm"></select>
+                            </div>
+                            <div class="sm:col-span-2 lg:col-span-4"><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Observações de Agenda</label><textarea id="os-obs" rows="2" placeholder="Instruções para o técnico..." class="input-delicate resize-none shadow-sm"></textarea></div>
+                        </div>
+                    </div>
+
+                    <!-- ABA 2: EQUIPAMENTOS -->
+                    <div id="aba2" class="hidden space-y-4 max-w-5xl mx-auto pb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800">Equipamentos / Máquinas</h4>
+                                <p class="text-[10px] text-slate-500">Adicione os equipamentos e defina múltiplos formulários se necessário.</p>
+                            </div>
+                            <button type="button" onclick="window.adicionarEquipamentoNaOS()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition border border-blue-200 cursor-pointer shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Add Máquina
+                            </button>
+                        </div>
+                        <div id="container-equipamentos-os" class="space-y-4"></div>
+                    </div>
+
+                    <!-- ABA 3: ORÇAMENTOS -->
+                    <div id="aba3" class="hidden space-y-4 max-w-5xl mx-auto pb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-sm font-semibold text-slate-800">Composição de Orçamentos</h4>
+                            <button type="button" onclick="window.adicionarOrcamentoNaOS()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition border border-emerald-200 cursor-pointer shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Add Orçamento
+                            </button>
+                        </div>
+                        <div id="container-orcamentos-os" class="space-y-4 min-h-[150px]"></div>
+                        
+                        <div class="bg-slate-50 rounded-xl p-4 flex justify-between items-center border border-slate-200 mt-4 shadow-sm">
+                            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Total Final da O.S.:</span>
+                            <span id="valor-total-geral-os" class="text-lg font-black text-emerald-600">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <!-- ABA 4: FORMULÁRIOS / LAUDOS (INTEGRAÇÃO FORMCRAFT) -->
+                    <div id="aba4" class="hidden space-y-4 max-w-4xl mx-auto pb-6">
+                        <div class="mb-2 bg-purple-50 p-4 rounded-xl border border-purple-200">
+                            <h4 class="text-sm font-bold text-purple-900"><i class="fa-solid fa-list-check mr-1.5"></i> Formulários, Laudos e Check-lists</h4>
+                            <p class="text-[11px] text-purple-700 mt-1 font-medium">Os formulários adicionados nas máquinas da Aba 2 aparecem aqui para o escritório preencher ou auditar. Respostas são salvas instantaneamente no banco de dados do FormCraft.</p>
+                        </div>
+                        
+                        <div id="container-formularios-os" class="space-y-3 min-h-[150px]">
+                            <div class="text-center py-10 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                                <p class="text-xs text-slate-400">Nenhum formulário vinculado ainda.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="bg-slate-50 border-t border-slate-200 px-5 py-4 shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex gap-2">
+                    <button type="button" onclick="window.imprimirOS()" class="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-600 font-bold rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-print"></i> PDF</button>
+                    <button type="button" onclick="window.enviarWhatsAppOS()" class="px-3 py-2 bg-emerald-500 border border-emerald-600 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition shadow-sm items-center gap-1.5 cursor-pointer hidden sm:flex"><i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp</button>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="window.fecharModalOS()" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm">Cancelar</button>
+                    <button type="button" onclick="window.salvarOS()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs shadow-md transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-check"></i> Salvar O.S.</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL FORMCRAFT: PREENCHER LAUDO NATIVAMENTE -->
+    <div id="modal-preencher-form" class="fixed inset-0 z-[99999] bg-slate-900/90 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-300 transform scale-95 transition-transform duration-300" id="modal-form-content">
+            
+            <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-blue-400"></i> <span id="titulo-modal-form">Formulário</span></h3>
+                <button onclick="window.fecharModalFormulario()" class="text-slate-400 hover:text-white transition cursor-pointer p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="px-5 pt-3 pb-2 bg-white border-b border-slate-200 shrink-0">
+                <p id="desc-modal-form" class="text-xs text-slate-500 mb-2"></p>
+                <div class="flex gap-2">
+                    <span id="badge-os-form" class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 shadow-sm"></span>
+                    <span id="badge-maq-form" class="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 shadow-sm truncate max-w-[200px]"></span>
+                </div>
+            </div>
+
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
+                <form id="interactive-preview-form" onsubmit="window.salvarPreenchimentoForm(event)" class="space-y-4">
+                    <div id="preview-fields-container" class="space-y-4"></div>
+                </form>
+            </div>
+            
+            <div class="bg-white border-t border-slate-200 px-5 py-4 shrink-0 flex justify-end gap-3 shadow-inner">
+                <button type="button" onclick="window.fecharModalFormulario()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">Cancelar / Fechar</button>
+                <button type="submit" form="interactive-preview-form" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs shadow-md transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-check"></i> Salvar Respostas no Banco</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ALERTAS DE EMAIL/PUSH -->
+    <div id="modal-alertas" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between shrink-0">
+                <h3 class="font-bold text-sm"><i class="fa-regular fa-bell mr-2 text-amber-400"></i> Configurar Alertas do Kanban</h3>
+                <button onclick="window.fecharModalAlertas()" class="text-slate-400 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 bg-slate-50 border-b border-slate-200 shrink-0">
+                <p class="text-xs text-slate-600 font-medium">Defina quem recebe notificação/alerta no App quando um cartão ENTRAR em cada coluna do Kanban.</p>
+            </div>
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4" id="config-notificacoes-content">
+                <!-- Gerado via JS -->
+            </div>
+            <div class="px-5 py-4 bg-white border-t border-slate-200 flex justify-end shrink-0 shadow-inner">
+                <button onclick="window.salvarConfigAlertas()" class="bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition text-xs flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-save"></i> Salvar Alertas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUTOMAÇÃO KANBAN (O ROBÔ) -->
+    <div id="modal-automacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-indigo-900 text-white px-5 py-4 flex items-center justify-between shrink-0">
+                <h3 class="font-bold text-sm"><i class="fa-solid fa-robot mr-2 text-indigo-400"></i> Automação: Etapas vs Kanban</h3>
+                <button onclick="window.fecharModalAutomacaoKanban()" class="text-indigo-300 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 bg-indigo-50 border-b border-indigo-200 shrink-0">
+                <p class="text-xs text-indigo-800 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> Mapeie para qual <strong>Coluna do Kanban</strong> o cartão da OS deve pular automaticamente de acordo com a <strong>Etapa Técnica</strong> salva pelo Técnico no App.</p>
+            </div>
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 bg-slate-50 space-y-3" id="config-automacao-content">
+                <!-- Gerado via JS -->
+            </div>
+            <div class="px-5 py-4 bg-white border-t border-slate-200 flex justify-end shrink-0 shadow-inner">
+                <button onclick="window.salvarAutomacaoKanban()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition text-xs flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-save"></i> Salvar Regras do Robô</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EXCLUSÃO DE O.S. -->
+    <div id="modal-delete" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[99999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-slate-200 my-auto">
+            <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto text-3xl shadow-inner border border-red-200 mb-5"><i class="fa-solid fa-trash-can"></i></div>
+            <h3 class="text-lg font-black text-slate-900">Excluir Ordem de Serviço?</h3>
+            <p class="text-sm text-slate-500 mt-2 font-medium">Esta ação apagará permanentemente o registro <span id="delete-os-id" class="font-black text-red-600 bg-red-50 px-2 py-0.5 rounded"></span>. Deseja continuar?</p>
+            <div class="flex gap-3 pt-6">
+                <button onclick="window.closeDeleteModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl cursor-pointer transition">Cancelar</button>
+                <button onclick="window.executeDeleteOS()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-black rounded-xl shadow-md cursor-pointer transition flex items-center justify-center gap-2">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST E ÁREA DE IMPRESSÃO -->
+    <div id="toast" class="fixed bottom-5 right-5 hidden z-[99999] bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 border border-slate-700 transition-opacity">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="toast-message" class="text-xs font-medium">Sucesso!</span>
+    </div>
+
+    <div id="print-area"></div>
+
+    <script type="module" src="core.js"></script>
+    <script type="module">
+        import { runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        window.FirebaseRunTransaction = runTransaction;
+    </script>
+
+    <script>
+        window.tickets = [];
+        window.dbClientes = [];
+        window.dbMaquinas = [];
+        window.parqueMaquinas = [];
+        window.usersList = [];
+        
+        // FormCraft Integration
+        window.dbForms = []; // Array de Objetos Form
+        window.formSubmissions = []; // Array de Respostas
+        
+        window.alertSettings = { 'ABERTURA': [], 'DIAGNOSTICO': [], 'AGENDAMENTO': [], 'EXECUCAO': [], 'CONCLUIDO': [] };
+        window.kanbanMapping = {};
+        
+        window.contadorEquips = 0;
+        window.contadorOrcs = 0;
+        window.currentUserStr = '';
+        window.visaoAtual = 'kanban'; 
+        window.pendingDeleteId = null;
+
+        // FASES ATUALIZADAS (5 COLUNAS)
+        const STATUSES_OS = {
+            'ABERTURA': { label: 'Abertura OS', color: 'bg-slate-100 border-slate-300 text-slate-700', badgeDot: 'bg-slate-500' },
+            'DIAGNOSTICO': { label: 'Diagnóstico / Orçamento', color: 'bg-amber-50 border-amber-200 text-amber-700', badgeDot: 'bg-amber-500' },
+            'AGENDAMENTO': { label: 'Agendamento', color: 'bg-blue-50 border-blue-200 text-blue-700', badgeDot: 'bg-blue-500' },
+            'EXECUCAO': { label: 'Execução', color: 'bg-rose-50 border-rose-200 text-rose-700', badgeDot: 'bg-rose-500' },
+            'CONCLUIDO': { label: 'Concluído', color: 'bg-emerald-50 border-emerald-200 text-emerald-700', badgeDot: 'bg-emerald-500' }
+        };
+
+        const ETAPAS_SERVICO = [
+            '1. Abertura da OS', '2. Check-list de Entrada', '3. Diagnóstico Técnico',
+            '4. Elaboração de Orçamento', '5. Aprovação do Cliente', '6. Execução do Serviço',
+            '7. Faturamento', '8. Check-out / Finalização', '9. Expedição / Devolução', '10. Pós-Venda'
+        ];
+
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
+            window.currentUserStr = window.nomeUsuarioLogado || window.currentUser?.email || 'Técnico';
+
+            const etapaSelect = document.getElementById('os-etapa');
+            etapaSelect.innerHTML = ETAPAS_SERVICO.map(e => `<option value="${e}">${e}</option>`).join('');
+
+            // Automação e Alertas (Bancos Isolados)
+            window.fsOnSnapshot(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'config', 'notificacoes_os'), snap => {
+                if(snap.exists()) window.alertSettings = snap.data();
+            });
+            window.fsOnSnapshot(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'config', 'kanban_mapping_os'), snap => {
+                if(snap.exists()) window.kanbanMapping = snap.data().mapping || {};
+            });
+
+            // Cadastros
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'cadastros_clientes'), snap => {
+                window.dbClientes = []; let html = '';
+                snap.forEach(d => { const c = d.data(); window.dbClientes.push(c); const n = c.fantasia || c.razao_social || ''; if(n) html += `<option value="${n}">`; });
+                document.getElementById('list-clientes').innerHTML = html;
+            });
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'parque_maquinas'), snap => { window.parqueMaquinas = []; snap.forEach(d => window.parqueMaquinas.push(d.data())); });
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'cadastros_equipamentos'), snap => { window.dbMaquinas = []; snap.forEach(d => window.dbMaquinas.push(d.data())); });
+            
+            // USUARIOS
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'usuarios_permissoes'), snap => {
+                window.usersList = []; let htmlTec = '<option value="">Selecione...</option>';
+                snap.forEach(d => { const u = d.data(); window.usersList.push(u); htmlTec += `<option value="${u.nome}">${u.nome}</option>`; });
+                document.getElementById('os-tecnico').innerHTML = htmlTec;
+            });
+
+            // FORMCRAFT DATA
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_forms'), snap => {
+                window.dbForms = []; snap.forEach(d => window.dbForms.push(d.data()));
+                window.atualizarAbaFormularios(); 
+            });
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_submissions'), snap => {
+                window.formSubmissions = []; snap.forEach(d => window.formSubmissions.push(d.data()));
+                window.atualizarAbaFormularios(); 
+            });
+
+            // ORDENS DE SERVIÇO
+            window.fsOnSnapshot(window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr'), snap => {
+                window.tickets = [];
+                snap.forEach(dSnap => {
+                    const d = dSnap.data();
+                    let tStatus = d.status || 'ABERTURA';
+                    
+                    // Tratamento antigo/legacy para as 5 colunas
+                    if(tStatus === 'ENTRADA') tStatus = 'ABERTURA';
+                    if(tStatus === 'TRIAGEM' || tStatus === 'ORCAMENTO') tStatus = 'DIAGNOSTICO';
+                    
+                    window.tickets.push({
+                        id: d.osr || dSnap.id,
+                        status: tStatus,
+                        etapa_global: d.etapa_global || (d.equipamentos && d.equipamentos.length > 0 ? d.equipamentos[0].etapa : '1. Abertura da OS'),
+                        clienteOS: d.clienteOS || d.cliente || '',
+                        tecnicoOS: d.tecnicoOS || d.tecnico || '',
+                        dataAgendamentoOS: d.dataAgendamentoOS || d.dataAgendamento || (d.timestamp ? new Date(d.timestamp).toISOString().split('T')[0] : ''),
+                        equipamentosOS: d.equipamentosOS || d.equipamentos || (d.maquina ? [{maquina: `[SN: ${d.serial||'S/N'}] ${d.maquina}`, defeito: d.defeito, formularios: [{titulo: '', resposta_id: ''}]}] : []),
+                        orcamentosOS: d.orcamentosOS || d.orcamentos || [],
+                        timestampOriginal: d.timestamp || Date.now()
+                    });
+                });
+                window.tickets.sort((a,b) => b.timestampOriginal - a.timestampOriginal);
+                window.renderizarVisoes();
+            });
+        };
+
+        window.mostrarNotificacao = function(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-emerald-400';
+            toast.classList.remove('hidden'); 
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        };
+        window.formatarDataBR = function(isoStr) { try { return isoStr.split('T')[0].split('-').reverse().join('/'); } catch(e) { return isoStr||'-'; } };
+        window.formatarMoeda = function(v) { return (v||0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+
+        // =====================================
+        // ALERTAS E AUTOMAÇÃO (ROBÔ)
+        // =====================================
+        window.abrirModalConfigAlertas = function() {
+            const cont = document.getElementById('config-notificacoes-content');
+            let html = '';
+            Object.keys(STATUSES_OS).forEach(st => {
+                const conf = STATUSES_OS[st];
+                const currentVals = (window.alertSettings[st] || []).join(', ');
+                html += `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1"><span class="w-2 h-2 rounded-full inline-block ${conf.badgeDot} mr-1"></span> ${conf.label}</label>
+                        <input type="text" class="inp-alerta w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-amber-500" data-status="${st}" placeholder="Ex: marcos@grupocij.com, Vendedor, Administrativo..." value="${currentVals}">
+                    </div>
+                `;
+            });
+            cont.innerHTML = html;
+            document.getElementById('modal-alertas').classList.remove('hidden');
+        };
+
+        window.fecharModalAlertas = () => document.getElementById('modal-alertas').classList.add('hidden');
+
+        window.salvarConfigAlertas = async function() {
+            const inps = document.querySelectorAll('.inp-alerta');
+            const novasConfigs = {};
+            inps.forEach(i => {
+                const st = i.getAttribute('data-status');
+                const arr = i.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                novasConfigs[st] = arr;
+            });
+            try {
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'config', 'notificacoes_os'), novasConfigs);
+                window.alertSettings = novasConfigs;
+                window.mostrarNotificacao('Configurações de alerta salvas!');
+                window.fecharModalAlertas();
+            } catch(e) { window.mostrarNotificacao('Erro ao salvar alertas.', 'error'); }
+        };
+
+        window.abrirModalAutomacaoKanban = function() {
+            const cont = document.getElementById('config-automacao-content');
+            let html = '';
+            ETAPAS_SERVICO.forEach(etapa => {
+                const mapAtual = window.kanbanMapping[etapa] || 'ABERTURA';
+                let selOpts = Object.keys(STATUSES_OS).map(k => `<option value="${k}" ${mapAtual === k ? 'selected' : ''}>${STATUSES_OS[k].label}</option>`).join('');
+                html += `
+                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm gap-2">
+                    <span class="text-[10px] font-bold text-slate-700 w-1/2">${etapa}</span>
+                    <i class="fa-solid fa-arrow-right text-slate-300"></i>
+                    <select class="map-sel w-1/2 text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg outline-none cursor-pointer" data-etapa="${etapa}">${selOpts}</select>
+                </div>
+                `;
+            });
+            cont.innerHTML = html;
+            document.getElementById('modal-automacao').classList.remove('hidden');
+        };
+
+        window.fecharModalAutomacaoKanban = () => document.getElementById('modal-automacao').classList.add('hidden');
+
+        window.salvarAutomacaoKanban = async function() {
+            const sels = document.querySelectorAll('.map-sel');
+            const mapping = {};
+            sels.forEach(s => mapping[s.getAttribute('data-etapa')] = s.value);
+            try {
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'config', 'kanban_mapping_os'), { mapping });
+                window.kanbanMapping = mapping;
+                window.mostrarNotificacao('Regras de Automação salvas!');
+                window.fecharModalAutomacaoKanban();
+            } catch(e) { window.mostrarNotificacao('Erro ao salvar automação.', 'error'); }
+        };
+
+        // =====================================
+        // VISÕES E RENDERIZAÇÃO
+        // =====================================
+        window.mudarVisao = function(visao) {
+            window.visaoAtual = visao;
+            if(visao === 'lista') {
+                document.getElementById('btn-visao-lista').className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-blue-600 shadow-sm transition";
+                document.getElementById('btn-visao-kanban').className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-500 hover:text-slate-800 transition";
+                document.getElementById('visao-lista').classList.remove('hidden');
+                document.getElementById('visao-kanban').classList.add('hidden');
+            } else {
+                document.getElementById('btn-visao-kanban').className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-blue-600 shadow-sm transition";
+                document.getElementById('btn-visao-lista').className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-500 hover:text-slate-800 transition";
+                document.getElementById('visao-kanban').classList.remove('hidden');
+                document.getElementById('visao-lista').classList.add('hidden');
+            }
+            window.renderizarVisoes();
+        };
+
+        window.getFiltrados = function() {
+            const busca = document.getElementById('filtro-busca').value.toLowerCase();
+            const tipoFiltro = document.getElementById('filtro-tipo-os').value;
+            const statusFiltro = document.getElementById('filtro-status').value;
+
+            return window.tickets.filter(t => {
+                if(statusFiltro !== 'ALL' && t.status !== statusFiltro) return false;
+                if(tipoFiltro === 'OS' && !t.id.startsWith('OS-')) return false;
+                if(tipoFiltro === 'OSR' && !t.id.startsWith('OSR-')) return false;
+                if(busca) {
+                    const str = `${t.id} ${t.clienteOS} ${t.tecnicoOS}`.toLowerCase();
+                    if(!str.includes(busca)) return false;
+                }
+                return true;
+            });
+        };
+
+        window.renderizarVisoes = function() {
+            const filtrados = window.getFiltrados();
+            if(window.visaoAtual === 'lista') window.renderizarTabela(filtrados);
+            else window.renderizarKanban(filtrados);
+        };
+
+        window.renderizarTabela = function(filtrados) {
+            const tbody = document.getElementById('tabela-os-body');
+            if(filtrados.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">Nenhuma O.S. encontrada.</td></tr>`; return; }
+
+            tbody.innerHTML = filtrados.map(t => {
+                const stConf = STATUSES_OS[t.status] || STATUSES_OS['ABERTURA'];
+                const totalOrcs = (t.orcamentosOS || []).reduce((acc, curr) => acc + (curr.total || 0), 0);
+
+                return `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer" onclick="window.abrirModalOS('${t.id}')">
+                    <td class="p-3"><span class="block font-bold text-blue-600">${t.id}</span><span class="text-[9px] text-slate-400">${window.formatarDataBR(t.dataAgendamentoOS)}</span></td>
+                    <td class="p-3 font-semibold text-slate-800">${t.clienteOS || 'S/N'}</td>
+                    <td class="p-3 text-slate-600">${t.tecnicoOS || 'Pendente'}</td>
+                    <td class="p-3 text-center"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">${t.etapa_global || '-'}</span></td>
+                    <td class="p-3 text-right font-semibold text-emerald-600">${window.formatarMoeda(totalOrcs)}</td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded border ${stConf.color}">${stConf.label}</span></td>
+                    <td class="p-3 text-center text-blue-500 font-medium text-xs hover:underline">Abrir</td>
+                </tr>`;
+            }).join('');
+        };
+
+        window.renderizarKanban = function(filtrados) {
+            const board = document.getElementById('kanban-board');
+            board.innerHTML = '';
+
+            Object.keys(STATUSES_OS).forEach(key => {
+                const conf = STATUSES_OS[key];
+                
+                // FLUID COLUMNS -> flex-1 para autoajuste perfeito às 5 colunas
+                const colDiv = document.createElement('div');
+                colDiv.className = 'kanban-col flex-1 min-w-[250px] sm:min-w-[280px] flex flex-col bg-slate-100/50 rounded-xl border border-slate-200 transition-colors h-full';
+                
+                colDiv.ondragover = e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+                colDiv.ondragleave = e => e.currentTarget.classList.remove('drag-over');
+                colDiv.ondrop = async e => {
+                    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+                    const id = e.dataTransfer.getData('text/plain');
+                    const t = window.tickets.find(x => x.id === id);
+                    if(t && t.status !== key) {
+                        t.status = key;
+                        try { 
+                            await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', t.id), {status: key}, {merge: true}); 
+                            window.dispararNotificacaoMudanca(t, key);
+                        } catch(err){}
+                    }
+                };
+
+                let myTks = filtrados.filter(t => t.status === key);
+
+                colDiv.innerHTML = `
+                    <div class="p-3 border-b border-slate-200 bg-white rounded-t-xl flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full ${conf.badgeDot}"></span>
+                            <h4 class="text-[10px] font-black uppercase text-slate-700">${conf.label}</h4>
+                        </div>
+                        <span class="text-[10px] font-bold bg-slate-100 px-1.5 rounded">${myTks.length}</span>
+                    </div>
+                `;
+
+                const cardsCont = document.createElement('div');
+                cardsCont.className = 'flex-1 overflow-y-auto p-2.5 space-y-3 custom-scrollbar min-h-0';
+                
+                myTks.forEach(t => {
+                    const card = document.createElement('div');
+                    card.draggable = true;
+                    card.className = 'bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-md transition text-xs group relative';
+                    card.ondragstart = e => { e.dataTransfer.setData('text/plain', t.id); card.classList.add('dragging'); };
+                    card.ondragend = () => card.classList.remove('dragging');
+                    card.onclick = (e) => { if(!e.target.closest('.btn-delete-card')) window.abrirModalOS(t.id); };
+
+                    const arrEq = t.equipamentosOS || [];
+                    let maqStr = 'Sem máquina vinculada';
+                    let defStr = 'Sem relato de defeito';
+                    if(arrEq.length > 0) {
+                        if(arrEq.length > 1) { maqStr = `${arrEq.length} equipamentos`; defStr = 'Múltiplos relatos.'; }
+                        else { maqStr = arrEq[0].maquina || 'S/M'; defStr = arrEq[0].defeito || 'S/D'; }
+                    }
+                    
+                    card.innerHTML = `
+                        <button onclick="window.abrirModalExcluirOS('${t.id}')" class="btn-delete-card absolute top-3 right-3 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition cursor-pointer p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                        <div class="flex justify-between items-start mb-2 pr-6">
+                            <span class="font-black text-blue-600 text-[11px]">${t.id}</span>
+                            <span class="text-[9px] text-slate-400 font-medium flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${window.formatarDataBR(t.dataAgendamentoOS)}</span>
+                        </div>
+                        <h5 class="font-bold text-slate-800 text-sm truncate mb-2 uppercase tracking-tight">${t.clienteOS || 'Cliente Não Informado'}</h5>
+                        <div class="text-[10px] text-slate-500 truncate mb-3 flex items-center gap-1.5"><i class="fa-solid fa-print text-slate-400"></i> ${maqStr}</div>
+                        
+                        <div class="mb-3">
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Defeito Reportado:</p>
+                            <p class="text-[10px] text-slate-600 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">${defStr}</p>
+                        </div>
+                        
+                        <div class="mb-3 flex justify-center">
+                            <span class="text-[9px] font-black text-blue-700 uppercase tracking-wider px-2 py-1 bg-blue-50 rounded-lg border border-blue-100 truncate w-full text-center" title="${t.etapa_global || '1. ABERTURA DA OS'}">${t.etapa_global || '1. ABERTURA DA OS'}</span>
+                        </div>
+
+                        <div class="flex justify-between items-center text-[10px] font-medium text-slate-500 border-t border-slate-100 pt-2 mt-auto">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-user text-slate-400"></i> <strong class="text-slate-700">${t.tecnicoOS || 'Pendente'}</strong></span>
+                        </div>
+                    `;
+                    cardsCont.appendChild(card);
+                });
+                
+                colDiv.appendChild(cardsCont);
+                board.appendChild(colDiv);
+            });
+        };
+
+        // =====================================
+        // MODAIS E CASCATAS
+        // =====================================
+        window.mudarAbaOS = function(aba) {
+            ['aba1', 'aba2', 'aba3', 'aba4'].forEach(a => {
+                document.getElementById(a).classList.add('hidden');
+                document.getElementById('btn-' + a).className = "tab-inactive pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer";
+            });
+            document.getElementById(aba).classList.remove('hidden');
+            document.getElementById('btn-' + aba).className = "tab-active pb-2.5 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer";
+            if(aba === 'aba4') window.atualizarAbaFormularios();
+        };
+
+        window.abrirModalOS = function(idEdit = null) {
+            document.getElementById('form-nova-os').reset();
+            document.getElementById('os-id-oculto').value = '';
+            document.getElementById('card-cliente-info').classList.add('hidden');
+            document.getElementById('container-equipamentos-os').innerHTML = '';
+            document.getElementById('container-orcamentos-os').innerHTML = '<div class="text-center py-6 border border-dashed border-slate-300 rounded-xl bg-slate-50"><p class="text-xs text-slate-400">Nenhum orçamento adicionado.</p></div>';
+            document.getElementById('container-formularios-os').innerHTML = '<div class="text-center py-6 border border-dashed border-slate-300 rounded-xl bg-slate-50"><p class="text-xs text-slate-400">Nenhum formulário vinculado ainda.</p></div>';
+            document.getElementById('valor-total-geral-os').innerText = 'R$ 0,00';
+            window.contadorEquips = 0; window.contadorOrcs = 0;
+
+            if (idEdit) {
+                const osCompleta = window.tickets.find(x => x.id === idEdit);
+                if(osCompleta) {
+                    document.getElementById('titulo-modal-os').innerText = `O.S. ${osCompleta.id}`;
+                    document.getElementById('os-id-oculto').value = osCompleta.id;
+                    document.getElementById('os-cliente').value = osCompleta.clienteOS; window.preencherCardCliente(osCompleta.clienteOS);
+                    document.getElementById('os-solicitante').value = osCompleta.solicitanteOS || '';
+                    document.getElementById('os-tipo').value = osCompleta.tipoAtendimentoOS || 'Interno';
+                    document.getElementById('os-data').value = osCompleta.dataAgendamentoOS || '';
+                    document.getElementById('os-tecnico').value = osCompleta.tecnicoOS || '';
+                    document.getElementById('os-obs').value = osCompleta.observacoesOS || '';
+                    document.getElementById('os-etapa').value = osCompleta.etapa_global || '1. Abertura da OS';
+
+                    let eqs = osCompleta.equipamentosOS || [];
+                    if(eqs.length > 0) eqs.forEach(maq => window.adicionarEquipamentoNaOS(maq));
+                    else window.adicionarEquipamentoNaOS();
+
+                    if(osCompleta.orcamentosOS && osCompleta.orcamentosOS.length > 0) {
+                        document.getElementById('container-orcamentos-os').innerHTML = '';
+                        osCompleta.orcamentosOS.forEach(orc => window.adicionarOrcamentoNaOS(orc));
+                    }
+                }
+            } else {
+                document.getElementById('titulo-modal-os').innerText = 'Nova Ordem de Serviço';
+                document.getElementById('os-data').value = new Date().toISOString().split('T')[0];
+                document.getElementById('os-etapa').value = '1. Abertura da OS';
+                window.adicionarEquipamentoNaOS(); 
+            }
+
+            window.atualizarContadorBadge('badge-equip-count', 'container-equipamentos-os');
+            window.atualizarContadorBadge('badge-orc-count', 'container-orcamentos-os');
+            window.mudarAbaOS('aba1');
+            document.getElementById('modal-os').classList.remove('hidden');
+        };
+
+        window.fecharModalOS = () => document.getElementById('modal-os').classList.add('hidden');
+
+        window.preencherCardCliente = function(nome) {
+            if(!nome) { document.getElementById('card-cliente-info').classList.add('hidden'); return; }
+            const cli = window.dbClientes.find(c => (c.fantasia||'').toLowerCase() === nome.toLowerCase() || (c.razao_social||'').toLowerCase() === nome.toLowerCase());
+            if (cli) {
+                document.getElementById('card-end-txt').innerText = cli.endereco ? `${cli.endereco}, ${cli.cidade || ''}` : 'Endereço não cadastrado';
+                let telTxt = cli.telefone || '-';
+                if(cli.contatos && cli.contatos.length > 0) telTxt = cli.contatos[0].telefone || telTxt;
+                document.getElementById('card-tel-txt').innerText = telTxt;
+                document.getElementById('card-cliente-info').classList.remove('hidden');
+                
+                const dlMaq = document.getElementById('list-maquinas'); dlMaq.innerHTML = '';
+                window.parqueMaquinas.filter(m => m.cliente_atual === cli.fantasia || m.cliente_atual === cli.razao_social).forEach(m => dlMaq.innerHTML += `<option value="[SN: ${m.serial}] ${m.modelo}">`);
+                window.dbMaquinas.forEach(m => dlMaq.innerHTML += `<option value="${m.modelo}">`);
+            } else { document.getElementById('card-cliente-info').classList.add('hidden'); }
+        };
+
+        // --- MÚLTIPLOS FORMULÁRIOS POR MÁQUINA ---
+        window.adicionarEquipamentoNaOS = function(dadosSalvos = null) {
+            window.contadorEquips++;
+            const container = document.getElementById('container-equipamentos-os');
+            
+            const cardHtml = `
+                <div id="equip-card-${window.contadorEquips}" class="equip-card bg-white border border-slate-200 rounded-xl p-4 relative transition hover:border-blue-300">
+                    <button type="button" onclick="this.parentElement.remove(); window.atualizarContadorBadge('badge-equip-count', 'container-equipamentos-os'); window.atualizarAbaFormularios();" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 transition cursor-pointer"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div class="space-y-3">
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Máquina / SN *</label><input type="text" list="list-maquinas" class="inp-maquina input-delicate" placeholder="Modelo ou Série..." value="${dadosSalvos ? window.escapeHtml(dadosSalvos.maquina) : ''}"></div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Defeito *</label><textarea rows="2" class="inp-defeito input-delicate resize-none" placeholder="Relato do cliente...">${dadosSalvos ? window.escapeHtml(dadosSalvos.defeito) : ''}</textarea></div>
+                            <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Serviço / Laudo (Técnico)</label><textarea rows="2" class="inp-servico input-delicate resize-none" placeholder="Laudo do técnico...">${dadosSalvos ? window.escapeHtml(dadosSalvos.servico) : ''}</textarea></div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col justify-start">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-[10px] font-black text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-list-check text-blue-500 mr-1"></i> Check-lists Exigidos</label>
+                                <button type="button" onclick="window.addFormSelectBox(${window.contadorEquips})" class="text-[10px] font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded transition cursor-pointer"><i class="fa-solid fa-plus"></i> Add Form</button>
+                            </div>
+                            <div id="forms-maq-${window.contadorEquips}" class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1 mb-3"></div>
+                            
+                            <div class="grid grid-cols-2 gap-3 mt-auto pt-3 border-t border-slate-200">
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Início</label><input type="time" class="inp-hora-inicio input-delicate" value="${dadosSalvos && dadosSalvos.horaInicio ? dadosSalvos.horaInicio : ''}"></div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Fim</label><input type="time" class="inp-hora-fim input-delicate" value="${dadosSalvos && dadosSalvos.horaFim ? dadosSalvos.horaFim : ''}"></div>
+                            </div>
+                            <input type="hidden" class="inp-pecas-utilizadas" value='${dadosSalvos && dadosSalvos.pecasUtilizadas ? JSON.stringify(dadosSalvos.pecasUtilizadas).replace(/'/g, "&#39;") : "[]"}'>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            
+            // Popula os formulários que vieram do banco
+            if (dadosSalvos) {
+                let arrForms = dadosSalvos.formularios || [];
+                if(arrForms.length === 0 && dadosSalvos.formulario) { arrForms = [{titulo: dadosSalvos.formulario, resposta_id: dadosSalvos.formulario_resposta_id || ''}]; }
+                if(arrForms.length > 0) {
+                    arrForms.forEach(f => window.addFormSelectBox(window.contadorEquips, f.titulo, f.resposta_id));
+                }
+            }
+            window.atualizarContadorBadge('badge-equip-count', 'container-equipamentos-os');
+        };
+
+        window.addFormSelectBox = function(equipId, titulo = '', respostaId = '') {
+            const container = document.getElementById(`forms-maq-${equipId}`);
+            // Puxa do Formcraft 
+            const formsOptions = window.dbForms.map(f => `<option value="${f.title}" ${f.title === titulo ? 'selected' : ''}>${f.title}</option>`).join('');
+            
+            const row = document.createElement('div');
+            row.className = "flex items-center gap-1.5 form-row-item";
+            row.innerHTML = `
+                <select class="inp-formulario input-delicate flex-1" onchange="window.atualizarAbaFormularios()"><option value="">Selecione o Laudo...</option>${formsOptions}</select>
+                <input type="hidden" class="inp-form-submission-id" value="${respostaId}">
+                <button type="button" onclick="this.parentElement.remove(); window.atualizarAbaFormularios();" class="w-8 h-8 rounded bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition shadow-sm cursor-pointer shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+            `;
+            container.appendChild(row);
+        };
+
+        // ABA 4 E INTEGRAÇÃO FORMCRAFT 100% NATIVA
+        window.escapeHtml = (s) => (s||'').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+        window.currentActiveForm = null;
+        window.currentActiveEquipIndex = null;
+        window.currentFormIndex = null;
+        window.currentActiveSubmissionId = null;
+
+        window.atualizarAbaFormularios = function() {
+            const container = document.getElementById('container-formularios-os');
+            let html = '';
+            let count = 0;
+
+            document.querySelectorAll('.equip-card').forEach((card, equipIndex) => {
+                const maqNome = card.querySelector('.inp-maquina').value || `Máquina ${equipIndex+1}`;
+                
+                card.querySelectorAll('.form-row-item').forEach((row, formIndex) => {
+                    const formTitle = row.querySelector('.inp-formulario').value;
+                    const respId = row.querySelector('.inp-form-submission-id').value;
+                    
+                    if(formTitle) {
+                        count++;
+                        const isFilled = respId !== '';
+                        const btnText = isFilled ? 'Ver/Editar Laudo' : 'Preencher Laudo';
+                        const btnClass = isFilled ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-600 hover:text-white' : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-600 hover:text-white';
+                        const badgeStatus = isFilled ? '<span class="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-200"><i class="fa-solid fa-check"></i> Preenchido</span>' : '<span class="text-[9px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-200">Pendente</span>';
+
+                        html += `
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center shadow-sm hover:border-slate-300 transition">
+                            <div>
+                                ${badgeStatus}
+                                <h5 class="text-sm font-black text-slate-800 mt-1">${formTitle}</h5>
+                                <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-link text-slate-300"></i> Vinculado à: ${maqNome}</p>
+                            </div>
+                            <button type="button" onclick="window.abrirModalFormulario('${formTitle}', ${equipIndex}, ${formIndex}, '${window.escapeHtml(maqNome)}')" class="${btnClass} px-4 py-2 rounded-lg text-xs font-bold transition border cursor-pointer shadow-sm">
+                                ${btnText}
+                            </button>
+                        </div>`;
+                    }
+                });
+            });
+
+            if(count === 0) container.innerHTML = '<div class="text-center py-6 border border-dashed border-slate-300 rounded-xl bg-slate-50"><p class="text-xs text-slate-400">Nenhum formulário vinculado.</p></div>';
+            else container.innerHTML = html;
+            document.getElementById('badge-form-count').innerText = count;
+        };
+
+        window.abrirModalFormulario = async function(formTitle, equipIndex, formIndex, maqNome) {
+            let formObj = window.dbForms.find(f => f.title === formTitle);
+            if (!formObj) { window.mostrarNotificacao('Formulário não encontrado na base.', 'error'); return; }
+            
+            window.currentActiveForm = formObj;
+            window.currentActiveEquipIndex = equipIndex;
+            window.currentFormIndex = formIndex;
+            
+            const osId = document.getElementById('os-id-oculto').value || 'OS Não Salva';
+            const cardMaquina = document.querySelectorAll('.equip-card')[equipIndex];
+            const formRow = cardMaquina.querySelectorAll('.form-row-item')[formIndex];
+            window.currentActiveSubmissionId = formRow.querySelector('.inp-form-submission-id').value;
+
+            document.getElementById('titulo-modal-form').innerText = formObj.title;
+            document.getElementById('desc-modal-form').innerText = formObj.description || 'Preencha os campos abaixo de acordo com a avaliação técnica.';
+            document.getElementById('badge-os-form').innerText = `OS: ${osId}`;
+            document.getElementById('badge-maq-form').innerText = `Máquina: ${maqNome}`;
+
+            let existingAnswers = {};
+            if (window.currentActiveSubmissionId) {
+                const sub = window.formSubmissions.find(s => s.id === window.currentActiveSubmissionId);
+                if (sub) existingAnswers = sub.answers || {};
+            }
+
+            const cont = document.getElementById('preview-fields-container');
+            const eventHandlers = `onchange="window.evaluatePreviewRules()" oninput="window.evaluatePreviewRules()"`;
+            
+            cont.innerHTML = formObj.fields.map(f => {
+                let html = `<label class="block text-xs font-black text-slate-800 mb-1.5 leading-tight">${window.escapeHtml(f.label)} ${f.required?'<span class="text-red-500">*</span>':''}</label>`;
+                if(f.instruction) html += `<p class="text-[10px] font-medium text-slate-500 mb-3">${window.escapeHtml(f.instruction)}</p>`;
+                
+                let val = existingAnswers[f.label] || '';
+                
+                if(f.type === 'short_text') html += `<input type="text" name="${f.id}" value="${window.escapeHtml(val)}" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-2.5 rounded-xl outline-none focus:border-blue-500 shadow-sm">`;
+                if(f.type === 'long_text') html += `<textarea name="${f.id}" rows="3" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-medium border border-slate-300 p-2.5 rounded-xl outline-none focus:border-blue-500 shadow-sm resize-none">${window.escapeHtml(val)}</textarea>`;
+                if(f.type === 'number') html += `<input type="number" name="${f.id}" value="${window.escapeHtml(val)}" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-2.5 rounded-xl outline-none focus:border-blue-500 shadow-sm">`;
+                if(f.type === 'date') html += `<input type="date" name="${f.id}" value="${window.escapeHtml(val)}" ${f.required?'required':''} ${eventHandlers} class="w-full text-xs font-bold border border-slate-300 p-2.5 rounded-xl outline-none focus:border-blue-500 shadow-sm cursor-pointer">`;
+                
+                if(f.type === 'single_select') {
+                    html += `<div class="space-y-1.5">${f.options.map(o => `<label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition border border-transparent hover:border-slate-200"><input type="radio" name="${f.id}" value="${window.escapeHtml(o)}" ${val === o ? 'checked' : ''} ${f.required?'required':''} ${eventHandlers} class="w-4 h-4 text-blue-600 cursor-pointer"> ${window.escapeHtml(o)}</label>`).join('')}</div>`;
+                }
+                if(f.type === 'multi_select') {
+                    const valArr = Array.isArray(val) ? val : (val.split ? val.split(', ') : []);
+                    html += `<div class="space-y-1.5">${f.options.map(o => `<label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition border border-transparent hover:border-slate-200"><input type="checkbox" name="${f.id}" value="${window.escapeHtml(o)}" ${valArr.includes(o) ? 'checked' : ''} ${eventHandlers} class="w-4 h-4 text-blue-600 rounded cursor-pointer"> ${window.escapeHtml(o)}</label>`).join('')}</div>`;
+                }
+                
+                return `<div id="pw-${f.id}" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300">${html}</div>`;
+            }).join('');
+            
+            window.evaluatePreviewRules();
+            
+            const modal = document.getElementById('modal-preencher-form');
+            const content = document.getElementById('modal-form-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        };
+
+        window.fecharModalFormulario = function() {
+            const modal = document.getElementById('modal-preencher-form');
+            const content = document.getElementById('modal-form-content');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        };
+
+        window.evaluatePreviewRules = function() {
+            const formObj = window.currentActiveForm;
+            if (!formObj || !formObj.rules || formObj.rules.length === 0) return;
+            
+            const form = document.getElementById('interactive-preview-form');
+            const values = {};
+            
+            formObj.fields.forEach(f => {
+                if(f.type === 'single_select') { const r = form.querySelector(`input[name="${f.id}"]:checked`); values[f.id] = r ? r.value : ''; }
+                else if(f.type === 'multi_select') { values[f.id] = Array.from(form.querySelectorAll(`input[name="${f.id}"]:checked`)).map(e=>e.value); }
+                else { const el = form.querySelector(`[name="${f.id}"]`); values[f.id] = el ? el.value : ''; }
+            });
+            
+            const targetFields = new Set(formObj.rules.map(r => r.targetId));
+            const fieldsToShow = new Set();
+            
+            formObj.rules.forEach(r => {
+                const triggerVal = values[r.triggerId];
+                let isMatch = false;
+                
+                if (Array.isArray(triggerVal)) {
+                     if (r.operator === 'contains' || r.operator === 'equals') isMatch = triggerVal.includes(r.value);
+                     if (r.operator === 'not_contains' || r.operator === 'not_equals') isMatch = !triggerVal.includes(r.value);
+                } else {
+                     const tValStr = String(triggerVal || '').toLowerCase();
+                     const rValStr = String(r.value || '').toLowerCase();
+                     const tValNum = parseFloat(triggerVal);
+                     const rValNum = parseFloat(r.value);
+                     
+                     switch(r.operator) {
+                         case 'equals': isMatch = tValStr === rValStr; break;
+                         case 'not_equals': isMatch = tValStr !== rValStr; break;
+                         case 'contains': isMatch = tValStr.includes(rValStr); break;
+                         case 'not_contains': isMatch = !tValStr.includes(rValStr); break;
+                         case 'greater_than': isMatch = !isNaN(tValNum) && tValNum > rValNum; break;
+                         case 'less_than': isMatch = !isNaN(tValNum) && tValNum < rValNum; break;
+                         case 'greater_or_equal': isMatch = !isNaN(tValNum) && tValNum >= rValNum; break;
+                         case 'less_or_equal': isMatch = !isNaN(tValNum) && tValNum <= rValNum; break;
+                     }
+                }
+                if (isMatch) fieldsToShow.add(r.targetId);
+            });
+            
+            formObj.fields.forEach(f => {
+                const el = document.getElementById(`pw-${f.id}`);
+                if (!el) return;
+                
+                if (targetFields.has(f.id)) {
+                    if (fieldsToShow.has(f.id)) {
+                        el.style.display = 'block';
+                        const inp = el.querySelector(`[name="${f.id}"]`);
+                        if(inp && f.required) inp.required = true;
+                    } else {
+                        el.style.display = 'none';
+                        const inps = el.querySelectorAll(`[name="${f.id}"]`);
+                        inps.forEach(i => i.required = false);
+                    }
+                }
+            });
+        };
+
+        window.salvarPreenchimentoForm = async function(e) {
+            e.preventDefault();
+            const formObj = window.currentActiveForm;
+            const answers = {};
+            
+            formObj.fields.forEach(f => {
+                const elContainer = document.getElementById(`pw-${f.id}`);
+                if (elContainer && elContainer.style.display === 'none') return;
+                
+                if(f.type === 'single_select') { const r = document.querySelector(`input[name="${f.id}"]:checked`); answers[f.label] = r ? r.value : ''; }
+                else if(f.type === 'multi_select') { answers[f.label] = Array.from(document.querySelectorAll(`input[name="${f.id}"]:checked`)).map(e=>e.value).join(', '); }
+                else { const el = document.querySelector(`[name="${f.id}"]`); answers[f.label] = el ? el.value : ''; }
+            });
+
+            const subId = window.currentActiveSubmissionId || 's_' + Date.now() + Math.floor(Math.random()*1000);
+            const sub = { 
+                id: subId, formId: formObj.id, osId: document.getElementById('os-id-oculto').value || 'OS-Temp',
+                submittedAt: new Date().toISOString(), answers: answers, tecnico: window.currentUserStr
+            };
+            
+            try {
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'sandbox_submissions', sub.id), sub);
+                
+                const cardMaquina = document.querySelectorAll('.equip-card')[window.currentActiveEquipIndex];
+                const formRow = cardMaquina.querySelectorAll('.form-row-item')[window.currentFormIndex];
+                formRow.querySelector('.inp-form-submission-id').value = subId;
+                
+                window.mostrarNotificacao('Laudo salvo e anexado à máquina!');
+                window.fecharModalFormulario();
+                window.atualizarAbaFormularios();
+            } catch(err) { window.mostrarNotificacao('Erro no envio.', 'error'); }
+        };
+
+        // ORÇAMENTOS
+        window.adicionarOrcamentoNaOS = function(dadosSalvos = null) {
+            window.contadorOrcs++;
+            if(document.getElementById('container-orcamentos-os').innerHTML.includes('Nenhum orçamento')) document.getElementById('container-orcamentos-os').innerHTML = '';
+            
+            const container = document.getElementById('container-orcamentos-os');
+            const maqValues = Array.from(document.querySelectorAll('.inp-maquina')).map(inp => inp.value).filter(val => val !== '');
+            let opcoesAlvo = '<option value="Geral da OS">Geral da O.S.</option>';
+            maqValues.forEach(maq => { opcoesAlvo += `<option value="${window.escapeHtml(maq)}">${window.escapeHtml(maq)}</option>`; });
+
+            let itensHtml = '';
+            if (dadosSalvos && dadosSalvos.itens && dadosSalvos.itens.length > 0) {
+                dadosSalvos.itens.forEach(item => { itensHtml += window.gerarLinhaItemOrcamento(window.contadorOrcs, item.desc, item.qtd, item.unit); });
+            } else { itensHtml = window.gerarLinhaItemOrcamento(window.contadorOrcs, '', 1, 0); }
+
+            const sMoQtd = dadosSalvos ? (dadosSalvos.mo_qtd || 1) : 1; const sMoUnit = dadosSalvos ? (dadosSalvos.mo_unit || '') : '';
+            const sDeslQtd = dadosSalvos ? (dadosSalvos.desl_qtd || 1) : 1; const sDeslUnit = dadosSalvos ? (dadosSalvos.desl_unit || '') : '';
+
+            const cardHtml = `
+                <div id="orc-card-${window.contadorOrcs}" class="orc-card bg-white border border-emerald-200 rounded-xl p-4 relative mb-4">
+                    <button type="button" onclick="document.getElementById('orc-card-${window.contadorOrcs}').remove(); window.atualizarContadorBadge('badge-orc-count', 'container-orcamentos-os'); window.calcularTotalGeralOS();" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 transition cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
+                    <div class="mb-3 w-1/2 pr-8"><label class="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Máquina Alvo</label><select class="inp-orc-alvo input-delicate border-emerald-200 bg-emerald-50/30 text-emerald-900">${opcoesAlvo}</select></div>
+                    <div class="border border-slate-200 rounded-lg overflow-hidden mb-3">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[10px]">
+                                <tr><th class="p-2 w-1/2">Peça/Serviço</th><th class="p-2 text-center w-16">Qtd</th><th class="p-2 text-right w-24">Unitário</th><th class="p-2 text-right w-24">Subtotal</th><th class="p-2 text-center w-8"></th></tr>
+                            </thead>
+                            <tbody id="tbody-itens-orc-${window.contadorOrcs}" class="divide-y divide-slate-100">${itensHtml}</tbody>
+                        </table>
+                        <div class="bg-slate-50 p-2 flex justify-between items-center border-t border-slate-200">
+                            <button type="button" onclick="window.addProdutoOrcamento(${window.contadorOrcs})" class="text-[10px] font-semibold text-blue-600 hover:text-blue-800 transition"><i class="fa-solid fa-plus mr-1"></i> Add Linha</button>
+                            <span class="text-[10px] text-slate-500 font-bold">Sub Peças: <span id="sub-prod-${window.contadorOrcs}" class="text-slate-800">R$ 0,00</span></span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div class="flex items-center gap-2"><label class="text-[10px] font-bold text-slate-500 uppercase w-20">Mão de Obra</label><input type="number" step="0.5" class="inp-orc-mo-qtd input-delicate w-16 text-center" placeholder="h" value="${sMoQtd}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"><input type="number" step="0.01" class="inp-orc-mo-unit input-delicate w-20 text-right" placeholder="R$/h" value="${sMoUnit}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"><span class="text-xs font-bold text-slate-700 w-20 text-right" id="sub-mo-${window.contadorOrcs}">R$ 0,00</span></div>
+                        <div class="flex items-center gap-2"><label class="text-[10px] font-bold text-slate-500 uppercase w-20">Desloc.</label><input type="number" step="1" class="inp-orc-desl-qtd input-delicate w-16 text-center" placeholder="km" value="${sDeslQtd}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"><input type="number" step="0.01" class="inp-orc-desl-unit input-delicate w-20 text-right" placeholder="R$/km" value="${sDeslUnit}" oninput="window.calcularTotaisCard(${window.contadorOrcs})"><span class="text-xs font-bold text-slate-700 w-20 text-right" id="sub-desl-${window.contadorOrcs}">R$ 0,00</span></div>
+                    </div>
+                    <div class="mt-3 flex justify-between items-center pt-3 border-t border-emerald-100">
+                        <input type="text" class="inp-orc-obs input-delicate w-2/3" placeholder="Observações..." value="${dadosSalvos ? window.escapeHtml(dadosSalvos.obs) : ''}">
+                        <div class="text-right"><span class="text-[10px] font-bold text-emerald-800 uppercase mr-2">Total Item:</span><span id="total-card-${window.contadorOrcs}" class="text-base font-black text-emerald-600">R$ 0,00</span></div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            if (dadosSalvos) document.getElementById(`orc-card-${window.contadorOrcs}`).querySelector('.inp-orc-alvo').value = dadosSalvos.alvo || 'Geral da OS';
+            window.calcularTotaisCard(window.contadorOrcs); window.atualizarContadorBadge('badge-orc-count', 'container-orcamentos-os');
+        };
+
+        window.gerarLinhaItemOrcamento = function(id, d, q, u) { 
+            return `<tr class="item-produto"><td class="p-1"><input type="text" class="inp-item-desc input-delicate border-transparent focus:border-slate-300 shadow-none" placeholder="Descrição..." value="${window.escapeHtml(d)}"></td><td class="p-1"><input type="number" class="inp-item-qtd input-delicate text-center border-transparent focus:border-slate-300 shadow-none" value="${q}" oninput="window.calcularTotaisCard(${id})"></td><td class="p-1"><input type="number" step="0.01" class="inp-item-unit input-delicate text-right border-transparent focus:border-slate-300 shadow-none" value="${u}" oninput="window.calcularTotaisCard(${id})"></td><td class="p-1 text-right font-medium text-slate-600 item-subtotal text-[11px] align-middle">R$ 0,00</td><td class="p-1 text-center align-middle"><button type="button" onclick="this.closest('tr').remove(); window.calcularTotaisCard(${id});" class="text-slate-300 hover:text-red-500 transition cursor-pointer"><i class="fa-solid fa-xmark"></i></button></td></tr>`; 
+        };
+        window.addProdutoOrcamento = function(id) { document.getElementById(`tbody-itens-orc-${id}`).insertAdjacentHTML('beforeend', window.gerarLinhaItemOrcamento(id, '', 1, 0)); window.calcularTotaisCard(id); };
+
+        window.calcularTotaisCard = function(id) {
+            const card = document.getElementById(`orc-card-${id}`); if(!card) return;
+            let subP = 0;
+            card.querySelectorAll('.item-produto').forEach(r => { const q = parseFloat(r.querySelector('.inp-item-qtd').value)||0; const u = parseFloat(r.querySelector('.inp-item-unit').value)||0; const sub = q*u; r.querySelector('.item-subtotal').innerText = window.formatarMoeda(sub); subP += sub; });
+            document.getElementById(`sub-prod-${id}`).innerText = window.formatarMoeda(subP);
+            const mo = (parseFloat(card.querySelector('.inp-orc-mo-qtd').value)||0) * (parseFloat(card.querySelector('.inp-orc-mo-unit').value)||0); document.getElementById(`sub-mo-${id}`).innerText = window.formatarMoeda(mo);
+            const ds = (parseFloat(card.querySelector('.inp-orc-desl-qtd').value)||0) * (parseFloat(card.querySelector('.inp-orc-desl-unit').value)||0); document.getElementById(`sub-desl-${id}`).innerText = window.formatarMoeda(ds);
+            const tot = subP + mo + ds; document.getElementById(`total-card-${id}`).innerText = window.formatarMoeda(tot); card.setAttribute('data-total', tot); window.calcularTotalGeralOS();
+        };
+
+        window.calcularTotalGeralOS = function() { let t = 0; document.querySelectorAll('.orc-card').forEach(c => { t += parseFloat(c.getAttribute('data-total'))||0; }); document.getElementById('valor-total-geral-os').innerText = window.formatarMoeda(t); };
+        window.atualizarContadorBadge = function(idB, idC) { const val = document.getElementById(idC).querySelectorAll(`.${idC === 'container-equipamentos-os' ? 'equip-card' : 'orc-card'}`).length; document.getElementById(idB).innerText = val; };
+
+        // SALVAR O.S E GATILHOS
+        window.salvarOS = async function() {
+            const cliente = document.getElementById('os-cliente').value.trim();
+            if (!cliente) { window.mostrarNotificacao("Preencha o Cliente!", 'warning'); window.mudarAbaOS('aba1'); return; }
+
+            const equipCards = document.querySelectorAll('.equip-card');
+            if (equipCards.length === 0) { window.mostrarNotificacao("Adicione uma máquina!", 'warning'); window.mudarAbaOS('aba2'); return; }
+
+            const arrayEquips = [];
+            equipCards.forEach(c => {
+                const forms = Array.from(c.querySelectorAll('.inp-formulario')).map(sel => ({
+                    titulo: sel.value, resposta_id: sel.nextElementSibling.value 
+                })).filter(f => f.titulo !== '');
+
+                arrayEquips.push({
+                    maquina: c.querySelector('.inp-maquina').value.trim() || 'S/N', 
+                    defeito: c.querySelector('.inp-defeito').value.trim() || 'S/D', 
+                    servico: c.querySelector('.inp-servico').value, 
+                    horaInicio: c.querySelector('.inp-hora-inicio').value, 
+                    horaFim: c.querySelector('.inp-hora-fim').value, 
+                    formularios: forms,
+                    pecasUtilizadas: JSON.parse(c.querySelector('.inp-pecas-utilizadas')?.value || "[]")
+                });
+            });
+
+            const arrayOrcs = [];
+            document.querySelectorAll('.orc-card').forEach(c => {
+                const itens = [];
+                c.querySelectorAll('.item-produto').forEach(r => { const d = r.querySelector('.inp-item-desc').value.trim(); if(d) itens.push({desc: d, qtd: parseFloat(r.querySelector('.inp-item-qtd').value)||0, unit: parseFloat(r.querySelector('.inp-item-unit').value)||0}); });
+                arrayOrcs.push({ alvo: c.querySelector('.inp-orc-alvo').value, itens: itens, mo_qtd: parseFloat(c.querySelector('.inp-orc-mo-qtd').value)||0, mo_unit: parseFloat(c.querySelector('.inp-orc-mo-unit').value)||0, desl_qtd: parseFloat(c.querySelector('.inp-orc-desl-qtd').value)||0, desl_unit: parseFloat(c.querySelector('.inp-orc-desl-unit').value)||0, obs: c.querySelector('.inp-orc-obs').value.trim(), total: parseFloat(c.getAttribute('data-total'))||0 });
+            });
+
+            const idOculto = document.getElementById('os-id-oculto').value;
+            const dataAgendada = document.getElementById('os-data').value;
+            const tecnicoDesignado = document.getElementById('os-tecnico').value;
+            const etapaGlobal = document.getElementById('os-etapa').value;
+            
+            // Automação Kanban (Robô)
+            let targetStatus = 'ABERTURA';
+            for (const [fase, etapas] of Object.entries(window.kanbanMapping)) {
+                if (fase === etapaGlobal) { targetStatus = etapas; break; }
+            }
+
+            const payload = {
+                clienteOS: cliente, cliente: cliente, 
+                solicitanteOS: document.getElementById('os-solicitante').value.trim(), 
+                tipoAtendimentoOS: document.getElementById('os-tipo').value, 
+                dataAgendamentoOS: dataAgendada, dataAgendamento: dataAgendada,
+                tecnicoOS: tecnicoDesignado, tecnico_kanban: tecnicoDesignado, tecnico: tecnicoDesignado, 
+                observacoesOS: document.getElementById('os-obs').value.trim(), 
+                equipamentosOS: arrayEquips, equipamentos: arrayEquips, 
+                orcamentosOS: arrayOrcs, orcamentos: arrayOrcs, 
+                status: targetStatus, etapa_global: etapaGlobal,
+                maquina: arrayEquips[0].maquina, defeito: arrayEquips[0].defeito, solucao: arrayEquips[0].servico || ''
+            };
+
+            try {
+                let osFinalId = idOculto;
+                let dispararAlerta = false;
+
+                if (idOculto) {
+                    const osOriginal = window.tickets.find(x => x.id === idOculto);
+                    if(osOriginal && osOriginal.status !== targetStatus) dispararAlerta = true;
+                    await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', idOculto), payload, {merge: true});
+                } else {
+                    const counterRef = window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'counters', 'osr');
+                    osFinalId = await window.FirebaseRunTransaction(window.AppDB, async (transaction) => {
+                        const cDoc = await transaction.get(counterRef);
+                        let cur = cDoc.exists() ? cDoc.data().current : 1000;
+                        transaction.set(counterRef, { current: cur + 1 }, { merge: true });
+                        return `OS-${new Date().getFullYear()}-${cur + 1}`;
+                    });
+                    payload.osr = osFinalId; payload.timestamp = Date.now();
+                    await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', osFinalId), payload);
+                    dispararAlerta = true;
+                }
+
+                if (dispararAlerta) window.dispararNotificacaoMudanca({id: osFinalId, ...payload}, targetStatus);
+                window.fecharModalOS(); window.mostrarNotificacao('O.S. salva com sucesso!');
+            } catch(e) { window.mostrarNotificacao('Erro ao salvar.', 'error'); }
+        };
+
+        // EXCLUSÃO E DISPARO DE NOTIFICAÇÕES (Robô)
+        window.abrirModalExcluirOS = function(id) {
+            window.pendingDeleteId = id; document.getElementById('delete-os-id').innerText = id; document.getElementById('modal-delete').classList.remove('hidden');
+        };
+        window.closeDeleteModal = () => document.getElementById('modal-delete').classList.add('hidden');
+        window.executeDeleteOS = async function() {
+            if(!window.pendingDeleteId) return;
+            try {
+                await window.fsDeleteDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', window.pendingDeleteId));
+                window.closeDeleteModal(); window.mostrarNotificacao('OS Excluída permanentemente!');
+            } catch(e) {}
+        };
+
+        window.dispararNotificacaoMudanca = async function(os, novaFase) {
+            const targets = window.alertSettings[novaFase];
+            if(!targets || targets.length === 0) return;
+            const emails = []; const perfis = [];
+            targets.forEach(t => { if(t.includes('@')) emails.push(t); else perfis.push(t); });
+            const msg = `O chamado/OS ${os.id||os.osr} (${os.clienteOS}) entrou na coluna ${STATUSES_OS[novaFase].label}.`;
+            try {
+                const nId = 'notif_' + Date.now();
+                await window.fsSetDoc(window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'notificacoes_app', nId), {
+                    id: nId, mensagem: msg, targetEmails: emails, targetProfiles: perfis, tipo: 'info', timestamp: Date.now()
+                });
+            } catch(e) {}
+        };
+
+        // IMPRESSÃO E WHATSAPP
+        window.gerarDadosParaRelatorio = function() {
+            const osID = document.getElementById('os-id-oculto').value || 'Nova OS';
+            const cliente = document.getElementById('os-cliente').value || 'Não Informado';
+            const dt = document.getElementById('os-data').value ? document.getElementById('os-data').value.split('-').reverse().join('/') : '-';
+            const tec = document.getElementById('os-tecnico').value || 'A definir';
+            const endereco = document.getElementById('card-end-txt').innerText || '-';
+            
+            let maquinasStr = '';
+            document.querySelectorAll('.equip-card').forEach(card => {
+                const m = card.querySelector('.inp-maquina').value;
+                const d = card.querySelector('.inp-defeito').value;
+                const s = card.querySelector('.inp-servico').value;
+                if(m) {
+                    maquinasStr += `<div style="margin-bottom: 10px;"><strong>Equipamento:</strong> ${m}<br><strong>Defeito:</strong> ${d}<br><strong>Serviço:</strong> ${s || 'Pendente'}</div>`;
+                }
+            });
+
+            let orcamentosStr = ''; let totalGlobal = 0;
+            document.querySelectorAll('.orc-card').forEach(card => {
+                const alvo = card.querySelector('.inp-orc-alvo').value;
+                let produtosStr = ''; let tProd = 0;
+                card.querySelectorAll('.item-produto').forEach(row => {
+                    const desc = row.querySelector('.inp-item-desc').value;
+                    const qtd = parseFloat(row.querySelector('.inp-item-qtd').value) || 0;
+                    const un = parseFloat(row.querySelector('.inp-item-unit').value) || 0;
+                    if(desc) {
+                        const s = qtd * un; tProd += s;
+                        produtosStr += `<tr><td style="border:1px solid #ccc; padding:4px;">${desc}</td><td style="border:1px solid #ccc; padding:4px; text-align:center;">${qtd}</td><td style="border:1px solid #ccc; padding:4px; text-align:right;">${window.formatarMoeda(un)}</td><td style="border:1px solid #ccc; padding:4px; text-align:right;">${window.formatarMoeda(s)}</td></tr>`;
+                    }
+                });
+
+                const moTotal = (parseFloat(card.querySelector('.inp-orc-mo-qtd').value) || 0) * (parseFloat(card.querySelector('.inp-orc-mo-unit').value) || 0);
+                const deslTotal = (parseFloat(card.querySelector('.inp-orc-desl-qtd').value) || 0) * (parseFloat(card.querySelector('.inp-orc-desl-unit').value) || 0);
+                const totalCard = tProd + moTotal + deslTotal; totalGlobal += totalCard;
+
+                orcamentosStr += `
+                    <div style="margin-bottom: 20px; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px;">
+                        <h4 style="margin-top:0; margin-bottom:10px; color:#1e3a8a;">Ref: ${alvo}</h4>
+                        ${produtosStr ? `<table style="width:100%; border-collapse: collapse; font-size:10px; margin-bottom:10px;"><thead style="background:#f1f5f9;"><tr><th style="border:1px solid #ccc; padding:4px; text-align:left;">Produto/Peça</th><th style="border:1px solid #ccc; padding:4px; text-align:center;">Qtd</th><th style="border:1px solid #ccc; padding:4px; text-align:right;">V. Unit</th><th style="border:1px solid #ccc; padding:4px; text-align:right;">Subtotal</th></tr></thead><tbody>${produtosStr}</tbody></table>` : ''}
+                        <div style="font-size:11px; text-align: right; background:#f8fafc; padding: 5px; border-radius: 4px;"><strong>Mão de Obra + Desl:</strong> ${window.formatarMoeda(moTotal + deslTotal)}<br><h3 style="margin:5px 0 0 0; color:#047857; font-size: 14px;">Total do Item: ${window.formatarMoeda(totalCard)}</h3></div>
+                    </div>
+                `;
+            });
+
+            return { osID, cliente, dt, tec, endereco, maquinasStr, orcamentosStr, totalGlobal };
+        };
+
+        window.imprimirOS = function() {
+            const dados = window.gerarDadosParaRelatorio();
+            let pArea = document.getElementById('print-area');
+            if(!pArea) {
+                pArea = document.createElement('div');
+                pArea.id = 'print-area';
+                document.body.appendChild(pArea);
+            }
+
+            pArea.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #1e3a8a; padding-bottom:10px; margin-bottom:15px;">
+                    <div><h1 style="color:#1e3a8a; margin:0; font-size:24px; font-weight:900;">GRUPO CIJ</h1><p style="margin:0; font-size:10px; color:#64748b;">Soluções em Codificação Industrial</p></div>
+                    <div style="text-align:right;"><h2 style="margin:0; font-size:18px; color:#333;">ORDEM DE SERVIÇO / ORÇAMENTO</h2><h3 style="margin:0; color:#dc2626;">${dados.osID}</h3></div>
+                </div>
+                <table style="width:100%; font-size:12px; margin-bottom:15px; border-collapse:collapse;">
+                    <tr><td style="padding:4px; border:1px solid #e2e8f0; background:#f8fafc; font-weight:bold;">Cliente:</td><td style="padding:4px; border:1px solid #e2e8f0;">${dados.cliente}</td><td style="padding:4px; border:1px solid #e2e8f0; background:#f8fafc; font-weight:bold;">Data:</td><td style="padding:4px; border:1px solid #e2e8f0;">${dados.dt}</td></tr>
+                    <tr><td style="padding:4px; border:1px solid #e2e8f0; background:#f8fafc; font-weight:bold;">Endereço:</td><td style="padding:4px; border:1px solid #e2e8f0;">${dados.endereco}</td><td style="padding:4px; border:1px solid #e2e8f0; background:#f8fafc; font-weight:bold;">Técnico:</td><td style="padding:4px; border:1px solid #e2e8f0;">${dados.tec}</td></tr>
+                </table>
+                <h3 style="background:#1e3a8a; color:white; padding:5px 10px; font-size:12px; border-radius:4px; margin-bottom:10px;">Equipamentos e Serviços</h3>
+                <div style="font-size:11px; margin-bottom:20px;">${dados.maquinasStr || '<p>Nenhum equipamento listado.</p>'}</div>
+                <h3 style="background:#1e3a8a; color:white; padding:5px 10px; font-size:12px; border-radius:4px; margin-bottom:10px;">Proposta Financeira</h3>
+                <div>${dados.orcamentosStr || '<p>Sem orçamento lançado.</p>'}</div>
+                <div style="margin-top:20px; text-align:right; font-size:18px; border-top:2px solid #1e3a8a; padding-top:10px;"><strong>VALOR TOTAL DA O.S: <span style="color:#047857;">${window.formatarMoeda(dados.totalGlobal)}</span></strong></div>
+            `;
+            window.print();
+        };
+
+        window.enviarWhatsAppOS = function() {
+            const dados = window.gerarDadosParaRelatorio();
+            if(!dados.cliente || dados.cliente === 'Não Informado') { alert("Preencha o cliente antes de enviar!"); return; }
+
+            let texto = `*Ordem de Serviço: ${dados.osID}* 📄\n*Cliente:* ${dados.cliente}\n*Data:* ${dados.dt} | *Técnico:* ${dados.tec}\n\n`;
+            if(dados.totalGlobal > 0) { texto += `*RESUMO DO ORÇAMENTO:*\n💳 *Valor Total:* ${window.formatarMoeda(dados.totalGlobal)}\n\nAcesse a O.S para visualizar o detalhamento de peças, mão de obra e deslocamento.\n`; } 
+            else { texto += `Aguardando orçamentação técnica.\n`; }
+            
+            const link = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+            window.open(link, '_blank');
+        };
+
+    </script>
+</body>
+</html>

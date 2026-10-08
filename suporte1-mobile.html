@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suporte Técnico Mobile - Grupo CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-3 sm:p-6">
+
+    <!-- DATALISTS PARA O AUTOCOMPLETE DA CENTRAL DE CADASTROS -->
+    <datalist id="clientes-oficiais"></datalist>
+    <datalist id="maquinas-oficiais"></datalist>
+
+    <!-- CONTAINER PRINCIPAL DO MÓDULO (Oculto até o login ser validado pelo core.js) -->
+    <div id="main-content" class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden flex flex-col my-auto hidden">
+        
+        <!-- CABEÇALHO MOBILE -->
+        <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-5 text-center relative">
+            <span class="absolute left-4 top-5 text-xs font-bold bg-blue-800/60 px-2.5 py-1 rounded-full border border-blue-400/30">
+                <i class="fa-solid fa-headset mr-1"></i> Suporte WhatsApp
+            </span>
+            <h1 class="text-lg font-black tracking-tight mt-6">Atendimento Remoto OSR</h1>
+            <p class="text-[11px] text-blue-200 mt-0.5">Grupo CIJ — Registro de Suporte Técnico</p>
+        </div>
+
+        <!-- FORMULÁRIO DE PREENCHIMENTO -->
+        <form id="formSuporteMobile" onsubmit="event.preventDefault();" class="p-5 space-y-4 flex-1 custom-scrollbar">
+            
+            <!-- Nº OSR (Gerado Automaticamente) -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nº OSR (Gerado Automaticamente)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-hashtag text-xs"></i></span>
+                    <input type="text" id="osr_numero" readonly placeholder="Gerado ao Salvar" class="w-full pl-9 pr-3.5 py-2.5 bg-blue-50/70 border border-blue-200 rounded-2xl text-xs font-black text-blue-950 outline-none cursor-not-allowed text-center">
+                </div>
+            </div>
+
+            <!-- Técnico Responsável (Bloqueado/Automático) -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Técnico Responsável *</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-user-gear text-xs"></i></span>
+                    <input type="text" id="osr_tecnico" required readonly class="w-full pl-9 pr-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-2xl text-xs font-bold text-slate-600 outline-none cursor-not-allowed">
+                </div>
+            </div>
+
+            <!-- Cliente (CONECTADO À CENTRAL DE CADASTROS) -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cliente *</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-building text-xs"></i></span>
+                    <!-- Note o list="clientes-oficiais" aqui -->
+                    <input type="text" id="osr_cliente" list="clientes-oficiais" required oninput="window.buscarClientesSemelhantes(this.value)" placeholder="Digite o nome da empresa..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 transition">
+                </div>
+                <!-- ALERTA DE CLIENTES SEMELHANTES ENCONTRADOS -->
+                <div id="alertaClientesSimilares" class="hidden mt-2 p-3 bg-amber-50 border border-amber-300 rounded-2xl space-y-2 shadow-xs">
+                    <div class="flex items-center justify-between text-xs font-bold text-amber-900">
+                        <span><i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i> Histórico anterior deste cliente:</span>
+                    </div>
+                    <div id="listaClientesSimilares" class="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar">
+                        <!-- Preenchido dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contato -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Contato (WhatsApp / Nome) *</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-user-tie text-xs"></i></span>
+                    <input type="text" id="osr_contato" required placeholder="Nome e telefone do responsável" class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 transition">
+                </div>
+            </div>
+
+            <!-- Máquina / Modelo (CONECTADO À CENTRAL DE CADASTROS) -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Máquina / Modelo *</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-print text-xs"></i></span>
+                    <!-- Note o list="maquinas-oficiais" aqui -->
+                    <input type="text" id="osr_maquina" list="maquinas-oficiais" required placeholder="Ex: LEADJET V8820 / Laser CO2" class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 transition">
+                </div>
+            </div>
+
+            <!-- Defeito Relatado -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Defeito Relatado *</label>
+                <textarea id="osr_defeito" required rows="2" placeholder="Descreva o problema informado pelo cliente..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 transition resize-none"></textarea>
+            </div>
+
+            <!-- Parecer Técnico -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Parecer Técnico *</label>
+                <textarea id="osr_solucao" required rows="2" placeholder="Parecer e procedimento realizado pelo técnico..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 transition resize-none"></textarea>
+            </div>
+
+            <!-- NOVO CAMPO: Peças Necessárias -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Peças Necessárias / Utilizadas (Opcional)</label>
+                <textarea id="osr_pecas" rows="2" placeholder="Ex: Filtro principal, Válvula de 3 vias..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 outline-none focus:border-blue-600 transition resize-none"></textarea>
+            </div>
+
+            <!-- BOTÃO DE CONCLUSÃO COM AS 3 OPÇÕES -->
+            <div class="pt-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Conclusão / Status do Atendimento *</label>
+                <select id="osr_conclusao" required class="w-full p-3 bg-blue-50 border border-blue-300 rounded-2xl text-xs font-bold text-blue-900 outline-none focus:border-blue-600 transition cursor-pointer">
+                    <option value="" disabled selected>Selecione a conclusão...</option>
+                    <option value="Marcar atendimento">📅 Marcar atendimento presencial / futuro</option>
+                    <option value="Enviar orçamento">💰 Enviar orçamento de peças/serviço</option>
+                    <option value="Resolvido">✅ Resolvido (Encerrar chamado)</option>
+                </select>
+            </div>
+
+            <!-- BOTÕES DE AÇÃO (SALVAR / SALVAR E ENVIAR) -->
+            <div class="pt-3 grid grid-cols-2 gap-2">
+                <button type="button" id="btnSalvarApenas" onclick="window.processarAtendimento(false)" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 px-3 rounded-2xl shadow-sm transition text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i> Apenas Salvar
+                </button>
+                <button type="button" id="btnSalvarEnviar" onclick="window.processarAtendimento(true)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-2xl shadow-md transition text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-paper-plane"></i> Salvar & WhatsApp
+                </button>
+            </div>
+        </form>
+
+        <!-- RODAPÉ MOBILE -->
+        <div class="p-4 bg-slate-50 text-center border-t border-slate-100 text-[10px] text-slate-400 font-medium">
+            Portal Técnico Grupo CIJ &copy; <span id="anoAtualRodape">2026</span>
+        </div>
+    </div>
+
+    <!-- MODAL DE HISTÓRICO DO CLIENTE SELECIONADO -->
+    <div id="modalHistorico" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-history text-amber-400"></i> Histórico da Empresa</h3>
+                    <p id="tituloModalCliente" class="text-[10px] text-slate-300 mt-0.5">Cliente Selecionado</p>
+                </div>
+                <button onclick="window.fecharModalHistorico()" class="text-slate-400 hover:text-white p-1 cursor-pointer"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-3" id="listaHistoricoCliente">
+                <!-- Preenchido via JS -->
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 text-right">
+                <button onclick="window.fecharModalHistorico()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOTOR CENTRAL DO SISTEMA -->
+    <script type="module" src="core.js"></script>
+    
+    <!-- IMPORTAÇÃO DA TRANSAÇÃO DO FIREBASE -->
+    <script type="module">
+        import { runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        window.FirebaseRunTransaction = runTransaction;
+    </script>
+
+    <!-- LÓGICA DO MÓDULO OSR MOBILE -->
+    <script>
+        let atendimentosCacheFirebase = [];
+        window.clientesOficiais = [];
+
+        // Inicialização acionada pelo core.js após o login
+        window.initModule = function(perfil) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            
+            document.getElementById('anoAtualRodape').innerText = new Date().getFullYear();
+
+            // Preenche o nome do técnico com base no usuário logado no sistema
+            const tecnicoLogado = window.nomeUsuarioLogado || (window.currentUser ? window.currentUser.email : 'Técnico CIJ');
+            document.getElementById('osr_tecnico').value = tecnicoLogado;
+
+            // 1. Busca os atendimentos anteriores no banco de dados para a pesquisa do histórico
+            const osrCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr');
+            window.fsOnSnapshot(osrCol, (snap) => {
+                atendimentosCacheFirebase = [];
+                snap.forEach(d => atendimentosCacheFirebase.push(d.data()));
+            });
+
+            // 2. NOVA INTEGRAÇÃO: Puxa os Clientes da Central de Cadastros e popula o Datalist
+            const clientesCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'cadastros_clientes');
+            window.fsOnSnapshot(clientesCol, (snap) => {
+                window.clientesOficiais = [];
+                const dl = document.getElementById('clientes-oficiais');
+                if(dl) dl.innerHTML = '';
+                
+                snap.forEach(d => {
+                    const c = d.data();
+                    const nomeFantasia = c.fantasia || c.razao_social;
+                    let contatoFmt = '';
+                    
+                    if (c.contatos && c.contatos.length > 0) {
+                        contatoFmt = `${c.contatos[0].nome} - ${c.contatos[0].telefone}`;
+                    } else if (c.contato) {
+                        contatoFmt = `${c.contato} - ${c.telefone || ''}`;
+                    }
+
+                    // Guarda na memória para o auto-preenchimento
+                    window.clientesOficiais.push({
+                        nome: nomeFantasia,
+                        razao: c.razao_social,
+                        contatoPrincipal: contatoFmt
+                    });
+                    
+                    if(dl) {
+                        dl.innerHTML += `<option value="${nomeFantasia}">`;
+                        // Se a Razão Social for diferente do nome fantasia, joga lá também para ajudar na busca
+                        if(c.razao_social && c.razao_social !== nomeFantasia) {
+                            dl.innerHTML += `<option value="${c.razao_social}">`;
+                        }
+                    }
+                });
+            });
+
+            // 3. NOVA INTEGRAÇÃO: Puxa os Equipamentos da Central de Cadastros
+            const maqCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'cadastros_equipamentos');
+            window.fsOnSnapshot(maqCol, (snap) => {
+                const dl = document.getElementById('maquinas-oficiais');
+                if(dl) {
+                    dl.innerHTML = '';
+                    snap.forEach(d => {
+                        const m = d.data();
+                        dl.innerHTML += `<option value="${m.modelo}">`;
+                    });
+                }
+            });
+        };
+
+        window.buscarClientesSemelhantes = function(valorInput) {
+            const termo = valorInput.trim().toLowerCase();
+            const alerta = document.getElementById('alertaClientesSimilares');
+            const containerLista = document.getElementById('listaClientesSimilares');
+            
+            // INTELIGÊNCIA: Se o técnico selecionou/digitou o nome exato do cliente oficial, auto-preenche o telefone!
+            const clienteOficial = window.clientesOficiais.find(c => 
+                c.nome.toLowerCase() === termo || 
+                (c.razao && c.razao.toLowerCase() === termo)
+            );
+
+            if (clienteOficial && clienteOficial.contatoPrincipal) {
+                const inputContato = document.getElementById('osr_contato');
+                // Só preenche se estiver vazio, para não apagar o que o técnico digitou manualmente
+                if (!inputContato.value) {
+                    inputContato.value = clienteOficial.contatoPrincipal;
+                }
+            }
+
+            if (termo.length < 2) {
+                alerta.classList.add('hidden');
+                containerLista.innerHTML = '';
+                return;
+            }
+            
+            const clientesUnicosMap = new Map();
+            
+            // Busca o histórico do cliente nas antigas OSR
+            atendimentosCacheFirebase.forEach(item => {
+                const nomeReal = item.cliente || '';
+                const nomeNormalizado = nomeReal.trim().toLowerCase();
+                
+                if (nomeNormalizado.includes(termo)) {
+                    if (!clientesUnicosMap.has(nomeNormalizado)) {
+                        clientesUnicosMap.set(nomeNormalizado, { nomeExibicao: nomeReal.trim(), atendimentos: [] });
+                    }
+                    clientesUnicosMap.get(nomeNormalizado).atendimentos.push(item);
+                }
+            });
+
+            if (clientesUnicosMap.size > 0) {
+                containerLista.innerHTML = '';
+                clientesUnicosMap.forEach((dados, chaveNorm) => {
+                    containerLista.innerHTML += `
+                        <div class="bg-white p-2.5 rounded-xl border border-amber-200 flex items-center justify-between gap-2 shadow-sm">
+                            <div>
+                                <strong class="text-xs text-slate-900 block">${dados.nomeExibicao}</strong>
+                                <span class="text-[10px] text-slate-500">${dados.atendimentos.length} atendimento(s) anterior(es)</span>
+                            </div>
+                            <button type="button" onclick="window.selecionarClienteEVerHistorico('${dados.nomeExibicao.replace(/'/g, "\\'")}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition cursor-pointer shrink-0">
+                                Ver Histórico
+                            </button>
+                        </div>
+                    `;
+                });
+                alerta.classList.remove('hidden');
+            } else {
+                alerta.classList.add('hidden');
+            }
+        };
+
+        window.selecionarClienteEVerHistorico = function(nomeCliente) {
+            document.getElementById('osr_cliente').value = nomeCliente;
+            document.getElementById('alertaClientesSimilares').classList.add('hidden');
+
+            const historicoCliente = atendimentosCacheFirebase.filter(item => (item.cliente || '').trim().toLowerCase() === nomeCliente.trim().toLowerCase());
+
+            document.getElementById('tituloModalCliente').innerText = `Empresa: ${nomeCliente}`;
+            const container = document.getElementById('listaHistoricoCliente');
+            container.innerHTML = '';
+
+            historicoCliente.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            historicoCliente.forEach(item => {
+                container.innerHTML += `
+                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px]">
+                            <span class="font-bold text-blue-900">${item.osr}</span>
+                            <span class="text-slate-400">${item.data_formatada || '-'}</span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-800"><i class="fa-solid fa-print text-slate-400 mr-1"></i> ${item.maquina}</p>
+                        <p class="text-[11px] text-slate-600"><strong>Defeito:</strong> ${item.defeito}</p>
+                        <p class="text-[11px] text-slate-600"><strong>Parecer Técnico:</strong> ${item.solucao}</p>
+                        ${item.pecas ? `<p class="text-[11px] text-slate-600"><strong>Peças:</strong> ${item.pecas}</p>` : ''}
+                        <div class="pt-1 flex items-center justify-between text-[10px]">
+                            <span class="text-slate-500">Técnico: ${item.tecnico}</span>
+                            <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">${item.conclusao}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('modalHistorico').classList.remove('hidden');
+        };
+
+        window.fecharModalHistorico = function() {
+            document.getElementById('modalHistorico').classList.add('hidden');
+        };
+
+        window.processarAtendimento = async function(enviarWhatsApp) {
+            // Validação simples dos campos obrigatórios
+            const form = document.getElementById('formSuporteMobile');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const btnApenas = document.getElementById('btnSalvarApenas');
+            const btnEnviar = document.getElementById('btnSalvarEnviar');
+            
+            btnApenas.disabled = true;
+            btnEnviar.disabled = true;
+            btnApenas.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...';
+
+            const dados = {
+                tecnico: document.getElementById('osr_tecnico').value,
+                cliente: document.getElementById('osr_cliente').value.trim(),
+                contato: document.getElementById('osr_contato').value,
+                maquina: document.getElementById('osr_maquina').value,
+                defeito: document.getElementById('osr_defeito').value,
+                solucao: document.getElementById('osr_solucao').value,
+                pecas: document.getElementById('osr_pecas').value.trim(),
+                conclusao: document.getElementById('osr_conclusao').value,
+                data_formatada: new Date().toLocaleString('pt-BR'),
+                autor_email: window.currentUser ? window.currentUser.email : ''
+            };
+
+            try {
+                // Transação segura para gerar o OSR sequencial na nuvem
+                const counterRef = window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'counters', 'osr');
+                
+                const numFormatado = await window.FirebaseRunTransaction(window.AppDB, async (transaction) => {
+                    const counterDoc = await transaction.get(counterRef);
+                    let currentNum = 1000;
+                    if (counterDoc.exists()) currentNum = counterDoc.data().current || 1000;
+                    const nextNum = currentNum + 1;
+                    transaction.set(counterRef, { current: nextNum }, { merge: true });
+                    
+                    const anoAtual = new Date().getFullYear();
+                    const numeroGerado = `OSR-${anoAtual}-${nextNum}`;
+                    
+                    dados.osr = numeroGerado;
+                    dados.timestamp = new Date().getTime();
+                    
+                    const docRef = window.fsDoc(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'suportes_osr', numeroGerado);
+                    transaction.set(docRef, dados);
+                    return numeroGerado;
+                });
+
+                if (enviarWhatsApp) {
+                    let msgWhatsApp = `*RELATÓRIO DE SUPORTE - OSR* %0A` +
+                                        `*OSR:* ${dados.osr} %0A` +
+                                        `*Técnico:* ${dados.tecnico} %0A` +
+                                        `*Cliente:* ${dados.cliente} %0A` +
+                                        `*Contato:* ${dados.contato} %0A` +
+                                        `*Máquina:* ${dados.maquina} %0A` +
+                                        `*Defeito:* ${dados.defeito} %0A` +
+                                        `*Parecer Técnico:* ${dados.solucao} %0A`;
+                    
+                    // Adiciona a informação de peças no WhatsApp só se o técnico preencheu algo
+                    if (dados.pecas) {
+                        msgWhatsApp += `*Peças Necessárias/Utilizadas:* ${dados.pecas} %0A`;
+                    }
+                    
+                    msgWhatsApp += `*Status:* ${dados.conclusao}`;
+                    
+                    window.open(`https://api.whatsapp.com/send?text=${msgWhatsApp}`, '_blank');
+                } else {
+                    alert(`Atendimento ${dados.osr} salvo com sucesso no sistema!`);
+                }
+
+                form.reset();
+                document.getElementById('alertaClientesSimilares').classList.add('hidden');
+                
+                // Mantém o técnico preenchido e zera o número do form
+                document.getElementById('osr_tecnico').value = dados.tecnico;
+                document.getElementById('osr_numero').value = '';
+
+            } catch (error) {
+                console.error("ERRO AO SALVAR OSR:", error);
+                alert("Erro ao salvar o atendimento no banco de dados. Verifique a conexão.");
+            } finally {
+                btnApenas.disabled = false;
+                btnEnviar.disabled = false;
+                btnApenas.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Apenas Salvar';
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área de Testes BETA - Portal CIJ</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        /* Fundo listrado de obra para indicar que é área de teste */
+        .bg-stripes { background-image: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 10px, #f1f5f9 10px, #f1f5f9 20px); }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased bg-stripes">
+
+    <!-- TELA DE LOGIN INJETADA PELO CORE -->
+    <div id="login-screen" class="fixed inset-0 z-[9999] bg-slate-900 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 text-center space-y-6">
+            <h1 class="text-2xl font-black text-[#002d72] tracking-tight mt-1">ACESSO AO PORTAL</h1>
+            <p id="login-message" class="text-sm font-semibold text-slate-500">Sincronizando...</p>
+        </div>
+    </div>
+
+    <!-- ÁREA CENTRAL DO NOVO MÓDULO -->
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6 relative gap-6 custom-scrollbar overflow-y-auto h-[calc(100vh-64px)] hidden" id="main-content">
+        
+        <!-- CABEÇALHO BETA -->
+        <header class="bg-white p-6 rounded-2xl shadow-sm border-2 border-orange-400 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 shrink-0 relative overflow-hidden">
+            <!-- Faixa de aviso diagonal -->
+            <div class="absolute -right-12 top-6 bg-orange-500 text-white font-black text-[10px] px-12 py-1 rotate-45 uppercase tracking-widest shadow-md">
+                Modo Teste
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-flask-vial"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded border border-orange-300">Laboratório de Ideias</span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                        Novo Módulo (Em Construção)
+                    </h1>
+                    <p class="text-slate-500 text-sm mt-1">
+                        Esta é uma tela fantasma. Apenas você tem o link e os dados salvos aqui não afetam o sistema oficial.
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- AQUI ENTRARÁ O CÓDIGO DO SEU NOVO MÓDULO -->
+        <div class="bg-white p-10 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center min-h-[400px] text-center border-dashed">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 text-4xl mb-4">
+                <i class="fa-solid fa-hammer"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-700">A tela está pronta!</h2>
+            <p class="text-slate-500 mt-2 max-w-md">Me diga qual é a ideia do novo módulo, quais dados ele vai gerenciar e como ele deve funcionar. Eu construo a lógica e coloco aqui dentro.</p>
+        </div>
+
+    </main>
+
+    <!-- MOTOR CENTRAL DO SISTEMA (Para manter o login e o menu) -->
+    <script type="module" src="core.js"></script>
+
+    <!-- LÓGICA DO MÓDULO BETA -->
+    <script>
+        // Função de inicialização acionada pelo core.js após validar a senha
+        window.initModule = function(perfil) {
+            
+            // Trava de segurança extra: Se não for Master, chuta para a Home!
+            if (perfil !== 'Master') {
+                alert("Acesso restrito. Módulo em desenvolvimento.");
+                window.location.href = "index.html";
+                return;
+            }
+
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('main-content')?.classList.remove('hidden');
+
+            console.log("Laboratório de testes inicializado com sucesso!");
+            
+            // Aqui nós faremos as leituras do Firebase para o novo banco de testes
+            // Exemplo futuro: const colTeste = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'modulos_novos_teste');
+        };
+    </script>
+</body>
+</html>

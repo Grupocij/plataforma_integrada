@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="pt-BR"><head><title>Modelos - Portal CIJ</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="erp-cadastros-v4-3.css?v=20261002-central1"></head>
+<body data-erp-page="modelos">
+<main id="main-content" class="hidden h-[calc(100vh-64px)] overflow-y-auto erp-scroll">
+<div class="max-w-[1500px] mx-auto p-2 md:p-3 space-y-2.5"><nav class="erp-card p-1.5 erp-nav">
+<a href="central_cadastros.html" data-page="dashboard"><i class="fa-solid fa-grid-2"></i> Visão geral</a>
+<a href="cadastros_clientes.html" data-page="clientes"><i class="fa-solid fa-building"></i> Clientes</a>
+<a href="cadastros_modelos.html" data-page="modelos"><i class="fa-solid fa-microchip"></i> Modelos</a>
+<a href="cadastros_consumiveis.html" data-page="consumiveis"><i class="fa-solid fa-droplet"></i> Consumíveis</a>
+<a href="parque_maquinas.html" data-page="parque"><i class="fa-solid fa-industry"></i> Parque de Máquinas</a>
+</nav>
+<script>document.addEventListener('DOMContentLoaded',()=>{const p=document.body.dataset.erpPage||'',k=p==='cliente-ficha'?'clientes':p==='parque-ficha'?'parque':p;document.querySelector(`[data-page="${k}"]`)?.classList.add('active')});</script><div class="erp-card erp-page-head p-3 flex justify-between gap-4"><div><span class="erp-pill bg-indigo-50 text-indigo-700">PADRONIZAÇÃO</span><h1 class="erp-page-title mt-2">Modelos de Equipamentos</h1><p class="erp-muted mt-1">Base para autopreenchimento do Parque de Máquinas.</p></div><button class="erp-btn erp-btn-primary" onclick="window.abrirModelo()"><i class="fa-solid fa-plus"></i> Novo modelo</button></div>
+<div class="erp-card erp-filterbar p-2 grid lg:grid-cols-[1fr_190px] gap-3"><input id="busca" class="erp-input" oninput="window.renderModelos()" placeholder="Buscar código, marca, modelo ou tipo..."><select id="situacao" class="erp-input" onchange="window.renderModelos()"><option value="">Todos</option><option value="ATIVO">Ativos</option><option value="INATIVO">Inativos</option></select></div>
+<div class="erp-card overflow-hidden"><div class="overflow-auto erp-scroll max-h-[61vh]"><table class="erp-table w-full min-w-[950px]"><thead><tr><th>Código</th><th>Marca</th><th>Modelo</th><th>Tipo</th><th>Categoria</th><th>Máquinas</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="tb-modelos"></tbody></table></div><div id="pager-modelos" class="erp-pager"></div></div><div id="modal-modelo" class="erp-modal hidden"><div class="erp-modal-card max-w-2xl"><form onsubmit="window.salvarModelo(event)">
+<div class="p-5 border-b flex justify-between"><div><span class="erp-pill bg-indigo-50 text-indigo-700">MODELO PADRÃO</span><h2 id="modelo-titulo" class="text-xl font-black mt-2">Novo modelo</h2></div><button type="button" class="erp-btn erp-btn-light !w-10 !px-0" onclick="window.erpClose('modal-modelo')"><i class="fa-solid fa-xmark"></i></button></div>
+<div class="p-5 space-y-4"><input id="mod-id" type="hidden"><div class="grid md:grid-cols-2 gap-4"><label><span class="erp-label">Código</span><input id="mod-codigo" class="erp-input"></label><label><span class="erp-label">Marca / fabricante *</span><input id="mod-marca" class="erp-input" required></label></div><div class="grid md:grid-cols-2 gap-4"><label><span class="erp-label">Modelo *</span><input id="mod-modelo" class="erp-input" required></label><label><span class="erp-label">Tipo *</span><input id="mod-tipo" class="erp-input" required placeholder="Inkjet, laser, detector..."></label></div><div class="grid md:grid-cols-2 gap-4"><label><span class="erp-label">Categoria</span><input id="mod-categoria" class="erp-input"></label><label><span class="erp-label">Situação</span><select id="mod-ativo" class="erp-input"><option value="true">ATIVO</option><option value="false">INATIVO</option></select></label></div><label><span class="erp-label">Observações técnicas</span><textarea id="mod-obs" class="erp-input min-h-24"></textarea></label></div>
+<div class="p-5 border-t bg-slate-50 flex justify-end gap-2"><button type="button" class="erp-btn erp-btn-light" onclick="window.erpClose('modal-modelo')">Cancelar</button><button class="erp-btn erp-btn-primary">Salvar modelo</button></div></form></div></div></div></main>
+<script type="module" src="core.js?v=20261002-central1"></script>
+<script src="erp-cadastros-v4-3-2.js?v=20261002-central1"></script>
+</body></html>

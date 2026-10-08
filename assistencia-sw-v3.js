@@ -1,0 +1,14 @@
+const CACHE_SHELL='cij-assistencia-tecnico-v3-shell';
+const CACHE_RUNTIME='cij-assistencia-tecnico-v3-runtime';
+const SHELL=['./assistencia.html','./core.js','./assistencia-manifest-v3.json','./assistencia-icon-192.png','./assistencia-icon-512.png'];
+
+self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_SHELL).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>null)))).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('cij-assistencia-tecnico-')&&!([CACHE_SHELL,CACHE_RUNTIME].includes(k))).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+self.addEventListener('message',event=>{const data=event.data||{};if(data.type==='CACHE_CURRENT_PAGE'&&data.url){event.waitUntil(caches.open(CACHE_SHELL).then(async c=>{try{const r=await fetch(data.url,{cache:'reload'});if(r&&r.ok)await c.put(data.url,r.clone())}catch(_){}}))}});
+function isStaticCrossOrigin(url){return['cdn.tailwindcss.com','fonts.googleapis.com','fonts.gstatic.com','cdnjs.cloudflare.com','www.gstatic.com'].includes(url.hostname)}
+async function staleWhileRevalidate(request,cacheName){const cache=await caches.open(cacheName);const cached=await cache.match(request);const net=fetch(request).then(resp=>{if(resp&&(resp.ok||resp.type==='opaque'))cache.put(request,resp.clone()).catch(()=>{});return resp}).catch(()=>null);return cached||await net||Response.error()}
+self.addEventListener('fetch',event=>{const request=event.request;if(request.method!=='GET')return;const url=new URL(request.url);
+ if(request.mode==='navigate'){event.respondWith((async()=>{try{const response=await fetch(request);const cache=await caches.open(CACHE_SHELL);if(response&&response.ok)cache.put(request,response.clone()).catch(()=>{});return response}catch(_){const direct=await caches.match(request);if(direct)return direct;const shell=await caches.match('./assistencia.html');if(shell)return shell;const keys=await caches.keys();for(const key of keys){const cache=await caches.open(key),matches=await cache.keys(),html=matches.find(r=>new URL(r.url).pathname.endsWith('.html'));if(html){const resp=await cache.match(html);if(resp)return resp}}return new Response('<h1>CIJ Técnico</h1><p>Aplicativo ainda não preparado para uso offline neste aparelho.</p>',{headers:{'Content-Type':'text/html; charset=utf-8'}})}})());return}
+ if(url.origin===self.location.origin){event.respondWith(staleWhileRevalidate(request,CACHE_RUNTIME));return}
+ if(isStaticCrossOrigin(url))event.respondWith(staleWhileRevalidate(request,CACHE_RUNTIME));
+});
