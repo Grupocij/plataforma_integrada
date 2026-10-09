@@ -278,7 +278,7 @@
             <div class="flex flex-wrap gap-2 items-end"><label class="text-xs font-bold text-slate-600">De <input id="cij-setor-inicio" type="date" class="block border rounded-lg p-2"></label><label class="text-xs font-bold text-slate-600">Até <input id="cij-setor-fim" type="date" class="block border rounded-lg p-2"></label><button onclick="window.cijFiltrarSetores()" class="bg-blue-700 text-white text-xs font-bold rounded-xl px-4 py-2.5">Atualizar</button><button onclick="window.cijExportarSetores()" class="border rounded-xl px-4 py-2.5 text-xs font-bold">Exportar CSV</button></div>
           </div>
           <p id="cij-setor-status" role="status" class="text-xs text-slate-500">Aguardando carregamento…</p>
-          <div id="cij-setor-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3"></div>
+          <div id="cij-setor-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3"></div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div class="bg-white border rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">Receitas e despesas por setor</h4><div id="cij-setor-chart" class="space-y-4"></div></div>
             <div class="bg-white border rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">Resultado consolidado</h4><div id="cij-setor-consolidado"></div></div>

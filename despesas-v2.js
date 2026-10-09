@@ -205,6 +205,7 @@ class ExpenseRepository{
        deleted=[oldItem];items=items.filter(i=>i.id!==oldItem.id);
      }
      if(action==='REOPEN'){
+       if(!canManageReports(context))throw new Error('Somente administradores autorizados podem reabrir relatórios finalizados.');
        if(h.status!=='FINALIZADO')throw new Error('Somente relatórios finalizados podem ser reabertos.');h.status='RASCUNHO';
      }
      if(action==='REIMBURSE'){
@@ -235,7 +236,9 @@ class ExpenseRepository{
      h={...h,itemIds:resultItems.map(i=>i.id),totalCentavos:total,itemCount:resultItems.length,updatedAtISO:now,updatedByEmail:actor.email,updatedByUid:actor.uid,revision:Number(h.revision||0)+1,schemaVersion:2};
      // Todos os documentos foram lidos antes de qualquer gravação.
      deleted.forEach(i=>tx.delete(this.ref(COL.items,i.id)));
-     resultItems.forEach(i=>tx.set(this.ref(COL.items,i.id),i));
+     // REOPEN altera apenas o status do cabecalho; nao regrava 1..400 despesas
+     // sem necessidade, evitando rejeicoes nas regras de atualizacao dos itens.
+     if(action!=='REOPEN')resultItems.forEach(i=>tx.set(this.ref(COL.items,i.id),i));
      tx.set(headerRef,h);
      const title={SAVE_ITEM:oldItem?'Despesa editada':'Despesa adicionada',DELETE_ITEM:'Despesa excluída',FINALIZE:'Relatório finalizado',REOPEN:'Relatório reaberto',REIMBURSE:'Reembolso registrado',UNDO_REIMBURSE:'Reembolso desfeito',DELETE_REPORT:'Relatório excluído'}[action];
      const audit={id:eventId,tipo:action,titulo:title,reportId:group.id,num_relatorio:h.num_relatorio,createdAtISO:now,actorEmail:actor.email,actorUid:actor.uid,actorNome:actor.nome,reason:text(payload.reason),totalAntesCentavos:beforeTotal,totalDepoisCentavos:total,itensAntes:beforeCount,itensDepois:resultItems.length,expenseId:savedId||payload.expenseId||'',descricao:input?.descricao||oldItem?.descricao||'',status:h.status};
@@ -350,7 +353,7 @@ function renderPage(){
    const number=h.num_relatorio==='Rascunho'?'Rascunho':h.num_relatorio;
    let actions=actionButton('details',g.id,expanded?'Ocultar detalhes':'Detalhes')+actionButton('pdf',g.id,'PDF completo')+actionButton('excel',g.id,'Excel completo')+actionButton('history',g.id,'Histórico');
    if(editable)actions+=actionButton('select',g.id,'Adicionar despesas')+(g.items.length?actionButton('FINALIZE',g.id,'Finalizar','primary'):'');
-   if(manageable&&h.status==='FINALIZADO')actions+=actionButton('REOPEN',g.id,canManageReports(c)?'Editar relatório finalizado (reabrir)':'Reabrir');
+   if(canManageReports(c)&&h.status==='FINALIZADO')actions+=actionButton('REOPEN',g.id,'Editar relatório finalizado (reabrir)');
    if(canManageReports(c)&&h.status==='FINALIZADO')actions+=actionButton('REIMBURSE',g.id,'Registrar reembolso');
    if(canManageReports(c)&&h.status==='REEMBOLSADO')actions+=actionButton('UNDO_REIMBURSE',g.id,'Desfazer reembolso');
    if(manageable&&h.status!=='REEMBOLSADO'&&h.status!=='EXCLUIDO'&&(editable||canManageReports(c)))actions+=actionButton('DELETE_REPORT',g.id,'Excluir','danger');
