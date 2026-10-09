@@ -69,6 +69,11 @@
             </div>
         </div>
 
+        <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2" aria-label="Abas do painel financeiro">
+            <button id="cij-tab-original" type="button" onclick="window.cijAlternarPainel('original')" class="rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-bold text-white">DRE de Vendas (atual)</button>
+            <button id="cij-tab-setores" type="button" onclick="window.cijAlternarPainel('setores')" class="rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-700">Análise Financeira por Setor</button>
+        </nav>
+        <div id="cij-panel-original" class="contents">
         <!-- FILTROS AVANÇADOS DO DRE -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 shrink-0">
             <div class="flex items-center gap-2 mb-2 md:mb-0">
@@ -266,6 +271,21 @@
             </div>
         </div>
 
+        </div>
+        <section id="cij-panel-setores" class="hidden space-y-4" aria-label="Análise financeira por setor">
+          <div class="rounded-2xl bg-white border border-slate-200 p-5 flex flex-wrap justify-between gap-3">
+            <div><h3 class="text-xl font-black text-slate-900">Análise Financeira por Setor</h3><p class="text-xs text-slate-500">Vendas, OS faturadas e despesas classificadas no Controle de Despesas, sem sobreposição entre setores.</p></div>
+            <div class="flex flex-wrap gap-2 items-end"><label class="text-xs font-bold text-slate-600">De <input id="cij-setor-inicio" type="date" class="block border rounded-lg p-2"></label><label class="text-xs font-bold text-slate-600">Até <input id="cij-setor-fim" type="date" class="block border rounded-lg p-2"></label><button onclick="window.cijFiltrarSetores()" class="bg-blue-700 text-white text-xs font-bold rounded-xl px-4 py-2.5">Atualizar</button><button onclick="window.cijExportarSetores()" class="border rounded-xl px-4 py-2.5 text-xs font-bold">Exportar CSV</button></div>
+          </div>
+          <p id="cij-setor-status" role="status" class="text-xs text-slate-500">Aguardando carregamento…</p>
+          <div id="cij-setor-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3"></div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white border rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">Receitas e despesas por setor</h4><div id="cij-setor-chart" class="space-y-4"></div></div>
+            <div class="bg-white border rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">Resultado consolidado</h4><div id="cij-setor-consolidado"></div></div>
+          </div>
+          <div class="bg-white border rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">Evolução mensal</h4><div id="cij-setor-meses" class="overflow-x-auto"></div></div>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-950">Lançamentos históricos sem setor ficam pendentes de classificação, não são distribuídos automaticamente. O resultado consolidado não substitui os impostos, comissões e custos de mercadorias do DRE existente. OS já faturadas também devem ser conciliadas para evitar receita duplicada se forem lançadas novamente em Vendas.</div>
+        </section>
     </main>
 
     <script type="module" src="core.js"></script>
@@ -419,6 +439,7 @@
                 window.vendasRegistradas = [];
                 snap.forEach(doc => window.vendasRegistradas.push(doc.data()));
                 window.calcularDRE();
+                window.cijFiltrarSetores?.();
             });
 
             const despesasCol = window.fsCollection(window.AppDB, 'artifacts', 'plataforma-cij', 'public', 'data', 'despesas_relatorio_novo');
@@ -426,8 +447,10 @@
                 window.despesasRegistradas = [];
                 snap.forEach(doc => window.despesasRegistradas.push(doc.data()));
                 window.calcularDRE();
+                window.cijFiltrarSetores?.();
             });
 
+            if (typeof window.cijCarregarOSFaturadas === 'function') window.cijCarregarOSFaturadas();
             window.selecionarAba('INKJET');
         };
 
@@ -600,6 +623,8 @@
                     if (dataInicio && dataStr < dataInicio) return;
                     if (dataFim && dataStr > dataFim) return;
                     
+                    // Nova classificacao: o DRE comercial utiliza somente despesas explicitamente comerciais.
+                    if (desp.setor !== 'Comercial') return;
                     const valRaw = desp.valor || desp.value || desp.valorDespesa || desp.amount || 0;
                     const valDesp = window.parseMoney(valRaw);
                     
@@ -868,5 +893,6 @@
         };
 
     </script>
+<script src="cij-financeiro-setores.js?v=20261009a"></script>
 </body>
 </html>
