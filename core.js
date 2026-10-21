@@ -328,6 +328,7 @@ window.fbGetBlob = getBlob;
 
 const moduleAccessAliases = {
     'cadastros_clientes.html': 'central_cadastros.html',
+    'pre_venda_laser.html': 'vendas.html',
     'cliente_ficha.html': 'central_cadastros.html',
     'cadastros_modelos.html': 'central_cadastros.html',
     'cadastros_pecas.html': 'estoque_pecas.html',
@@ -357,6 +358,7 @@ const globalModulesMap = [
     { name: 'Lista de Solicitações', url: 'solicitacoes-lista.html', icon: 'fa-list-check text-orange-600' },
     { name: 'Veículos Gerencial', url: 'veiculos.html', icon: 'fa-car-tunnel text-teal-700' },
     { name: 'Vendas (Saídas)', url: 'vendas.html', icon: 'fa-cart-shopping text-rose-600' },
+    { name: 'Pré-Venda Técnica — Laser', url: 'pre_venda_laser.html', icon: 'fa-bolt text-indigo-600' },
     { name: 'Painel Diretoria', url: 'admin.html', icon: 'fa-shield-halved text-purple-600' },
     { name: 'Gerenciar Usuários', url: 'usuarios.html', icon: 'fa-users-gear text-slate-800' },
     { name: 'Central de Cadastros', url: 'central_cadastros.html', icon: 'fa-database text-blue-600' },
